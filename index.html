@@ -179,6 +179,16 @@
       align-items: start;
     }
     .hero > .specimen-label { grid-column: 2; justify-self: end; margin-top: 0; }
+    /* Only Buy is introduced by the full hero. The other views state their own
+       question, so the hero collapses to a model readout and gives the panels
+       back roughly 300px above the fold. */
+    .hero[data-compact="true"] { padding: 24px 0 20px; gap: 20px 40px; align-items: center; }
+    .hero[data-compact="true"] .classification-strip,
+    .hero[data-compact="true"] .hero-copy p,
+    .hero[data-compact="true"] .release-card p,
+    .hero[data-compact="true"] > .specimen-label { display: none; }
+    .hero[data-compact="true"] h1 { font-size: clamp(30px, 3.2vw, 44px); line-height: 1; margin: 6px 0 0; }
+    .hero[data-compact="true"] .release-card { padding: 12px 14px; }
     .eyebrow { font: 12px var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--signal); }
     h1 { max-width: 900px; margin: 12px 0 18px; font-size: clamp(42px, 6.5vw, 90px); line-height: .92; letter-spacing: -.065em; }
     .hero p { max-width: 760px; margin: 0; color: var(--muted); font-size: clamp(17px, 2vw, 22px); }
@@ -192,6 +202,74 @@
     }
     .release-card strong { display: block; margin: 5px 0 8px; font-size: 24px; }
     .release-card p { font-size: 14px; }
+
+    /* Orientation: the vocabulary a first-time reader needs before the tabs
+       mean anything. Dismissible, and the choice persists. */
+    .orientation {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: start;
+      margin: 30px 0 0;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--signal);
+      background: var(--panel-2);
+    }
+    .orientation[hidden] { display: none; }   /* display:grid would beat [hidden] */
+    .orientation-terms {
+      display: grid;
+      grid-template-columns: max-content minmax(0, 1fr);
+      gap: 6px 18px;
+      margin: 10px 0 0;
+    }
+    .orientation-terms dt { font-weight: 800; }
+    .orientation-terms dd { margin: 0; color: var(--muted); }
+    .orientation-path { margin: 12px 0 0; color: var(--muted); }
+    .orientation-path strong { color: var(--ink); }
+    .orientation-show { margin: 30px 0 0; }
+    .orientation + .mode-nav, .orientation-show + .mode-nav { margin-top: 18px; }
+
+    /* Start gate. One question, asked once, before the instrument appears. It
+       routes to a starting surface; it does not gate any capability, and every
+       route runs the same arithmetic. */
+    .shell[data-gate="open"] > *:not(.start-gate) { display: none; }
+    /* The gate is a full-page moment rather than part of the instrument, so it
+       centres in the viewport instead of following the left-aligned grid the
+       rest of the page keeps. Card bodies stay left-aligned to stay readable. */
+    .shell[data-gate="open"] { display: flex; align-items: center; justify-content: center; padding: 28px 0; }
+    /* `safe` keeps the top of the gate reachable when a short viewport cannot
+       fit it; browsers without the keyword fall back to the plain centring. */
+    .shell[data-gate="open"] { align-items: safe center; }
+    .start-gate { max-width: 940px; margin: 0; text-align: center; }
+    /* Centred ragged text breaks badly by default; `balance` evens the lines
+       and is simply ignored where it is not supported. */
+    .start-gate h2 { font-size: 34px; line-height: 1.1; margin: 6px 0 10px; text-wrap: balance; }
+    .start-gate > p { color: var(--muted); margin: 0 auto 26px; max-width: 64ch; text-wrap: balance; }
+    .gate-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .gate-card {
+      display: flex; flex-direction: column; gap: 6px; text-align: left;
+      padding: 18px; border: 1px solid var(--line); border-top: 4px solid var(--signal);
+      background: var(--panel-2); color: inherit; font: inherit; cursor: pointer;
+    }
+    .gate-card:hover { border-color: var(--signal); filter: brightness(1.04); }
+    .gate-card:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+    .gate-kicker { font: 11px var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+    .gate-card strong { font-size: 17px; }
+    .gate-card p { margin: 0; color: var(--muted); font-size: 13px; }
+    .gate-go { margin-top: auto; padding-top: 12px; font: 11px var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--signal); }
+    /* Outranks `.start-gate > p` above, which would otherwise zero this margin. */
+    .start-gate > .gate-foot { margin: 24px auto 0; color: var(--muted); font-size: 13px; max-width: 64ch; text-wrap: balance; }
+    /* The gate is the shortest state the page has; without this the footer
+       floats mid-viewport on a tall screen. Scoped to the gate so no other
+       view's layout changes, and flex-based so it cannot overshoot into a
+       scrollbar the way a hand-picked min-height does. */
+    body:has(.shell[data-gate="open"]) { display: flex; flex-direction: column; min-height: 100vh; }
+    body:has(.shell[data-gate="open"]) > .shell { flex: 1 0 auto; }
+    .gate-reopen { margin: 30px 0 0; }
+    .orientation-show:not([hidden]) + .gate-reopen { margin-left: 8px; }
+    .gate-reopen + .mode-nav { margin-top: 18px; }
+    @media (max-width: 760px) { .gate-grid { grid-template-columns: 1fr; } .start-gate h2 { font-size: 26px; } }
 
     .mode-nav {
       display: flex;
@@ -212,6 +290,9 @@
     }
     .mode-tab:first-child { border-left: 1px solid var(--line); }
     .mode-tab[aria-selected="true"] { background: var(--signal); color: #061b1e; }
+    .mode-tab.branch { font-weight: 700; color: var(--muted); }
+    .mode-tab.branch[aria-selected="true"] { color: #061b1e; }
+    .mode-tab.first-branch { margin-left: 20px; border-left: 1px solid var(--line); }
     .mode-tab:hover { filter: brightness(1.06); }
     .view[hidden] { display: none; }
 
@@ -319,6 +400,25 @@
     .setup-card ul { margin: 0 0 18px; padding-left: 18px; color: var(--muted); }
     .card-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .fit { font: 11px var(--mono); color: var(--signal); }
+    /* Inline definitions. A real button so it is reachable by keyboard and
+       usable on touch, unlike title=. One shared popover serves every term. */
+    .term {
+      appearance: none; border: 0; border-bottom: 1px dotted var(--signal);
+      margin: 0; padding: 0; background: none;
+      font: inherit; color: inherit; cursor: help;
+    }
+    .term:hover, .term[aria-expanded="true"] { color: var(--signal); border-bottom-style: solid; }
+    .term-pop {
+      position: fixed; z-index: 60; max-width: 340px;
+      padding: 12px 14px; font-size: 14px; line-height: 1.55;
+      border: 1px solid var(--signal); border-left-width: 4px;
+      background: var(--panel-2); box-shadow: var(--shadow);
+    }
+    .term-pop[hidden] { display: none; }
+    .term-pop strong { display: block; margin-bottom: 5px; }
+    .term-pop p { margin: 0; color: var(--muted); }
+    .topology-legend { margin: 26px 0 -6px; color: var(--muted); }
+
     .mini-button { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 7px 9px; cursor: pointer; }
     .mini-button:hover { border-color: var(--signal); }
 
@@ -365,6 +465,18 @@
     .roster-drop { border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; padding: 4px 8px; font: 11px var(--mono); }
     .roster-drop:hover { color: var(--danger); border-color: var(--danger); }
     .roster-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 12px 0 14px; }
+    .plan-reach { border: 1px solid var(--line); border-top: 3px solid var(--signal); background: var(--panel-2); padding: 14px; margin: 0 0 14px; }
+    .plan-reach > .eyebrow { margin-bottom: 10px; }
+    .plan-reach .metrics { margin: 0; }
+    .plan-reach-note { margin: 12px 0 0; color: var(--muted); font-size: 12.5px; }
+    .plan-reach-list { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+    .plan-reach-list summary { cursor: pointer; font: 11px var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--signal); }
+    .plan-reach-list summary:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+    .plan-reach-group { margin-top: 10px; }
+    /* Machine names contain middots of their own, so a run-in separated list
+       is unreadable; each name gets its own cell instead. */
+    .plan-reach-group ul { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 6px 0 0; padding: 0; }
+    .plan-reach-group li { font: 11px var(--mono); color: var(--muted); border: 1px solid var(--line); padding: 2px 6px; }
     .lane-map { display: grid; gap: 6px; margin-top: 14px; }
     .lane-bar { display: grid; grid-template-columns: 88px minmax(0, 1fr) 96px; gap: 10px; align-items: center; }
     .lane-bar > span:first-child { font: 10px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
@@ -487,6 +599,10 @@
       .shell { width: min(100% - 20px, 1440px); }
       .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 46px; }
       .mode-tab { min-width: 0; flex: 1; min-height: 48px; }
+      .mode-tab.first-branch { margin-left: 8px; }
+      .orientation { grid-template-columns: 1fr; }
+      .orientation-terms { grid-template-columns: 1fr; gap: 2px; }
+      .orientation-terms dd { margin-bottom: 10px; }
       .topbar-inner { flex-wrap: wrap; gap: 10px; padding-top: 10px; padding-bottom: 10px; }
       .model-picker select { max-width: 150px; }
       .section-head { display: block; }
@@ -519,17 +635,45 @@
           <span class="model-picker-label">Model</span>
           <select id="modelSelect" aria-label="Model to plan for"></select>
         </label>
+        <button class="theme-toggle" id="copyPlanLink" type="button">Copy plan link</button>
         <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme">Light mode</button>
       </div>
     </div>
   </header>
 
-  <main class="shell">
-    <section class="hero">
-      <div>
+  <main class="shell" id="mainShell">
+    <section class="start-gate" id="startGate" aria-labelledby="startGateTitle" hidden>
+      <div class="eyebrow">Harness Planner</div>
+      <h2 id="startGateTitle">How do you want to start?</h2>
+      <p>Three ways into the same instrument. Every route runs the same memory arithmetic on the same machines &mdash; this only decides where you begin, and you can switch at any time.</p>
+      <div class="gate-grid">
+        <button class="gate-card" type="button" data-gate-choice="plan">
+          <span class="gate-kicker">You know what you want to run</span>
+          <strong>From a harness plan</strong>
+          <p>Describe the jobs &mdash; a primary coder, a reviewer, a scout &mdash; and see what memory that roster needs before you commit to hardware.</p>
+          <span class="gate-go">Open the model roster &rarr;</span>
+        </button>
+        <button class="gate-card" type="button" data-gate-choice="machine">
+          <span class="gate-kicker">You know the hardware</span>
+          <strong>From a machine</strong>
+          <p>Pick an exact Mac configuration or derive a GPU host from its payload, and see what that machine can actually hold.</p>
+          <span class="gate-go">Open the configuration catalog &rarr;</span>
+        </button>
+        <button class="gate-card" type="button" data-gate-choice="browse">
+          <span class="gate-kicker">Not sure yet</span>
+          <strong>Browse everything</strong>
+          <p>Compare the reference builds side by side at the precision and context you choose, and see how each one holds its memory.</p>
+          <span class="gate-go">Open the build grid &rarr;</span>
+        </button>
+      </div>
+      <p class="gate-foot">Counts are memory arithmetic, not benchmarks or a ranking. Nothing here is recommended over anything else &mdash; the planner reports what fits and where the numbers came from.</p>
+    </section>
+
+    <section class="hero" id="hero">
+      <div class="hero-copy">
         <div class="classification-strip">Independent research lab</div>
         <div class="eyebrow">Local coding systems / field instrument</div>
-        <h1>Buy the machine.<br>Route the models.</h1>
+        <h1 id="heroTitle">Buy the machine.<br>Route the models.</h1>
         <p>Compare realistic local-AI builds, then turn the winning hardware into a coding harness for the model you pick — with explicit workers, memory limits, and escalation paths.</p>
       </div>
       <aside class="release-card" aria-label="Selected model">
@@ -541,18 +685,34 @@
       <span class="specimen-label">One-person research lab / Est. 2026</span>
     </section>
 
+    <aside class="orientation" id="orientationPanel" aria-labelledby="orientationTitle">
+      <div>
+        <div class="eyebrow" id="orientationTitle">New here / how to read this</div>
+        <dl class="orientation-terms">
+          <dt>Worker</dt>
+          <dd>One loaded copy of a model, ready to answer requests. Every count on this page is how many workers fit in a machine&rsquo;s memory.</dd>
+          <dt>Q4 / Q8 / BF16</dt>
+          <dd>How tightly the weights are compressed. Q4 is the smallest and fits the most workers; BF16 is the uncompressed reference and fits the fewest.</dd>
+        </dl>
+        <p class="orientation-path"><strong>Buy</strong> and <strong>Deploy</strong> are the two main views &mdash; what a machine can host, and how models are routed onto it. Work in either order. Cluster, Mix, and Phase split are alternatives for planning across more than one machine.</p>
+      </div>
+      <button class="mini-button" id="orientationHide" type="button" aria-controls="orientationPanel">Got it</button>
+    </aside>
+    <button class="mini-button orientation-show" id="orientationShow" type="button" aria-controls="orientationPanel" hidden>What is this?</button>
+    <button class="mini-button gate-reopen" id="gateReopen" type="button" aria-controls="startGate">Change starting point</button>
+
     <nav class="mode-nav" aria-label="Planner mode" role="tablist">
-      <button class="mode-tab" id="buyTab" role="tab" aria-selected="true" aria-controls="buyView">01 / Buy</button>
-      <button class="mode-tab" id="deployTab" role="tab" aria-selected="false" aria-controls="deployView">02 / Deploy</button>
-      <button class="mode-tab" id="clusterTab" role="tab" aria-selected="false" aria-controls="clusterView">03 / Cluster</button>
-      <button class="mode-tab" id="mixTab" role="tab" aria-selected="false" aria-controls="mixView">04 / Mix</button>
-      <button class="mode-tab" id="splitTab" role="tab" aria-selected="false" aria-controls="splitView">05 / Phase split</button>
+      <button class="mode-tab" id="buyTab" role="tab" aria-selected="true" aria-controls="buyView">Buy</button>
+      <button class="mode-tab" id="deployTab" role="tab" aria-selected="false" aria-controls="deployView">Deploy</button>
+      <button class="mode-tab branch first-branch" id="clusterTab" role="tab" aria-selected="false" aria-controls="clusterView">Cluster</button>
+      <button class="mode-tab branch" id="mixTab" role="tab" aria-selected="false" aria-controls="mixView">Mix</button>
+      <button class="mode-tab branch" id="splitTab" role="tab" aria-selected="false" aria-controls="splitView">Phase split</button>
     </nav>
 
     <section class="view" id="buyView" role="tabpanel" aria-labelledby="buyTab">
       <div class="section-head">
-        <div><div class="eyebrow">Question one</div><h2>What should you build?</h2></div>
-        <p>Each build reports what it can actually host at the precision and context you pick. Counts are memory arithmetic, not a ranking.</p>
+        <div><div class="eyebrow">Hardware</div><h2>What should you build?</h2></div>
+        <p>Each build reports what it can actually host at the <button type="button" class="term" data-term="precision" aria-expanded="false">precision</button> and <button type="button" class="term" data-term="working-context" aria-expanded="false">context</button> you pick. Counts are memory arithmetic, not a ranking.</p>
       </div>
 
       <div class="control-strip" aria-label="Capability assumptions">
@@ -573,8 +733,8 @@
             <option value="128">128K</option>
           </select>
         </div>
-        <div class="control">
-          <span class="label">Memory per worker</span>
+        <div class="control" role="status">
+          <span class="label">Memory per <button type="button" class="term" data-term="worker" aria-expanded="false">worker</button></span>
           <strong id="buyWorkerCost">20 GB</strong><br><span style="color:var(--muted)" id="buyWorkerCostDetail">16GB weights + 4GB context reserve</span>
         </div>
         <div class="control">
@@ -583,7 +743,7 @@
         </div>
       </div>
 
-      <section class="panel mac-catalog" aria-labelledby="macCatalogTitle">
+      <section class="panel mac-catalog" id="macCatalogPanel" aria-labelledby="macCatalogTitle">
         <div class="panel-head"><h3 id="macCatalogTitle">Mac configuration catalog</h3><span class="eyebrow" id="macCatalogCount">47 profiles / Neo excluded</span></div>
         <div class="panel-body">
           <div class="control-strip" aria-label="Mac catalog controls">
@@ -594,10 +754,10 @@
           </div>
           <div class="catalog-layout">
             <div class="catalog-summary">
-              <div class="fit-banner" id="macCatalogBanner"><strong id="macCatalogName">Mac Studio M3 Ultra</strong><p id="macCatalogNote"></p></div>
+              <div class="fit-banner" id="macCatalogBanner" role="status"><strong id="macCatalogName">Mac Studio M3 Ultra</strong><p id="macCatalogNote"></p></div>
               <div class="metrics">
                 <div class="metric"><span>Planning memory</span><strong id="macCatalogMemory">232 / 256 GB</strong></div>
-                <div class="metric"><span>Memory bandwidth</span><strong id="macCatalogBandwidth">819 GB/s</strong></div>
+                <div class="metric"><span>Memory <button type="button" class="term" data-term="bandwidth" aria-expanded="false">bandwidth</button></span><strong id="macCatalogBandwidth">819 GB/s</strong></div>
                 <div class="metric"><span id="macCatalogFitLabel">Model fit</span><strong id="macCatalogFit">Comfortable</strong></div>
                 <div class="metric"><span>Phase-split class</span><strong id="macCatalogClass">Best match</strong></div>
               </div>
@@ -661,6 +821,7 @@
         </div>
       </section>
 
+      <p class="topology-legend">Every build below holds its memory in one of four ways &mdash; as a <button type="button" class="term" data-term="pool" aria-expanded="false">pool</button>, as <button type="button" class="term" data-term="lanes" aria-expanded="false">lanes</button>, in <button type="button" class="term" data-term="tiers" aria-expanded="false">tiers</button>, or across <button type="button" class="term" data-term="nodes" aria-expanded="false">nodes</button> &mdash; and that difference, not the headline number, decides what fits. A worker too large for one lane needs <button type="button" class="term" data-term="sharding" aria-expanded="false">sharding</button>.</p>
       <div class="setup-grid" id="setupGrid" aria-label="Hardware choices"></div>
 
       <div class="compare-wrap">
@@ -674,8 +835,8 @@
 
     <section class="view" id="deployView" role="tabpanel" aria-labelledby="deployTab" hidden>
       <div class="section-head">
-        <div><div class="eyebrow">Question two</div><h2>How should it work?</h2></div>
-        <p>Choose a machine and experiment. The planner assigns a flagship, supporting workers, and an optional cloud judge.</p>
+        <div><div class="eyebrow">Harness</div><h2>How should it work?</h2></div>
+        <p>Choose a machine and experiment. The planner assigns a flagship, supporting <button type="button" class="term" data-term="worker" aria-expanded="false">workers</button>, and an optional cloud judge.</p>
       </div>
 
       <div class="control-strip" aria-label="Deployment controls">
@@ -713,7 +874,7 @@
         <section class="panel">
           <div class="panel-head"><h3>Fit report</h3><span class="eyebrow" id="fitCode">FIT / 01</span></div>
           <div class="panel-body">
-            <div class="fit-banner" id="fitBanner"><strong id="fitTitle">Comfortable fit</strong><p id="fitText"></p></div>
+            <div class="fit-banner" id="fitBanner" role="status"><strong id="fitTitle">Comfortable fit</strong><p id="fitText"></p></div>
             <div class="eyebrow">Per primary worker</div>
             <div class="memory-bar" aria-label="Estimated memory allocation">
               <span class="memory-seg weights" id="weightBar"></span><span class="memory-seg context" id="contextBar"></span><span class="memory-seg reserve" id="reserveBar"></span>
@@ -721,7 +882,7 @@
             <div class="legend"><span><i style="background:var(--signal)"></i>weights</span><span><i style="background:var(--amber)"></i>context/runtime</span><span><i style="background:var(--line)"></i>headroom</span></div>
             <div class="metrics">
               <div class="metric"><span>Weight estimate</span><strong id="weightMetric">16 GB</strong></div>
-              <div class="metric"><span>Context reserve</span><strong id="contextMetric">4 GB</strong></div>
+              <div class="metric"><span><button type="button" class="term" data-term="context-reserve" aria-expanded="false">Context reserve</button></span><strong id="contextMetric">4 GB</strong></div>
               <div class="metric"><span>Primary copies</span><strong id="copyMetric">4</strong></div>
               <div class="metric"><span>Reasoning mode</span><strong id="reasonMetric">Medium</strong></div>
             </div>
@@ -729,16 +890,27 @@
           </div>
         </section>
 
-        <section class="panel">
+        <section class="panel" id="rosterPanel">
           <div class="panel-head"><h3>Model roster</h3><span class="eyebrow" id="rosterVerdict">—</span></div>
           <div class="panel-body">
-            <p class="roster-intro">Assign a model to each job, then pack them onto the machine together. Memory pools only where the hardware actually pools it.</p>
+            <p class="roster-intro">Assign a model to each job, then pack them onto the machine together. Memory <button type="button" class="term" data-term="pool" aria-expanded="false">pools</button> only where the hardware actually pools it.</p>
             <div class="roster-rows" id="rosterRows"></div>
             <div class="roster-actions">
               <button class="mini-button" id="addRosterRow" type="button">+ Add a role</button>
               <span class="eyebrow" id="rosterTotal"></span>
             </div>
-            <div class="fit-banner" id="rosterBanner"><strong id="rosterTitle"></strong><p id="rosterText"></p></div>
+            <div class="plan-reach" id="planReach" role="status">
+              <div class="eyebrow">This plan, before a machine is chosen</div>
+              <div class="metrics">
+                <div class="metric"><span>Workers</span><strong id="planWorkers">&mdash;</strong></div>
+                <div class="metric"><span>Combined footprint</span><strong id="planFootprint">&mdash;</strong></div>
+                <div class="metric"><span>Largest single worker</span><strong id="planLargest">&mdash;</strong></div>
+                <div class="metric"><span>Machines that can host it</span><strong id="planHosts">&mdash;</strong></div>
+              </div>
+              <p class="plan-reach-note">A machine needs more than the combined total: across <button type="button" class="term" data-term="lanes" aria-expanded="false">lanes</button>, no single worker may exceed one lane unless it is <button type="button" class="term" data-term="sharding" aria-expanded="false">sharded</button>, which is why the largest worker constrains as much as the sum.</p>
+              <details class="plan-reach-list"><summary>Which machines hold it</summary><div id="planReachBody"></div></details>
+            </div>
+            <div class="fit-banner" id="rosterBanner" role="status"><strong id="rosterTitle"></strong><p id="rosterText"></p></div>
             <div class="lane-map" id="laneMap"></div>
           </div>
         </section>
@@ -758,8 +930,8 @@
 
     <section class="view" id="clusterView" role="tabpanel" aria-labelledby="clusterTab" hidden>
       <div class="section-head">
-        <div><div class="eyebrow">Question three</div><h2>What should the cluster do?</h2></div>
-        <p>Build a quiet Mac swarm or a CUDA Spark cluster. Aggregate memory is shown separately from per-node memory because those numbers answer different questions.</p>
+        <div><div class="eyebrow">Branch &middot; more than one machine</div><h2>What should the cluster do?</h2></div>
+        <p>Build a quiet Mac swarm or a CUDA Spark cluster. Aggregate memory is shown separately from per-<button type="button" class="term" data-term="nodes" aria-expanded="false">node</button> memory because those numbers answer different questions.</p>
       </div>
 
       <div class="control-strip" aria-label="Cluster controls">
@@ -796,11 +968,11 @@
         <section class="panel">
           <div class="panel-head"><h3>Cluster envelope</h3><span class="eyebrow" id="clusterBackend">MLX / JACCL</span></div>
           <div class="panel-body">
-            <div class="fit-banner" id="clusterBanner"><strong id="clusterTitle">Replica swarm recommended</strong><p id="clusterText"></p></div>
+            <div class="fit-banner" id="clusterBanner" role="status"><strong id="clusterTitle">Replica swarm recommended</strong><p id="clusterText"></p></div>
             <div class="metrics">
               <div class="metric"><span>Aggregate usable memory</span><strong id="clusterMemory">224 GB</strong></div>
               <div class="metric"><span>Per node</span><strong id="clusterPerNode">112 GB</strong></div>
-              <div class="metric"><span>Primary replicas</span><strong id="clusterReplicas">6</strong></div>
+              <div class="metric"><span>Primary <button type="button" class="term" data-term="replica" aria-expanded="false">replicas</button></span><strong id="clusterReplicas">6</strong></div>
               <div class="metric"><span>Interconnect</span><strong id="clusterNetwork">TB5 / 10GbE</strong></div>
             </div>
             <div class="cluster-callout" id="clusterCaveat"><strong>Memory rule:</strong> aggregate memory is directly useful for replicas. A single model can use it only through a compatible distributed backend, with communication overhead.</div>
@@ -823,8 +995,8 @@
 
     <section class="view" id="mixView" role="tabpanel" aria-labelledby="mixTab" hidden>
       <div class="section-head">
-        <div><div class="eyebrow">Question four</div><h2>How should the islands mix?</h2></div>
-        <p>Compose a heterogeneous harness from quiet MLX nodes and CUDA Sparks. The router shares work and evidence—not physical memory—between platform islands.</p>
+        <div><div class="eyebrow">Branch &middot; mixed platforms</div><h2>How should the islands mix?</h2></div>
+        <p>Compose a heterogeneous harness from quiet MLX <button type="button" class="term" data-term="nodes" aria-expanded="false">nodes</button> and CUDA Sparks. The router shares work and evidence—not physical memory—between platform islands.</p>
       </div>
 
       <div class="maturity-grid" aria-label="Mixed cluster operating modes">
@@ -852,7 +1024,7 @@
         <section class="panel">
           <div class="panel-head"><h3>Federated envelope</h3><span class="eyebrow">MLX + CUDA</span></div>
           <div class="panel-body">
-            <div class="fit-banner" id="mixBanner"><strong id="mixTitle">Role-based federation</strong><p id="mixText"></p></div>
+            <div class="fit-banner" id="mixBanner" role="status"><strong id="mixTitle">Role-based federation</strong><p id="mixText"></p></div>
             <div class="metrics">
               <div class="metric"><span>Aggregate usable memory</span><strong id="mixMemory">304 GB</strong></div>
               <div class="metric"><span>Total nodes</span><strong id="mixNodesMetric">4</strong></div>
@@ -879,7 +1051,7 @@
 
     <section class="view" id="splitView" role="tabpanel" aria-labelledby="splitTab" hidden>
       <div class="section-head">
-        <div><div class="eyebrow">Question five</div><h2>Should Spark prefill for a Mac?</h2></div>
+        <div><div class="eyebrow">Branch &middot; experimental</div><h2>Should Spark <button type="button" class="term" data-term="prefill" aria-expanded="false">prefill</button> for a Mac?</h2></div>
         <p>Model the EXO-style phase split without treating a vendor Llama benchmark as a Qwen forecast. This is an experiment planner, not a purchase promise.</p>
       </div>
 
@@ -900,7 +1072,7 @@
         <section class="panel">
           <div class="panel-head"><h3>Experiment gate</h3><span class="eyebrow" id="splitGateCode">RESEARCH / GO</span></div>
           <div class="panel-body">
-            <div class="fit-banner warn" id="splitBanner"><strong id="splitTitle">Strongest research pairing</strong><p id="splitText"></p></div>
+            <div class="fit-banner warn" id="splitBanner" role="status"><strong id="splitTitle">Strongest research pairing</strong><p id="splitText"></p></div>
             <div class="metrics">
               <div class="metric"><span>Runtime status</span><strong id="splitRuntime">Experimental fork</strong></div>
               <div class="metric"><span>Planning memory</span><strong id="splitMemory">≈232 GB usable</strong></div>
@@ -922,7 +1094,7 @@
               <div class="phase-arrow" aria-hidden="true"></div>
               <article class="transfer-node"><span>State handoff</span><strong id="splitTransferNode">10GbE</strong><small id="splitTransferText">Overlap layer-state transfer with later prefill computation.</small></article>
               <div class="phase-arrow" aria-hidden="true"></div>
-              <article class="phase-node decode"><span>Phase 02 / MLX</span><strong id="splitDecodeNode">M3 Ultra Studio</strong><small>Generate output tokens on the higher-bandwidth decode node.</small></article>
+              <article class="phase-node decode"><span>Phase 02 / MLX</span><strong id="splitDecodeNode">M3 Ultra Studio</strong><small>Generate output tokens on the higher-bandwidth <button type="button" class="term" data-term="decode" aria-expanded="false">decode</button> node.</small></article>
             </div>
             <div class="recipe">
               <div class="recipe-head"><span>EXPERIMENT BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copySplit" type="button">Copy</button></div>
@@ -968,7 +1140,9 @@
     </section>
   </main>
 
-  <footer><div class="shell">QWEN HARNESS PLANNER / LOCAL-FIRST / ESTIMATES ARE DECISION AIDS, NOT BENCHMARK CLAIMS</div></footer>
+  <footer><div class="shell">HARNESS PLANNER / LOCAL-FIRST / ESTIMATES ARE DECISION AIDS, NOT BENCHMARK CLAIMS</div></footer>
+
+  <div class="term-pop" id="termPop" hidden></div>
 
   <script>
     const setups = [
@@ -1395,18 +1569,70 @@
     }
     let selectedSetup = 'x4';
     let customCluster = null;
+    let customSource = null;   // 'cluster' | 'mix' — how customCluster was built
 
     const $ = (id) => document.getElementById(id);
     const setupById = (id) => id === 'custom-cluster' ? customCluster : id === 'build:epyc-current' ? generatedBuild : id.startsWith('mac:') ? macProfileToSetup(id.slice(4)) : setups.find(s => s.id === id);
 
-    function setView(name) {
-      const views = ['buy', 'deploy', 'cluster', 'mix', 'split'];
-      views.forEach(view => {
+    const viewOrder = ['buy', 'deploy', 'cluster', 'mix', 'split'];
+    const viewTitles = { buy: 'Buy', deploy: 'Deploy', cluster: 'Cluster', mix: 'Mix', split: 'Phase split' };
+    let currentView = 'buy';
+    let heroHeadline = null;
+
+    // The hero sells the Buy view. Carrying it unchanged across the other four
+    // left them opening under a headline about buying, so it compacts instead.
+    function setHeroMode(name) {
+      if (heroHeadline === null) heroHeadline = $('heroTitle').innerHTML;
+      $('hero').dataset.compact = String(name !== 'buy');
+      $('heroTitle').innerHTML = name === 'buy' ? heroHeadline : viewTitles[name];
+    }
+
+    // Each door names the surface it opens. A door presets nothing beyond the
+    // view and the focus target: no route unlocks, hides, or reorders any
+    // capability, so a starting point is never a commitment.
+    const gateTargets = {
+      plan: { view: 'deploy', focus: 'rosterPanel' },
+      machine: { view: 'buy', focus: 'macCatalogPanel' },
+      browse: { view: 'buy', focus: null }
+    };
+    let gateChoice = null;
+
+    function setGate(open) {
+      $('startGate').hidden = !open;
+      if (open) $('mainShell').dataset.gate = 'open'; else delete $('mainShell').dataset.gate;
+      $('gateReopen').hidden = open;
+      if (open) $('startGate').querySelector('.gate-card').focus();
+    }
+
+    function chooseStart(choice) {
+      const target = gateTargets[choice];
+      if (!target) return;
+      gateChoice = choice;
+      setGate(false);
+      setView(target.view);
+      // Focusing the destination panel both announces it and scrolls it into
+      // view; the tab keeps its own focus when there is no deeper target.
+      const panel = target.focus ? $(target.focus) : null;
+      if (panel) { panel.setAttribute('tabindex', '-1'); panel.focus(); }
+    }
+
+    function setOrientation(visible) {
+      $('orientationPanel').hidden = !visible;
+      $('orientationShow').hidden = visible;
+    }
+
+    function setView(name, { focusTab = true } = {}) {
+      currentView = name;
+      viewOrder.forEach(view => {
         const active = name === view;
         $(`${view}View`).hidden = !active;
-        $(`${view}Tab`).setAttribute('aria-selected', String(active));
+        const tab = $(`${view}Tab`);
+        tab.setAttribute('aria-selected', String(active));
+        // Roving tabindex: the strip is a single tab stop and arrows move inside it.
+        tab.tabIndex = active ? 0 : -1;
       });
-      $(`${name}Tab`).focus();
+      setHeroMode(name);
+      if (focusTab) $(`${name}Tab`).focus();
       if (name === 'deploy') updateDeploy();
       if (name === 'cluster') updateCluster();
       if (name === 'mix') updateMix();
@@ -1848,10 +2074,54 @@
         }));
     }
 
+    // A roster's footprint is fixed by its models, precisions and contexts, so
+    // "what can host this plan" is a property of the plan alone, not of any
+    // selected machine. Every machine in the planner is packed against it with
+    // the same first-fit-decreasing routine used for the selected one: no
+    // separate arithmetic, no ordering beyond catalogue order, no ranking.
+    function planReach(items) {
+      const machines = [...setups, ...Object.keys(macProfiles).map(macProfileToSetup)];
+      if (generatedBuild) machines.push(generatedBuild);
+      const holds = [], spills = [], missing = [];
+      machines.forEach(machine => {
+        const packed = packRoster(machine, items);
+        if (!packed.fits) missing.push(machine.name);
+        else if (packed.overFast) spills.push(machine.name);
+        else holds.push(machine.name);
+      });
+      return { holds, spills, missing, total: machines.length };
+    }
+
+    function updatePlanReach(items) {
+      const workers = items.length;
+      const combined = items.reduce((total, item) => total + item.need, 0);
+      const largest = workers ? Math.max(...items.map(item => item.need)) : 0;
+      $('planWorkers').textContent = workers ? String(workers) : '\u2014';
+      $('planFootprint').textContent = workers ? `${gb(combined)} GB` : '\u2014';
+      $('planLargest').textContent = workers ? `${gb(largest)} GB` : '\u2014';
+
+      if (!workers) {
+        $('planHosts').textContent = '\u2014';
+        $('planReachBody').innerHTML = '<p class="plan-reach-note">Add a role to see which machines can host the plan.</p>';
+        return;
+      }
+
+      const reach = planReach(items);
+      $('planHosts').textContent = `${reach.holds.length + reach.spills.length} of ${reach.total}`;
+      const group = (title, names) => names.length
+        ? `<div class="plan-reach-group"><span class="eyebrow">${title} / ${names.length}</span><ul>${names.map(name => `<li>${name}</li>`).join('')}</ul></div>`
+        : '';
+      $('planReachBody').innerHTML = group('Holds the plan', reach.holds)
+        + group('Holds it, spilling to a slower tier', reach.spills)
+        + `<p class="plan-reach-note">${reach.missing.length} machine${reach.missing.length === 1 ? '' : 's'} in the planner cannot hold this plan at these precisions and contexts. Listed in catalogue order; the planner does not rank them.</p>`;
+    }
+
     function updateRoster(s) {
       const items = rosterItems();
       const packed = packRoster(s, items);
       const workers = items.length;
+
+      updatePlanReach(items);
 
       $('rosterTotal').textContent = `${workers} worker${workers === 1 ? '' : 's'} · ${gb(packed.used)}GB assigned of ${gb(packed.capacity)}GB`;
       $('rosterBanner').className = `fit-banner ${!packed.fits ? 'stop' : (packed.overFast || packed.used / packed.capacity > .85) ? 'warn' : ''}`;
@@ -2252,6 +2522,308 @@
       updateSplit();
     }
 
+    // ------------------------------------------------------------------ state
+    // A plan is worth returning to. Every control is captured in one object:
+    // localStorage restores your own last session, and the same object encodes
+    // into a link so a plan can be sent somewhere. A link, when present, wins —
+    // an explicit share beats whatever this browser happened to be holding.
+    // Load with #fresh to ignore stored state.
+
+    const STATE_KEY = 'harness-planner/v1';
+    const STATE_VERSION = 1;
+    const CONTEXTS = [16, 32, 64, 128];
+
+    function collectState() {
+      return {
+        v: STATE_VERSION,
+        view: currentView,
+        theme: document.documentElement.dataset.theme,
+        orientation: $('orientationPanel').hidden ? 'hidden' : 'open',
+        gate: gateChoice,
+        model: selectedModel,
+        setup: selectedSetup,
+        mac: selectedMacKey,
+        customSource,
+        buy: { quant: $('buyQuant').value, context: $('buyContext').value },
+        epyc: {
+          gpu: $('epycGpu').value, count: $('epycGpuCount').value, host: $('epycHost').value,
+          cpu: $('epycCpu').value, ram: $('epycRam').value, saved: generatedBuild !== null
+        },
+        deploy: {
+          experiment: $('experiment').value, quant: $('quant').value, context: $('context').value,
+          roster: roster.map(row => ({ ...row }))
+        },
+        cluster: {
+          family: $('clusterFamily').value, count: $('clusterCount').value,
+          strategy: $('clusterStrategy').value, quant: $('clusterQuant').value
+        },
+        mix: {
+          strategy: $('mixStrategy').value, quant: $('mixQuant').value, context: $('mixContext').value,
+          composition: mixComposition.map(row => ({ ...row }))
+        },
+        split: {
+          sparks: $('splitSparks').value, decode: $('splitDecode').value,
+          network: $('splitNetwork').value, prompt: $('splitPrompt').value
+        }
+      };
+    }
+
+    // Restore is deliberately defensive: a stored plan can outlive the model or
+    // machine it referenced, and a half-applied plan is worse than a default.
+    // Every setter validates against the options that actually exist now.
+    function setControl(id, value) {
+      if (value === undefined || value === null) return false;
+      const el = $(id);
+      if (!el) return false;
+      const wanted = String(value);
+      if (el.tagName === 'SELECT' && ![...el.options].some(option => option.value === wanted)) return false;
+      el.value = wanted;
+      return true;
+    }
+
+    function knownProfile(reference) {
+      if (typeof reference !== 'string') return false;
+      return reference.startsWith('mac:')
+        ? Boolean(macProfiles[reference.slice(4)])
+        : setups.some(setup => setup.id === reference);
+    }
+
+    function applyState(state) {
+      if (!state || state.v !== STATE_VERSION) return false;
+
+      if (state.theme === 'dark' || state.theme === 'light') setTheme(state.theme);
+      if (state.orientation === 'hidden') setOrientation(false);
+      if (typeof state.gate === 'string' && gateTargets[state.gate]) gateChoice = state.gate;
+
+      if (models.some(model => model.id === state.model)) {
+        selectedModel = state.model;
+        setControl('modelSelect', state.model);
+        renderFlagship();
+      }
+
+      if (state.mac && macProfiles[state.mac]) {
+        selectedMacKey = state.mac;
+        const group = macProfileGroups.find(item => item.options.includes(selectedMacKey));
+        if (group) {
+          $('macFamily').value = group.label;
+          populateMacProfileSelect();
+          setControl('macProfile', selectedMacKey);
+        }
+      }
+
+      setControl('buyQuant', state.buy?.quant);
+      setControl('buyContext', state.buy?.context);
+
+      // The EPYC host decides which CPUs and RAM sizes exist, so it is set first.
+      if (state.epyc) {
+        setControl('epycGpu', state.epyc.gpu);
+        setControl('epycGpuCount', state.epyc.count);
+        setControl('epycHost', state.epyc.host);
+        fillEpycDependentControls(true);
+        setControl('epycCpu', state.epyc.cpu);
+        setControl('epycRam', state.epyc.ram);
+        if (state.epyc.saved) {
+          const build = deriveEpycBuild();
+          if (build.valid) generatedBuild = build;
+        }
+      }
+
+      setControl('clusterFamily', state.cluster?.family);
+      setControl('clusterCount', state.cluster?.count);
+      setControl('clusterStrategy', state.cluster?.strategy);
+      setControl('clusterQuant', state.cluster?.quant);
+
+      setControl('mixStrategy', state.mix?.strategy);
+      setControl('mixQuant', state.mix?.quant);
+      setControl('mixContext', state.mix?.context);
+      if (Array.isArray(state.mix?.composition)) {
+        const restored = state.mix.composition
+          .filter(row => row && knownProfile(row.profile))
+          .map(row => ({ profile: row.profile, count: Math.max(1, Math.min(16, Number(row.count) || 1)) }));
+        if (restored.length) mixComposition = restored;
+      }
+
+      setControl('experiment', state.deploy?.experiment);
+      setControl('quant', state.deploy?.quant);
+      setControl('context', state.deploy?.context);
+      if (Array.isArray(state.deploy?.roster)) {
+        const restored = state.deploy.roster
+          .filter(row => row && models.some(model => model.id === row.model) && quantOrder.includes(row.quant))
+          .map((row, i) => ({
+            role: String(row.role || 'Support worker').slice(0, 60),
+            model: row.model,
+            quant: row.quant,
+            context: CONTEXTS.includes(Number(row.context)) ? Number(row.context) : 32,
+            count: Math.max(0, Math.min(16, Math.round(Number(row.count)) || 0)),
+            primary: i === 0
+          }));
+        if (restored.length) roster = restored;
+      }
+
+      setControl('splitSparks', state.split?.sparks);
+      setControl('splitDecode', state.split?.decode);
+      setControl('splitNetwork', state.split?.network);
+      setControl('splitPrompt', state.split?.prompt);
+
+      // A saved build or a derived cluster has to exist before it can be selected.
+      if (generatedBuild) refreshPlannerOptions();
+      if (state.setup === 'custom-cluster' && (state.customSource === 'cluster' || state.customSource === 'mix')) {
+        customSource = state.customSource;
+        if (customSource === 'cluster') updateCluster(); else { updateMix(); customCluster = makeMixedSetup(); }
+        if (customCluster) {
+          const option = document.createElement('option');
+          option.value = 'custom-cluster';
+          option.textContent = customCluster.name;
+          $('deploySetup').append(option);
+        }
+      }
+      if (state.setup === 'build:epyc-current' ? Boolean(generatedBuild) : knownProfile(state.setup) || state.setup === 'custom-cluster') {
+        if (setControl('deploySetup', state.setup)) selectedSetup = state.setup;
+      }
+
+      if (viewOrder.includes(state.view)) setView(state.view, { focusTab: false });
+      return true;
+    }
+
+    let saveTimer = null;
+    function scheduleSave() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        // Private windows and blocked site data throw on write; losing the
+        // convenience is fine, breaking the instrument is not.
+        try { localStorage.setItem(STATE_KEY, JSON.stringify(collectState())); } catch { /* not persisted */ }
+      }, 200);
+    }
+
+    function storedState() {
+      try { return JSON.parse(localStorage.getItem(STATE_KEY) || 'null'); } catch { return null; }
+    }
+
+    // base64url so the link survives a terminal, a chat client, and an address bar.
+    function encodePlan(state) {
+      const bytes = new TextEncoder().encode(JSON.stringify(state));
+      let binary = '';
+      bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function decodePlan(text) {
+      try {
+        const binary = atob(text.replace(/-/g, '+').replace(/_/g, '/'));
+        return JSON.parse(new TextDecoder().decode(Uint8Array.from(binary, ch => ch.charCodeAt(0))));
+      } catch { return null; }
+    }
+
+    function planFromHash() {
+      const match = /(?:^|[#&])plan=([A-Za-z0-9\-_]+)/.exec(location.hash);
+      return match ? decodePlan(match[1]) : null;
+    }
+
+    function setTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      $('themeToggle').textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+    }
+
+    // ------------------------------------------------------------- glossary
+    // This vocabulary is load-bearing and used hundreds of times, but was only
+    // ever explained in prose at the bottom of the page. Terms are defined
+    // where they are used instead. One shared popover serves every term.
+
+    const glossary = {
+      'worker': ['Worker',
+        'One loaded copy of a model, held in memory and ready to answer requests. Its footprint is weights plus context reserve. Every count on this page is how many workers fit.'],
+      'precision': ['Precision (Q4 / Q8 / BF16)',
+        'How tightly the weights are compressed. Q4 is roughly half of Q8 and a quarter of BF16, so it fits the most workers; BF16 is the uncompressed reference. Models that ship natively quantised do not follow that arithmetic, so they are sized from measured artifacts instead.'],
+      'working-context': ['Working context',
+        'How many tokens of prompt and history a worker keeps live. Larger context costs memory linearly, through the context reserve.'],
+      'context-reserve': ['Context reserve',
+        'Memory set aside for the conversation itself — the KV cache. It is computed per model from its own attention config, not read from a shared table: measured reserve spans a 26× range between models at identical context.'],
+      'pool': ['Pool',
+        'Unified memory — one allocation the whole machine shares, as on a Mac or a single DGX Spark. Capacity simply sums, so any worker can use all of it.'],
+      'lanes': ['Lanes',
+        'Independent GPUs. Memory does not pool across them, so a worker larger than one card needs explicit sharding. An NVLink-bridged pair is still lanes, but the span crosses the bridge rather than PCIe.'],
+      'tiers': ['Tiers',
+        'One coherent address space at two speeds, as on a DGX Station or Ryzen AI Max. A worker may straddle the boundary and simply runs slower, so the spill is reported rather than refused.'],
+      'nodes': ['Nodes',
+        'Separate machines on a network. Memory never pools and the link is far slower than local memory, so plan complete replicas rather than one split model.'],
+      'sharding': ['Sharding',
+        'Splitting one model across several devices so a worker larger than any single device can run. It costs communication on every token and needs backend support, which is why independent workers are often the better trade.'],
+      'replica': ['Replica',
+        'A complete, independent copy of a model on its own node. Replicas can use a cluster’s aggregate memory directly; a single model split across nodes cannot.'],
+      'prefill': ['Prefill',
+        'The first phase: reading the whole input prompt and producing model state. It is compute-bound, which is why a CUDA machine can win it.'],
+      'decode': ['Decode',
+        'The second phase: generating output tokens one at a time. It is memory-bandwidth-bound, which is why a high-bandwidth Mac can win it.'],
+      'bandwidth': ['Memory bandwidth',
+        'How fast a machine can stream weights out of memory. It sets decode speed. Shown here as context only — this tool never models it as throughput.']
+    };
+
+    let openTerm = null;
+
+    function closeTerm() {
+      if (!openTerm) return;
+      openTerm.setAttribute('aria-expanded', 'false');
+      openTerm.removeAttribute('aria-describedby');
+      $('termPop').hidden = true;
+      openTerm = null;
+    }
+
+    function showTerm(button) {
+      const entry = glossary[button.dataset.term];
+      if (!entry) return;
+      closeTerm();
+      const pop = $('termPop');
+      pop.textContent = '';
+      const title = document.createElement('strong');
+      title.textContent = entry[0];
+      const body = document.createElement('p');
+      body.textContent = entry[1];
+      pop.append(title, body);
+      pop.hidden = false;
+
+      // Fixed positioning, because terms sit inside scrolling panels and tables
+      // that would otherwise clip an absolutely positioned definition.
+      const anchorRect = button.getBoundingClientRect();
+      const popRect = pop.getBoundingClientRect();
+      const margin = 12;
+      const left = Math.min(Math.max(margin, anchorRect.left),
+                            Math.max(margin, window.innerWidth - popRect.width - margin));
+      let top = anchorRect.bottom + 8;
+      if (top + popRect.height > window.innerHeight - margin) {
+        top = anchorRect.top - popRect.height - 8;   // flip above the term
+      }
+      // Final clamp: a definition parked off-screen is worse than one nudged
+      // away from its term, and an anchor can sit outside the viewport.
+      top = Math.min(Math.max(margin, top), Math.max(margin, window.innerHeight - popRect.height - margin));
+      pop.style.left = `${Math.round(left)}px`;
+      pop.style.top = `${Math.round(top)}px`;
+
+      button.setAttribute('aria-expanded', 'true');
+      button.setAttribute('aria-describedby', 'termPop');
+      openTerm = button;
+    }
+
+    function wireGlossary() {
+      // Delegated, so terms added to any view later are covered automatically.
+      document.addEventListener('click', (event) => {
+        const term = event.target.closest && event.target.closest('.term');
+        if (term) {
+          if (openTerm === term) closeTerm(); else showTerm(term);
+          return;
+        }
+        if (!(event.target.closest && event.target.closest('#termPop'))) closeTerm();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || !openTerm) return;
+        const term = openTerm;
+        closeTerm();
+        term.focus();
+      });
+      // Any layout movement invalidates the position, so close rather than chase it.
+      window.addEventListener('scroll', closeTerm, true);
+      window.addEventListener('resize', closeTerm);
+    }
+
     function init() {
       $('epycGpu').innerHTML = Object.entries(epycGpuProfiles).map(([key,gpu]) => `<option value="${key}">${gpu.name} · ${gpu.vram}GB · ${gpu.tdp}W</option>`).join('');
       $('epycGpuCount').innerHTML = [1,2,4,8].map(count => `<option value="${count}">${count} GPU${count === 1 ? '' : 's'}</option>`).join('');
@@ -2290,6 +2862,17 @@
       $('macFamily').addEventListener('change', () => { selectedMacKey = macProfileGroups.find(group => group.label === $('macFamily').value).options[0]; populateMacProfileSelect(); updateMacCatalog(); });
       $('macProfile').addEventListener('change', updateMacCatalog);
       $('addMixRow').addEventListener('click', () => { mixComposition.push({ profile: `mac:${selectedMacKey}`, count: 1 }); renderMixRows(); });
+      document.querySelector('.mode-nav').addEventListener('keydown', (event) => {
+        const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+        const target = step
+          ? viewOrder[(viewOrder.indexOf(currentView) + step + viewOrder.length) % viewOrder.length]
+          : event.key === 'Home' ? viewOrder[0]
+          : event.key === 'End' ? viewOrder[viewOrder.length - 1]
+          : null;
+        if (!target) return;
+        event.preventDefault();
+        setView(target);
+      });
       $('buyTab').addEventListener('click', () => setView('buy'));
       $('deployTab').addEventListener('click', () => setView('deploy'));
       $('clusterTab').addEventListener('click', () => setView('cluster'));
@@ -2328,6 +2911,7 @@
         let option = $('deploySetup').querySelector('option[value="custom-cluster"]');
         if (!option) { option = document.createElement('option'); option.value = 'custom-cluster'; $('deploySetup').append(option); }
         option.textContent = customCluster.name;
+        customSource = 'cluster';
         selectedSetup = 'custom-cluster';
         $('deploySetup').value = selectedSetup;
         $('quant').value = $('clusterQuant').value;
@@ -2340,33 +2924,70 @@
         let option = $('deploySetup').querySelector('option[value="custom-cluster"]');
         if (!option) { option = document.createElement('option'); option.value = 'custom-cluster'; $('deploySetup').append(option); }
         option.textContent = customCluster.name;
+        customSource = 'mix';
         selectedSetup = 'custom-cluster';
         $('deploySetup').value = selectedSetup;
         $('quant').value = $('mixQuant').value;
         $('context').value = $('mixContext').value;
         setView('deploy');
       });
-      $('copyRecipe').addEventListener('click', async () => {
-        try { await navigator.clipboard.writeText($('recipeText').textContent); $('copyRecipe').textContent = 'Copied'; setTimeout(() => $('copyRecipe').textContent = 'Copy', 1400); }
-        catch { $('copyRecipe').textContent = 'Select text'; }
+      // Clipboard access fails on an insecure origin or a denied permission.
+      // The fallback selects the block so the keyboard shortcut still works,
+      // rather than telling the reader to do something the page did not do.
+      const copyShortcut = navigator.userAgent.includes('Mac') ? '\u2318C' : 'Ctrl+C';
+      [['copyRecipe', 'recipeText'], ['copyCluster', 'clusterRecipe'],
+       ['copyMix', 'mixRecipe'], ['copySplit', 'splitRecipe']].forEach(([buttonId, blockId]) => {
+        const button = $(buttonId);
+        const restore = () => setTimeout(() => { button.textContent = 'Copy'; }, 2200);
+        button.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText($(blockId).textContent);
+            button.textContent = 'Copied';
+          } catch {
+            const range = document.createRange();
+            range.selectNodeContents($(blockId));
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            button.textContent = `Selected \u2014 press ${copyShortcut}`;
+          }
+          restore();
+        });
       });
-      $('copyCluster').addEventListener('click', async () => {
-        try { await navigator.clipboard.writeText($('clusterRecipe').textContent); $('copyCluster').textContent = 'Copied'; setTimeout(() => $('copyCluster').textContent = 'Copy', 1400); }
-        catch { $('copyCluster').textContent = 'Select text'; }
-      });
-      $('copyMix').addEventListener('click', async () => {
-        try { await navigator.clipboard.writeText($('mixRecipe').textContent); $('copyMix').textContent = 'Copied'; setTimeout(() => $('copyMix').textContent = 'Copy', 1400); }
-        catch { $('copyMix').textContent = 'Select text'; }
-      });
-      $('copySplit').addEventListener('click', async () => {
-        try { await navigator.clipboard.writeText($('splitRecipe').textContent); $('copySplit').textContent = 'Copied'; setTimeout(() => $('copySplit').textContent = 'Copy', 1400); }
-        catch { $('copySplit').textContent = 'Select text'; }
-      });
+      wireGlossary();
+      $('orientationHide').addEventListener('click', () => { setOrientation(false); $('orientationShow').focus(); });
+      $('orientationShow').addEventListener('click', () => { setOrientation(true); $('orientationHide').focus(); });
       $('themeToggle').addEventListener('click', () => {
-        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-        document.documentElement.dataset.theme = next;
-        $('themeToggle').textContent = next === 'dark' ? 'Light mode' : 'Dark mode';
+        setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
       });
+      $('copyPlanLink').addEventListener('click', async () => {
+        const button = $('copyPlanLink');
+        const link = `${location.href.split('#')[0]}#plan=${encodePlan(collectState())}`;
+        try {
+          await navigator.clipboard.writeText(link);
+          button.textContent = 'Link copied';
+        } catch {
+          // No clipboard on this origin: put the plan in the address bar so it
+          // can still be copied by hand.
+          history.replaceState(null, '', link);
+          button.textContent = 'Link in address bar';
+        }
+        setTimeout(() => { button.textContent = 'Copy plan link'; }, 2200);
+      });
+
+      let sharedPlan = false;
+      if (location.hash === '#fresh') {
+        try { localStorage.removeItem(STATE_KEY); } catch { /* nothing to clear */ }
+      } else {
+        const shared = planFromHash();
+        sharedPlan = Boolean(shared);
+        applyState(shared || storedState());
+      }
+      // The plan has been applied, so drop it from the URL: a link left in the
+      // address bar would shadow every later edit on the next reload.
+      if (location.hash) history.replaceState(null, '', location.href.split('#')[0]);
+      setView(currentView, { focusTab: false });
+
       renderBuy();
       renderEpycBuilder();
       updateMacCatalog();
@@ -2374,6 +2995,21 @@
       renderMixRows();
       updateSplit();
       updateDeploy();
+
+      $('startGate').addEventListener('click', (event) => {
+        const door = event.target.closest('[data-gate-choice]');
+        if (door) chooseStart(door.dataset.gateChoice);
+      });
+      $('gateReopen').addEventListener('click', () => setGate(true));
+
+      // The gate is the front door, so it is asked on every load. Stored state
+      // has already been applied by this point and a door only chooses where to
+      // land, so passing through never discards the plan underneath. Someone
+      // opening a shared plan link came for that plan, and is not asked.
+      if (!sharedPlan) setGate(true);
+
+      // Bubble phase, so this runs after the handler that changed the state.
+      ['change', 'input', 'click'].forEach(type => document.addEventListener(type, scheduleSave));
     }
     init();
   </script>

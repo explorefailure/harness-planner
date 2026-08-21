@@ -37,6 +37,23 @@ python3 -m http.server 8765 --directory .
 # http://127.0.0.1:8765/
 ```
 
+## Your plan persists
+
+Every control — model, precision, context, roster, EPYC build, cluster and mix
+composition, theme, and which view you were on — is saved to `localStorage` as
+you work and restored on the next visit.
+
+**Copy plan link** encodes that same state into the URL, so a plan can be sent
+somewhere or kept as a bookmark. Opening a plan link applies it and then strips
+it from the address bar, so it cannot shadow later edits. A shared link always
+wins over locally stored state.
+
+Load `index.html#fresh` to discard the stored plan and start from defaults.
+
+A stored plan is validated on restore: a model, machine, or profile that no
+longer exists is dropped rather than applied, and a plan from an older schema
+version is ignored outright.
+
 ## Files
 
 - `index.html` — the entire instrument: markup, CSS, JavaScript, data.
@@ -125,6 +142,13 @@ pool is the specific error this tool exists to avoid.
   are flagged in the UI.
 - Prices and specifications were accurate as read on the dates cited and may
   have changed.
+- **A plan link can outgrow a paste.** The link carries the whole state as
+  uncompressed JSON with long keys, so it grows with the roster and mix rows:
+  a four-role roster encodes to about 1,460 characters. Browsers and bookmarks
+  handle that comfortably, but some chat clients truncate URLs near 2,000, so a
+  large plan could produce a link that does not arrive intact. Shortening the
+  state keys, or omitting values that already match the defaults, would cut it
+  substantially — neither is done yet.
 
 ## Branding
 
