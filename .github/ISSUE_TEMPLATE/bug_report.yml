@@ -1,0 +1,52 @@
+name: Bug report
+description: Report a reproducible, non-sensitive problem with the planner.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include secrets, private data, exploit details, or a security
+        proof of concept here. Report vulnerabilities through the private route
+        in SECURITY.md.
+
+        If a displayed number is simply wrong, use the Data correction template
+        instead.
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: The commit you are running, from the repository or your local clone.
+      placeholder: e1e0322
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Firefox 141 / Safari 18.2 / Chrome 130
+    validations:
+      required: true
+  - type: textarea
+    id: selection
+    attributes:
+      label: Selected model, machine, precision, and context
+      description: The planner is stateless, so this is what reproduces it.
+      placeholder: |
+        Model: GLM-4.5-Air
+        Machine: 4× RTX 3090 · EPYC
+        Precision: Q4, Context: 32K
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console output
+      description: Optional, but usually decisive.
+      render: text

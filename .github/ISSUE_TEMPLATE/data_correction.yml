@@ -1,0 +1,50 @@
+name: Data correction
+description: A hardware specification or model figure in the planner is wrong or out of date.
+title: "[Data]: "
+labels: [data]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most valuable kind of report for this project. Every number
+        the planner shows is meant to trace back to a primary source, so a wrong
+        figure is a real defect rather than a cosmetic one.
+  - type: input
+    id: subject
+    attributes:
+      label: Which model or build
+      placeholder: gpt-oss-120b / 4× RTX 3090 · EPYC
+    validations:
+      required: true
+  - type: input
+    id: shown
+    attributes:
+      label: Figure the planner shows
+      placeholder: 62.77GB at Q4_K_M
+    validations:
+      required: true
+  - type: input
+    id: correct
+    attributes:
+      label: Figure you believe is correct
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Primary source
+      description: >
+        A vendor specification page, official model card, or model-tree API
+        response. Benchmarks and articles that restate a vendor claim are not
+        primary sources.
+      placeholder: https://...
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: >
+        If the figure depends on configuration — an operating system, a memory
+        allocation mode, a quantisation variant — say which, since the planner
+        may need to model both rather than pick one.

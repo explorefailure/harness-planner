@@ -1,0 +1,41 @@
+name: Change proposal
+description: Propose a new model, a new machine, or a change in behaviour.
+title: "[Proposal]: "
+labels: [proposal]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of change
+      options:
+        - Add a model
+        - Add a machine
+        - Change how something is computed
+        - Change how something is presented
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: The change
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Primary sources
+      description: >
+        A new model needs measured artifact sizes and an architecture config. A
+        new machine needs a vendor specification. If a figure cannot be sourced,
+        say so — the project prefers a gap to an unsourced number.
+    validations:
+      required: true
+  - type: textarea
+    id: topology
+    attributes:
+      label: For a machine — how does it hold memory
+      description: >
+        One pool, tiers at different speeds, independent GPU lanes, or separate
+        networked nodes. Describing lanes as a pool is the specific error this
+        project exists to avoid.

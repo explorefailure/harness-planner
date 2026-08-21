@@ -1,0 +1,19 @@
+name: Usage question
+description: Ask how to use or interpret the planner.
+title: "[Question]: "
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search existing issues first. Remove anything private before posting.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: What you were trying to plan

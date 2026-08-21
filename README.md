@@ -37,7 +37,13 @@ python3 -m http.server 8765 --directory .
 ## Files
 
 - `index.html` — the entire instrument: markup, CSS, JavaScript, data.
+- `tools/check.mjs` — repository invariants; run with `node tools/check.mjs`.
 - `DESIGN.md` — visual direction and design decision record.
+- `CONTRIBUTING.md` — how to add a model or machine without introducing an
+  unsourced figure.
+- `SECURITY.md` — trust boundary and private vulnerability reporting.
+- `SUPPORT.md` — where to ask, and what this project will not do.
+- `CHANGELOG.md` — release history.
 - `NOTICE` — attribution, trademarks, and the accuracy statement.
 - `LICENSE` — Apache License 2.0.
 
