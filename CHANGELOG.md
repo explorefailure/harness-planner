@@ -39,4 +39,30 @@ Initial public source. No version has been tagged yet.
 - Each shape keeps its own roster, seeded from the shape you arrived from.
   Shapes with no roles to assign — a distributed single model and a phase
   split — say so rather than rendering a roster that does not apply.
+- Buy is two pages: a machine page (exact Mac configuration, or a GPU/EPYC host
+  derived from a payload) and a browse page (the pre-designed builds and their
+  comparison table). The gate's machine and browse doors open the matching
+  page, and a switch above the shared precision and context strip moves between
+  them, so neither door hides the other page. The chosen page is saved with the
+  rest of the plan and travels in a plan link.
+- Import a model from Hugging Face by pasting its page link or `owner/name`.
+  The planner reads the repository's parameter count, canonical weight-file
+  sizes, quantised sibling artifacts, and attention config, then computes from
+  those. Weights are never downloaded. Imported entries carry
+  `provenance: 'imported'`, sit in their own group, and state per precision
+  whether a size was measured, native, or estimated.
+- The import control carries the Hugging Face logo, so what it connects to is
+  legible before the label is read. The logo is that company's own published
+  asset, inlined as vector paths rather than linked, so it costs no request and
+  the page stays self-contained.
+- The import panel opens over the start gate rather than being hidden by it, so
+  a model can be imported before a route is chosen and the gate's topology
+  counts describe that model.
+- The page now reaches one network origin, `https://huggingface.co`, and only
+  when a model is imported. The origin is declared once, every request is built
+  from that constant, and no other network transport is allowed; a new
+  `tools/check.mjs` invariant proves this and fails CI otherwise. The trust
+  boundary in `SECURITY.md` was rewritten to match, including a standing claim
+  that the page stored nothing, which `localStorage` persistence had already
+  made untrue.
 - Repository invariants enforced by `tools/check.mjs` in CI.

@@ -152,7 +152,7 @@
     }
     .brand-mark { width: 14px; height: 14px; border: 4px solid var(--signal); transform: rotate(45deg); }
     .status-live { font: 11px var(--mono); color: var(--signal); text-transform: uppercase; letter-spacing: .12em; }
-    .topbar-tools { display: flex; align-items: center; gap: 12px; }
+    .topbar-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .model-picker { display: flex; align-items: center; gap: 8px; }
     .model-picker-label { font: 10px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .12em; }
     .model-picker select { max-width: 260px; }
@@ -169,6 +169,10 @@
       cursor: pointer;
     }
     .theme-toggle:hover { background: var(--panel-2); }
+    /* A button that carries a mark aligns the two on one baseline. The mark is
+       decorative: the label already names the action for a screen reader. */
+    .has-mark { display: inline-flex; align-items: center; gap: 7px; }
+    .hf-mark { width: 16px; height: 15px; flex: none; }
 
     .hero {
       display: grid;
@@ -233,14 +237,23 @@
     /* Start gate. One question, asked once, before the instrument appears. It
        routes to a starting surface; it does not gate any capability, and every
        route runs the same arithmetic. */
-    .shell[data-gate="open"] > *:not(.start-gate) { display: none; }
+    /* The import panel is reachable from the topbar, which stays visible here,
+       so it has to survive the gate: a visible control that does nothing when
+       clicked is broken. Choosing a model is orthogonal to choosing a route,
+       and importing first is what makes the gate's counts describe your own
+       model rather than a default. */
+    .shell[data-gate="open"] > *:not(.start-gate):not(.import-panel) { display: none; }
     /* The gate is a full-page moment rather than part of the instrument, so it
        centres in the viewport instead of following the left-aligned grid the
        rest of the page keeps. Card bodies stay left-aligned to stay readable. */
-    .shell[data-gate="open"] { display: flex; align-items: center; justify-content: center; padding: 28px 0; }
+    .shell[data-gate="open"] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 28px 0; }
     /* `safe` keeps the top of the gate reachable when a short viewport cannot
        fit it; browsers without the keyword fall back to the plain centring. */
-    .shell[data-gate="open"] { align-items: safe center; }
+    .shell[data-gate="open"] { justify-content: safe center; }
+    /* Opened from the gate the panel leads, so it is seen without scrolling
+       past a full-height question, and it keeps the left-aligned reading the
+       centred gate copy drops. */
+    .shell[data-gate="open"] > .import-panel { order: -1; width: min(100%, 720px); margin: 0; text-align: left; }
     .start-gate { max-width: 1220px; margin: 0; text-align: center; }
     /* Centred ragged text breaks badly by default; `balance` evens the lines
        and is simply ignored where it is not supported. */
@@ -571,6 +584,15 @@
     .topo-change { flex: none; }
 
     .topo-picker { padding: 16px; margin-bottom: 18px; border: 1px solid var(--line); background: var(--paper); }
+    .buy-strip { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 9px 12px; margin-bottom: 14px; border: 1px solid var(--line); border-left: 3px solid var(--signal); background: var(--panel-2); }
+    .buy-strip-label { font: 10px var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+    .buy-switch { display: flex; }
+    .buy-switch button { font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; padding: 7px 14px; min-height: 34px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+    .buy-switch button + button { border-left: 0; }
+    .buy-switch button[aria-pressed="true"] { background: var(--signal); color: #061b1e; border-color: var(--signal); }
+    .buy-switch button:hover { filter: brightness(1.06); }
+    .buy-strip-note { flex: 1; min-width: 0; color: var(--muted); }
+    @media (max-width: 760px) { .buy-switch { width: 100%; } .buy-switch button { flex: 1; min-height: 44px; } }
     .topo-picker .section-head { margin-bottom: 14px; }
     .topo-picker-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
     .topo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -632,6 +654,18 @@
     .notes ul { padding-left: 20px; }
     footer { padding: 18px 0 32px; border-top: 1px solid var(--line); color: var(--muted); font: 11px var(--mono); }
 
+    .import-panel { margin: 22px 0 0; }
+    .import-intro { color: var(--muted); margin-bottom: 12px; }
+    .import-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .import-row input { flex: 1; min-width: 220px; min-height: 38px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); color: var(--ink); padding: 7px 9px; font: 13px var(--mono); }
+    .import-status { margin-top: 12px; font: 12px var(--mono); color: var(--muted); }
+    .import-status[data-tone="bad"] { color: var(--danger); }
+    .import-status[data-tone="good"] { color: var(--signal); }
+    .import-result { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+    .import-lines { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 2px 14px; font-size: 13px; }
+    .import-lines dt { color: var(--muted); font: 10px var(--mono); text-transform: uppercase; letter-spacing: .1em; padding-top: 4px; }
+    .import-lines dd { margin: 0 0 6px; }
+    @media (max-width: 760px) { .import-lines { grid-template-columns: 1fr; } .import-row input { min-width: 0; flex: 1 0 100%; } }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
     @media (max-width: 1100px) {
@@ -655,6 +689,8 @@
       .orientation-terms dd { margin-bottom: 10px; }
       .topbar-inner { flex-wrap: wrap; gap: 10px; padding-top: 10px; padding-bottom: 10px; }
       .model-picker select { max-width: 150px; }
+      .topbar-tools { gap: 8px; row-gap: 8px; }
+      .topbar-tools .theme-toggle { flex: 1 1 auto; }
       .section-head { display: block; }
       .control-strip, .setup-grid, .deploy-layout, .cluster-layout, .model-strip, .notes, .maturity-grid { grid-template-columns: 1fr; }
       .builder-controls, .derived-grid { grid-template-columns: 1fr; }
@@ -685,6 +721,7 @@
           <span class="model-picker-label">Model</span>
           <select id="modelSelect" aria-label="Model to plan for"></select>
         </label>
+        <button class="theme-toggle has-mark" id="importOpen" type="button" aria-controls="importPanel" aria-expanded="false"><svg class="hf-mark" viewBox="0 0 95 88" width="16" height="15" fill="none" aria-hidden="true" focusable="false"> <path fill="#FFD21E" d="M47.21 76.5a34.75 34.75 0 1 0 0-69.5 34.75 34.75 0 0 0 0 69.5Z" /> <path fill="#FF9D0B" d="M81.96 41.75a34.75 34.75 0 1 0-69.5 0 34.75 34.75 0 0 0 69.5 0Zm-73.5 0a38.75 38.75 0 1 1 77.5 0 38.75 38.75 0 0 1-77.5 0Z" /> <path fill="#3A3B45" d="M58.5 32.3c1.28.44 1.78 3.06 3.07 2.38a5 5 0 1 0-6.76-2.07c.61 1.15 2.55-.72 3.7-.32ZM34.95 32.3c-1.28.44-1.79 3.06-3.07 2.38a5 5 0 1 1 6.76-2.07c-.61 1.15-2.56-.72-3.7-.32Z" /> <path fill="#FF323D" d="M46.96 56.29c9.83 0 13-8.76 13-13.26 0-2.34-1.57-1.6-4.09-.36-2.33 1.15-5.46 2.74-8.9 2.74-7.19 0-13-6.88-13-2.38s3.16 13.26 13 13.26Z" /> <path fill="#3A3B45" fill-rule="evenodd" d="M39.43 54a8.7 8.7 0 0 1 5.3-4.49c.4-.12.81.57 1.24 1.28.4.68.82 1.37 1.24 1.37.45 0 .9-.68 1.33-1.35.45-.7.89-1.38 1.32-1.25a8.61 8.61 0 0 1 5 4.17c3.73-2.94 5.1-7.74 5.1-10.7 0-2.34-1.57-1.6-4.09-.36l-.14.07c-2.31 1.15-5.39 2.67-8.77 2.67s-6.45-1.52-8.77-2.67c-2.6-1.29-4.23-2.1-4.23.29 0 3.05 1.46 8.06 5.47 10.97Z" clip-rule="evenodd" /> <path fill="#FF9D0B" d="M70.71 37a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5ZM24.21 37a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5ZM17.52 48c-1.62 0-3.06.66-4.07 1.87a5.97 5.97 0 0 0-1.33 3.76 7.1 7.1 0 0 0-1.94-.3c-1.55 0-2.95.59-3.94 1.66a5.8 5.8 0 0 0-.8 7 5.3 5.3 0 0 0-1.79 2.82c-.24.9-.48 2.8.8 4.74a5.22 5.22 0 0 0-.37 5.02c1.02 2.32 3.57 4.14 8.52 6.1 3.07 1.22 5.89 2 5.91 2.01a44.33 44.33 0 0 0 10.93 1.6c5.86 0 10.05-1.8 12.46-5.34 3.88-5.69 3.33-10.9-1.7-15.92-2.77-2.78-4.62-6.87-5-7.77-.78-2.66-2.84-5.62-6.25-5.62a5.7 5.7 0 0 0-4.6 2.46c-1-1.26-1.98-2.25-2.86-2.82A7.4 7.4 0 0 0 17.52 48Zm0 4c.51 0 1.14.22 1.82.65 2.14 1.36 6.25 8.43 7.76 11.18.5.92 1.37 1.31 2.14 1.31 1.55 0 2.75-1.53.15-3.48-3.92-2.93-2.55-7.72-.68-8.01.08-.02.17-.02.24-.02 1.7 0 2.45 2.93 2.45 2.93s2.2 5.52 5.98 9.3c3.77 3.77 3.97 6.8 1.22 10.83-1.88 2.75-5.47 3.58-9.16 3.58-3.81 0-7.73-.9-9.92-1.46-.11-.03-13.45-3.8-11.76-7 .28-.54.75-.76 1.34-.76 2.38 0 6.7 3.54 8.57 3.54.41 0 .7-.17.83-.6.79-2.85-12.06-4.05-10.98-8.17.2-.73.71-1.02 1.44-1.02 3.14 0 10.2 5.53 11.68 5.53.11 0 .2-.03.24-.1.74-1.2.33-2.04-4.9-5.2-5.21-3.16-8.88-5.06-6.8-7.33.24-.26.58-.38 1-.38 3.17 0 10.66 6.82 10.66 6.82s2.02 2.1 3.25 2.1c.28 0 .52-.1.68-.38.86-1.46-8.06-8.22-8.56-11.01-.34-1.9.24-2.85 1.31-2.85Z" /> <path fill="#FFD21E" d="M38.6 76.69c2.75-4.04 2.55-7.07-1.22-10.84-3.78-3.77-5.98-9.3-5.98-9.3s-.82-3.2-2.69-2.9c-1.87.3-3.24 5.08.68 8.01 3.91 2.93-.78 4.92-2.29 2.17-1.5-2.75-5.62-9.82-7.76-11.18-2.13-1.35-3.63-.6-3.13 2.2.5 2.79 9.43 9.55 8.56 11-.87 1.47-3.93-1.71-3.93-1.71s-9.57-8.71-11.66-6.44c-2.08 2.27 1.59 4.17 6.8 7.33 5.23 3.16 5.64 4 4.9 5.2-.75 1.2-12.28-8.53-13.36-4.4-1.08 4.11 11.77 5.3 10.98 8.15-.8 2.85-9.06-5.38-10.74-2.18-1.7 3.21 11.65 6.98 11.76 7.01 4.3 1.12 15.25 3.49 19.08-2.12Z" /> <path fill="#FF9D0B" d="M77.4 48c1.62 0 3.07.66 4.07 1.87a5.97 5.97 0 0 1 1.33 3.76 7.1 7.1 0 0 1 1.95-.3c1.55 0 2.95.59 3.94 1.66a5.8 5.8 0 0 1 .8 7 5.3 5.3 0 0 1 1.78 2.82c.24.9.48 2.8-.8 4.74a5.22 5.22 0 0 1 .37 5.02c-1.02 2.32-3.57 4.14-8.51 6.1-3.08 1.22-5.9 2-5.92 2.01a44.33 44.33 0 0 1-10.93 1.6c-5.86 0-10.05-1.8-12.46-5.34-3.88-5.69-3.33-10.9 1.7-15.92 2.78-2.78 4.63-6.87 5.01-7.77.78-2.66 2.83-5.62 6.24-5.62a5.7 5.7 0 0 1 4.6 2.46c1-1.26 1.98-2.25 2.87-2.82A7.4 7.4 0 0 1 77.4 48Zm0 4c-.51 0-1.13.22-1.82.65-2.13 1.36-6.25 8.43-7.76 11.18a2.43 2.43 0 0 1-2.14 1.31c-1.54 0-2.75-1.53-.14-3.48 3.91-2.93 2.54-7.72.67-8.01a1.54 1.54 0 0 0-.24-.02c-1.7 0-2.45 2.93-2.45 2.93s-2.2 5.52-5.97 9.3c-3.78 3.77-3.98 6.8-1.22 10.83 1.87 2.75 5.47 3.58 9.15 3.58 3.82 0 7.73-.9 9.93-1.46.1-.03 13.45-3.8 11.76-7-.29-.54-.75-.76-1.34-.76-2.38 0-6.71 3.54-8.57 3.54-.42 0-.71-.17-.83-.6-.8-2.85 12.05-4.05 10.97-8.17-.19-.73-.7-1.02-1.44-1.02-3.14 0-10.2 5.53-11.68 5.53-.1 0-.19-.03-.23-.1-.74-1.2-.34-2.04 4.88-5.2 5.23-3.16 8.9-5.06 6.8-7.33-.23-.26-.57-.38-.98-.38-3.18 0-10.67 6.82-10.67 6.82s-2.02 2.1-3.24 2.1a.74.74 0 0 1-.68-.38c-.87-1.46 8.05-8.22 8.55-11.01.34-1.9-.24-2.85-1.31-2.85Z" /> <path fill="#FFD21E" d="M56.33 76.69c-2.75-4.04-2.56-7.07 1.22-10.84 3.77-3.77 5.97-9.3 5.97-9.3s.82-3.2 2.7-2.9c1.86.3 3.23 5.08-.68 8.01-3.92 2.93.78 4.92 2.28 2.17 1.51-2.75 5.63-9.82 7.76-11.18 2.13-1.35 3.64-.6 3.13 2.2-.5 2.79-9.42 9.55-8.55 11 .86 1.47 3.92-1.71 3.92-1.71s9.58-8.71 11.66-6.44c2.08 2.27-1.58 4.17-6.8 7.33-5.23 3.16-5.63 4-4.9 5.2.75 1.2 12.28-8.53 13.36-4.4 1.08 4.11-11.76 5.3-10.97 8.15.8 2.85 9.05-5.38 10.74-2.18 1.69 3.21-11.65 6.98-11.76 7.01-4.31 1.12-15.26 3.49-19.08-2.12Z" /> </svg>Import model</button>
         <button class="theme-toggle" id="copyPlanLink" type="button">Copy plan link</button>
         <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme">Light mode</button>
       </div>
@@ -762,6 +799,21 @@
       </div>
     </section>
 
+    <section class="panel import-panel" id="importPanel" aria-labelledby="importTitle" hidden>
+      <div class="panel-head"><h3 id="importTitle">Import a model from Hugging Face</h3><span class="eyebrow">Reads public metadata over the network</span></div>
+      <div class="panel-body">
+        <p class="import-intro">Paste a model page link or an <code>owner/name</code> id. The planner reads that repository&rsquo;s own parameter count, file sizes and attention config, and computes from those. The weights are never downloaded &mdash; only their size is needed.</p>
+        <div class="import-row">
+          <label class="sr-only" for="importRepo">Hugging Face model link or id</label>
+          <input id="importRepo" type="text" spellcheck="false" autocomplete="off" placeholder="Qwen/Qwen3-8B">
+          <button class="mini-button" id="importGo" type="button">Read model</button>
+          <button class="mini-button" id="importClose" type="button">Close</button>
+        </div>
+        <div class="import-status" id="importStatus" role="status"></div>
+        <div class="import-result" id="importResult" hidden></div>
+      </div>
+    </section>
+
     <section class="hero" id="hero">
       <div class="hero-copy">
         <div class="classification-strip">Independent research lab</div>
@@ -801,8 +853,18 @@
 
     <section class="view" id="buyView" role="tabpanel" aria-labelledby="buyTab">
       <div class="section-head">
-        <div><div class="eyebrow">Hardware</div><h2>What should you build?</h2></div>
-        <p>Each build reports what it can actually host at the <button type="button" class="term" data-term="precision" aria-expanded="false">precision</button> and <button type="button" class="term" data-term="working-context" aria-expanded="false">context</button> you pick. Counts are memory arithmetic, not a ranking.</p>
+        <div><div class="eyebrow">Hardware</div><h2 id="buyTitle">What should you build?</h2></div>
+        <p id="buyIntroBrowse">Each pre-designed build reports what it can actually host at the <button type="button" class="term" data-term="precision" aria-expanded="false">precision</button> and <button type="button" class="term" data-term="working-context" aria-expanded="false">context</button> you pick. Counts are memory arithmetic, not a ranking.</p>
+        <p id="buyIntroMachine" hidden>Name the hardware &mdash; an exact Mac configuration, or a GPU or EPYC host derived from the payload you intend to run &mdash; and see what it can actually hold at the <button type="button" class="term" data-term="precision" aria-expanded="false">precision</button> and <button type="button" class="term" data-term="working-context" aria-expanded="false">context</button> you pick.</p>
+      </div>
+
+      <div class="buy-strip">
+        <span class="buy-strip-label">Page</span>
+        <div class="buy-switch" role="group" aria-label="Which Buy page to show">
+          <button id="buyMode-machine" type="button" aria-pressed="false" aria-controls="buyMachine">Machine</button>
+          <button id="buyMode-browse" type="button" aria-pressed="true" aria-controls="buyBrowse">Browse</button>
+        </div>
+        <span class="buy-strip-note" id="buyModeNote"></span>
       </div>
 
       <div class="control-strip" aria-label="Capability assumptions">
@@ -833,6 +895,7 @@
         </div>
       </div>
 
+      <div class="buy-mode" id="buyMachine" hidden>
       <section class="panel mac-catalog" id="macCatalogPanel" aria-labelledby="macCatalogTitle">
         <div class="panel-head"><h3 id="macCatalogTitle">Mac configuration catalog</h3><span class="eyebrow" id="macCatalogCount">47 profiles / Neo excluded</span></div>
         <div class="panel-body">
@@ -910,7 +973,9 @@
           </div>
         </div>
       </section>
+      </div>
 
+      <div class="buy-mode" id="buyBrowse">
       <p class="topology-legend">Every build below holds its memory in one of four ways &mdash; as a <button type="button" class="term" data-term="pool" aria-expanded="false">pool</button>, as <button type="button" class="term" data-term="lanes" aria-expanded="false">lanes</button>, in <button type="button" class="term" data-term="tiers" aria-expanded="false">tiers</button>, or across <button type="button" class="term" data-term="nodes" aria-expanded="false">nodes</button> &mdash; and that difference, not the headline number, decides what fits. A worker too large for one lane needs <button type="button" class="term" data-term="sharding" aria-expanded="false">sharding</button>.</p>
       <div class="setup-grid" id="setupGrid" aria-label="Hardware choices"></div>
 
@@ -920,6 +985,7 @@
           <thead><tr><th>Setup</th><th>Investment</th><th>Usable model memory</th><th>Q4 workers</th><th>Q8 workers</th><th>BF16 workers</th><th>Noise / power</th><th>Notes</th></tr></thead>
           <tbody id="compareBody"></tbody>
         </table>
+      </div>
       </div>
     </section>
 
@@ -1681,9 +1747,9 @@
     // capability, so a starting point is never a commitment.
     const gateTargets = {
       plan: { view: 'deploy', focus: 'rosterPanel' },
-      machine: { view: 'buy', focus: 'macCatalogPanel' },
+      machine: { view: 'buy', mode: 'machine', focus: 'macCatalogPanel' },
       shape: { view: 'deploy', focus: null, step: 2 },
-      browse: { view: 'buy', focus: null }
+      browse: { view: 'buy', mode: 'browse', focus: null }
     };
     let gateChoice = null;
 
@@ -1736,19 +1802,60 @@
       if (target.step === 2) { setGateStep(2); return; }
       setGate(false);
       setView(target.view);
+      if (target.mode) setBuyMode(target.mode);
       // The topology door opens the cards it names and every other door shuts
       // them, so a route presets nothing beyond where you land. Closing takes
       // no focus, because the door's own focus target owns it.
       setPicker(Boolean(target.picker), { focus: Boolean(target.picker) });
       // Focusing the destination panel both announces it and scrolls it into
       // view; the tab keeps its own focus when there is no deeper target.
-      const panel = target.focus ? $(target.focus) : null;
+      const panel = target.focus ? $(target.focus)
+        : target.mode === 'browse' ? $('buyBrowse')
+        : null;
       if (panel) { panel.setAttribute('tabindex', '-1'); panel.focus(); }
     }
 
     function setOrientation(visible) {
       $('orientationPanel').hidden = !visible;
       $('orientationShow').hidden = visible;
+    }
+
+    // Buy holds two pages. The machine page names hardware — an exact Mac
+    // configuration, or a host derived from a payload — and the browse page
+    // compares the pre-designed builds. The gate's machine and browse doors
+    // preset it, but the switch is always there, so a door still hides
+    // nothing: it decides which page you open on, not which you may see.
+    const buyModes = {
+      machine: {
+        title: 'Which machine?',
+        note: 'A configuration you name, or a host derived from its payload.'
+      },
+      browse: {
+        title: 'What should you build?',
+        note: 'The pre-designed builds, compared at your precision and context.'
+      }
+    };
+    let buyMode = 'browse';
+
+    function setBuyMode(mode, { focus = false } = {}) {
+      if (!buyModes[mode]) return;
+      buyMode = mode;
+      Object.keys(buyModes).forEach(key => {
+        const on = key === mode;
+        $(key === 'machine' ? 'buyMachine' : 'buyBrowse').hidden = !on;
+        $(`buyMode-${key}`).setAttribute('aria-pressed', String(on));
+      });
+      // Each page keeps its own intro so the glossary buttons inside it stay
+      // wired; swapping the text would throw them away.
+      $('buyIntroMachine').hidden = mode !== 'machine';
+      $('buyIntroBrowse').hidden = mode !== 'browse';
+      $('buyTitle').textContent = buyModes[mode].title;
+      $('buyModeNote').textContent = buyModes[mode].note;
+      if (focus) {
+        const panel = $(mode === 'machine' ? 'macCatalogPanel' : 'buyBrowse');
+        panel.setAttribute('tabindex', '-1');
+        panel.focus();
+      }
     }
 
     function setView(name, { focusTab = true } = {}) {
@@ -2804,6 +2911,282 @@
       ].join('\n');
     }
 
+    // ------------------------------------------- Hugging Face model import
+    // The one origin this page will ever contact. Every request below is built
+    // from this constant and nothing else, so `tools/check.mjs` can prove the
+    // page reaches no other host. Nothing but metadata is read: a repository's
+    // parameter count, its file listing, its attention config, and the sizes of
+    // any quantised sibling. Weights are never downloaded — the planner only
+    // ever needed their size.
+    const HF_ORIGIN = 'https://huggingface.co';
+    const HF_TIMEOUT_MS = 15000;
+    const BYTES_PER_GB = 1e9;
+    const toGb = bytes => Math.round(bytes / BYTES_PER_GB * 100) / 100;
+
+    async function hfJson(path) {
+      const stop = new AbortController();
+      const timer = setTimeout(() => stop.abort(), HF_TIMEOUT_MS);
+      try {
+        const response = await fetch(HF_ORIGIN + path, { headers: { accept: 'application/json' }, signal: stop.signal });
+        if (!response.ok) {
+          const error = new Error('HTTP ' + response.status);
+          error.status = response.status;
+          throw error;
+        }
+        return await response.json();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    // A model page link or a bare owner/name. Anything else is refused rather
+    // than guessed at: the wrong repository would still produce a plausible
+    // model entry, which is exactly the failure this tool exists to avoid.
+    function parseRepoId(input) {
+      const text = String(input || '').trim();
+      if (!text) return null;
+      let candidate = text;
+      if (/^https?:\/\//i.test(text)) {
+        let url;
+        try { url = new URL(text); } catch { return null; }
+        if (url.hostname !== 'huggingface.co' && url.hostname !== 'www.huggingface.co') return null;
+        const parts = url.pathname.split('/').filter(Boolean);
+        if (parts[0] === 'models') parts.shift();
+        if (parts.length < 2) return null;
+        candidate = parts[0] + '/' + parts[1];
+      }
+      return /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(candidate) ? candidate : null;
+    }
+
+    // A GGUF repository names its precision in the filename. Files are grouped
+    // by base name first so that a split set is summed while a repository that
+    // ships both a single file and a split copy is not counted twice.
+    // A GGUF repository also carries artifacts that are not this model at this
+    // precision: projector files, and speculative-decoding draft models that
+    // put the same precision in their name while being a fiftieth of the size.
+    const GGUF_NOT_THE_MODEL = /mmproj|eagle|draft|vocab|lora|adapter/i;
+
+    function ggufSizes(entries, referenceGb) {
+      const wanted = { q4: /q4_k_m/i, q8: /q8_0/i };
+      const found = {};
+      Object.keys(wanted).forEach(key => {
+        const parts = entries.filter(e => /\.gguf$/i.test(e.path) && wanted[key].test(e.path) && !GGUF_NOT_THE_MODEL.test(e.path));
+        if (!parts.length) return;
+        const groups = {};
+        parts.forEach(e => {
+          const base = e.path.replace(/-\d{5}-of-\d{5}(\.gguf)$/i, '$1');
+          (groups[base] = groups[base] || []).push(e);
+        });
+        const pick = Object.keys(groups).sort()[0];
+        const total = toGb(groups[pick].reduce((sum, e) => sum + (e.size || 0), 0));
+        // A quantisation of these weights is a fraction of them, never a
+        // rounding error of them. Anything far outside that band is a different
+        // model that happens to carry the precision in its filename, so it is
+        // dropped rather than reported as this model's size.
+        if (total >= referenceGb * 0.15 && total <= referenceGb * 1.3) found[key] = total;
+      });
+      return found;
+    }
+
+    async function readHubModel(repo) {
+      // The repository itself answers first, so by the time the config 401s we
+      // already know the repo exists and the refusal really is a gate.
+      const meta = await hfJson('/api/models/' + repo);
+      const tree = await hfJson('/api/models/' + repo + '/tree/main?limit=1000');
+
+      // A repository often ships the same weights more than once — a
+      // consolidated file beside the sharded set, or a second export in a
+      // subdirectory. Summing every .safetensors would double-count, and a
+      // doubled size is exactly the plausible wrong number this tool exists to
+      // avoid, so the canonical `model.safetensors` set is taken when present
+      // and loose top-level files are only a fallback.
+      const safetensors = tree.filter(e => /\.safetensors$/i.test(e.path));
+      const canonical = safetensors.filter(e => /^model(-\d+-of-\d+)?\.safetensors$/i.test(e.path));
+      const weightFiles = canonical.length
+        ? canonical
+        : safetensors.filter(e => !e.path.includes('/') && !/^consolidated/i.test(e.path));
+      const weightBytes = weightFiles.reduce((sum, e) => sum + (e.size || 0), 0);
+      if (!weightBytes) { const error = new Error('no-weights'); error.code = 'no-weights'; throw error; }
+
+      let config = null;
+      let gated = Boolean(meta.gated);
+      try {
+        config = await hfJson('/' + repo + '/resolve/main/config.json');
+      } catch (error) {
+        if (error.status === 401 || error.status === 403) gated = true; else throw error;
+      }
+
+      // The hub reports the parameter count directly, which is better than
+      // dividing bytes by a dtype width that may not be uniform.
+      const reported = meta.safetensors && meta.safetensors.total;
+      const params = reported ? reported / 1e9 : toGb(weightBytes) / 2;
+
+      // The config's own declaration is authoritative in BOTH directions: a
+      // readable config that declares no quantisation means the weights are not
+      // natively quantised, whatever dtypes appear in the tensor summary. The
+      // dtype breakdown only stands in when the config cannot be read, and then
+      // only if a packed dtype holds most of the parameters — a small U8 buffer
+      // (an attention mask or bias) is ordinary in an fp16 model and must not
+      // be mistaken for quantised weights.
+      const tensorTypes = (meta.safetensors && meta.safetensors.parameters) || {};
+      const packed = Object.keys(tensorTypes)
+        .filter(d => /^(U8|I8|F8|FP8|U4|I4|INT8|INT4|E4M3|E5M2)$/i.test(d))
+        .find(d => reported && tensorTypes[d] / reported > 0.5);
+      const native = (config && config.quantization_config && config.quantization_config.quant_method)
+        || (config ? null : (packed ? packed.toLowerCase() : null));
+
+      const layers = config && (config.num_hidden_layers ?? config.n_layer);
+      const kvHeads = config && (config.num_key_value_heads ?? config.num_attention_heads);
+      const heads = config && config.num_attention_heads;
+      const headDim = config && (config.head_dim ?? (config.hidden_size && heads ? config.hidden_size / heads : null));
+      const arch = (layers && kvHeads && headDim)
+        ? { layers, kvHeads, headDim: Math.round(headDim) }
+        : null;
+
+      const experts = config && (config.num_experts ?? config.num_local_experts ?? config.n_routed_experts);
+
+      const sizes = { bf16: toGb(weightBytes) };
+      const sizeSource = { bf16: 'measured' };
+
+      // Q4 and Q8 live in a different repository from the base weights, so the
+      // hub's own quantisation index is asked for them. This is a bonus: a
+      // failure here must leave the import standing, not sink it.
+      let quantRepo = null;
+      try {
+        const quants = await hfJson('/api/models?filter=base_model:quantized:' + repo + '&limit=30');
+        // The hub's index lists finetunes alongside true quantisations, so a
+        // repository carrying this model's own name is tried first. More than
+        // one is tried, because the first may publish neither precision.
+        const stem = repo.split('/').pop().toLowerCase();
+        const candidates = (quants || [])
+          .filter(q => /gguf/i.test(q.id || ''))
+          .sort((a, b) => Number(b.id.toLowerCase().includes(stem)) - Number(a.id.toLowerCase().includes(stem)))
+          .slice(0, 3);
+        for (const candidate of candidates) {
+          const measured = ggufSizes(await hfJson('/api/models/' + candidate.id + '/tree/main?limit=1000'), sizes.bf16);
+          Object.keys(measured).forEach(key => {
+            if (sizes[key] == null) { sizes[key] = measured[key]; sizeSource[key] = 'measured'; quantRepo = candidate.id; }
+          });
+          if (sizes.q4 != null && sizes.q8 != null) break;
+        }
+      } catch { /* no quantisation index: fall through to the rules below */ }
+
+      ['q4', 'q8'].forEach(key => {
+        if (sizes[key] != null) return;
+        if (native) {
+          // Natively quantised weights barely change across precisions and no
+          // size formula applies, so the measured artifact is the only honest
+          // number to report at every precision.
+          sizes[key] = sizes.bf16;
+          sizeSource[key] = 'native';
+        } else {
+          sizes[key] = Math.round(params * (key === 'q4' ? 4 : 8) / 8 * 100) / 100;
+          sizeSource[key] = 'derived';
+        }
+      });
+
+      const derived = ['q4', 'q8'].filter(key => sizeSource[key] === 'derived');
+      const notes = [];
+      if (quantRepo) notes.push('Q4 and Q8 measured from ' + quantRepo + '.');
+      if (derived.length) notes.push('No quantised sibling was found, so ' + derived.map(k => k.toUpperCase()).join(' and ') + (derived.length > 1 ? ' are formula estimates' : ' is a formula estimate') + ', which runs low against real GGUF artifacts.');
+      if (native) notes.push('Ships natively ' + native + ', so no size formula applies. Its parameter figure counts packed tensor elements and will not match the name.');
+      if (!arch) notes.push(gated ? 'Config is gated, so context reserve falls back to a generic estimate.' : 'Attention config unreadable, so context reserve falls back to a generic estimate.');
+
+      return {
+        id: 'hf:' + repo,
+        name: repo.split('/').pop(),
+        repo,
+        family: 'Imported',
+        params: Math.round(params * 100) / 100,
+        active: null,
+        kind: experts ? 'moe' : 'dense',
+        sizes,
+        sizeSource,
+        arch,
+        context: (config && config.max_position_embeddings) || null,
+        license: (meta.cardData && meta.cardData.license) || null,
+        gated,
+        native,
+        provenance: 'imported',
+        imported: true,
+        quantRepo,
+        note: notes.join(' ')
+      };
+    }
+
+    function setImportStatus(text, tone) {
+      const node = $('importStatus');
+      node.textContent = text;
+      if (tone) node.dataset.tone = tone; else delete node.dataset.tone;
+    }
+
+    function renderImportResult(model) {
+      const label = key => model.sizeSource[key] === 'measured' ? 'measured'
+        : model.sizeSource[key] === 'native' ? 'native, measured'
+        : 'estimated';
+      const rows = [
+        ['Repository', model.repo],
+        ['Parameters', model.params + 'B ' + (model.kind === 'moe' ? 'total (MoE)' : 'dense')],
+        ['BF16', model.sizes.bf16 + ' GB (' + label('bf16') + ')'],
+        ['Q8', model.sizes.q8 + ' GB (' + label('q8') + ')'],
+        ['Q4', model.sizes.q4 + ' GB (' + label('q4') + ')'],
+        ['KV reserve', model.arch
+          ? 'computed from config (' + model.arch.layers + ' layers, ' + model.arch.kvHeads + ' KV heads, head dim ' + model.arch.headDim + ')'
+          : 'generic estimate — config unavailable'],
+        ['Context', model.context ? Math.round(model.context / 1024) + 'K' : 'unverified'],
+        ['Licence', model.license || 'unstated']
+      ];
+      $('importResult').innerHTML = '<dl class="import-lines">'
+        + rows.map(r => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('')
+        + '</dl>' + (model.note ? '<p class="cap-note">' + model.note + '</p>' : '');
+      $('importResult').hidden = false;
+    }
+
+    let importBusy = false;
+
+    async function runImport() {
+      if (importBusy) return;
+      const repo = parseRepoId($('importRepo').value);
+      if (!repo) {
+        $('importResult').hidden = true;
+        setImportStatus('Not a Hugging Face model reference. Use owner/name, or a link to the model page.', 'bad');
+        return;
+      }
+      importBusy = true;
+      $('importGo').disabled = true;
+      $('importResult').hidden = true;
+      setImportStatus('Reading ' + repo + ' from Hugging Face…');
+      try {
+        const model = await readHubModel(repo);
+        const at = models.findIndex(m => m.id === model.id);
+        if (at >= 0) models[at] = model; else models.push(model);
+        renderModelPicker();
+        $('modelSelect').value = model.id;
+        applyModel();
+        renderImportResult(model);
+        setImportStatus('Imported ' + model.name + ' and selected it. Every count on the page now describes this model.', 'good');
+        scheduleSave();
+      } catch (error) {
+        const status = error && error.status;
+        setImportStatus(
+          error && error.code === 'no-weights' ? 'That repository publishes no .safetensors weights, so there is no size to measure. Point at the base model repository rather than a GGUF or adapter repo.'
+          : status === 401 || status === 403 ? 'Hugging Face refused that repository (HTTP ' + status + '). It is either gated or does not exist — the hub answers the same way for both.'
+          : status === 404 ? 'No such model repository.'
+          : error && error.name === 'AbortError' ? 'Hugging Face did not answer within 15 seconds.'
+          : 'Could not reach Hugging Face. Check the network, or that a blocker is not stopping the request.',
+          'bad');
+      } finally {
+        importBusy = false;
+        $('importGo').disabled = false;
+      }
+    }
+
+    function setImportPanel(open) {
+      $('importPanel').hidden = !open;
+      $('importOpen').setAttribute('aria-expanded', String(open));
+      if (open) $('importRepo').focus();
+    }
+
     function renderModelPicker() {
       const byFamily = {};
       models.forEach(m => (byFamily[m.family] = byFamily[m.family] || []).push(m));
@@ -2831,6 +3214,10 @@
       flags.push(m.provenance === 'measured'
         ? { cls: 'ok', text: 'sizes measured' }
         : { cls: 'warn', text: m.provenance });
+      if (m.sizeSource) {
+        const estimated = Object.keys(m.sizeSource).filter(key => m.sizeSource[key] === 'derived');
+        if (estimated.length) flags.push({ cls: 'warn', text: `${estimated.join('/').toUpperCase()} size estimated` });
+      }
       if (m.native) flags.push({ cls: 'warn', text: `native ${m.native} — no size formula` });
       if (m.gated) flags.push({ cls: 'warn', text: 'gated repo' });
       if (m.kvUpperBound) flags.push({ cls: 'warn', text: 'KV is an upper bound' });
@@ -2886,9 +3273,10 @@
         orientation: $('orientationPanel').hidden ? 'hidden' : 'open',
         gate: gateChoice,
         model: selectedModel,
+        imported: models.filter(m => m.imported),
         setup: selectedSetup,
         mac: selectedMacKey,
-        buy: { quant: $('buyQuant').value, context: $('buyContext').value },
+        buy: { mode: buyMode, quant: $('buyQuant').value, context: $('buyContext').value },
         epyc: {
           gpu: $('epycGpu').value, count: $('epycGpuCount').value, host: $('epycHost').value,
           cpu: $('epycCpu').value, ram: $('epycRam').value, saved: generatedBuild !== null
@@ -2953,6 +3341,18 @@
       if (state.orientation === 'hidden') setOrientation(false);
       if (typeof state.gate === 'string' && gateTargets[state.gate]) gateChoice = state.gate;
 
+      // Imported models are restored first, because the selected model, the
+      // roster and every count below may refer to one.
+      if (Array.isArray(state.imported)) {
+        state.imported.forEach(entry => {
+          if (!entry || !entry.id || !entry.sizes) return;
+          if (typeof entry.sizes.q4 !== 'number' || typeof entry.sizes.q8 !== 'number' || typeof entry.sizes.bf16 !== 'number') return;
+          const at = models.findIndex(m => m.id === entry.id);
+          if (at >= 0) models[at] = entry; else models.push(entry);
+        });
+        renderModelPicker();
+      }
+
       if (models.some(model => model.id === state.model)) {
         selectedModel = state.model;
         setControl('modelSelect', state.model);
@@ -2971,6 +3371,9 @@
 
       setControl('buyQuant', state.buy?.quant);
       setControl('buyContext', state.buy?.context);
+      // An unknown page name is dropped rather than applied, like any other
+      // stored value that no longer exists.
+      if (buyModes[state.buy?.mode]) buyMode = state.buy.mode;
 
       // The EPYC host decides which CPUs and RAM sizes exist, so it is set first.
       if (state.epyc) {
@@ -3209,6 +3612,12 @@
       renderModelPicker();
       renderFlagship();
       $('modelSelect').addEventListener('change', applyModel);
+      $('importOpen').addEventListener('click', () => setImportPanel($('importPanel').hidden));
+      $('importClose').addEventListener('click', () => { setImportPanel(false); $('importOpen').focus(); });
+      $('importGo').addEventListener('click', runImport);
+      $('importRepo').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') { event.preventDefault(); runImport(); }
+      });
       renderRoster();
       $('addRosterRow').addEventListener('click', () => {
         roster.push({ role: 'Support worker', model: selectedModel, quant: 'q4', context: 32, count: 1 });
@@ -3333,6 +3742,7 @@
       // address bar would shadow every later edit on the next reload.
       if (location.hash) history.replaceState(null, '', location.href.split('#')[0]);
       setView(currentView, { focusTab: false });
+      setBuyMode(buyMode);
 
       renderBuy();
       renderEpycBuilder();
@@ -3361,6 +3771,10 @@
         updateHarness();
         renderTopoGrid('gateTopoGrid', 'gateTopoNote');
       }));
+      Object.keys(buyModes).forEach(key => {
+        $(`buyMode-${key}`).addEventListener('click', () => setBuyMode(key, { focus: true }));
+      });
+
       $('gateReopen').addEventListener('click', () => setGate(true));
 
       // The gate is the front door, so it is asked on every load. Stored state

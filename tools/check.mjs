@@ -40,6 +40,26 @@ check('page is self-contained', () => {
   return 'no off-host script/link/img';
 });
 
+check('network access is confined to one declared origin', () => {
+  // The page reads public model metadata from Hugging Face. That is the only
+  // network access it is allowed, and this proves it: one origin constant, every
+  // fetch built from it, and no other transport that could reach a second host.
+  const declared = [...html.matchAll(/const\s+HF_ORIGIN\s*=\s*'([^']+)'/g)].map(m => m[1]);
+  if (declared.length !== 1) throw new Error(`expected exactly one HF_ORIGIN declaration, found ${declared.length}`);
+  if (declared[0] !== 'https://huggingface.co') throw new Error(`unexpected origin ${declared[0]}`);
+
+  const calls = [...html.matchAll(/\bfetch\s*\(\s*([^,)]+)/g)].map(m => m[1].trim());
+  if (!calls.length) throw new Error('no fetch call found, but an origin is declared');
+  const stray = calls.filter(arg => !arg.startsWith('HF_ORIGIN'));
+  if (stray.length) throw new Error(`fetch not built from HF_ORIGIN: ${stray[0].slice(0, 60)}`);
+
+  // Anything below can reach a host without going through fetch.
+  const banned = /\bXMLHttpRequest\b|\bWebSocket\b|\bEventSource\b|sendBeacon|importScripts|\bimport\s*\(/;
+  if (banned.test(html)) throw new Error(`banned network transport: ${html.match(banned)[0]}`);
+
+  return `${calls.length} fetch call(s), origin ${declared[0]}`;
+});
+
 check('licence header present', () => {
   if (!html.includes('Apache License, Version 2.0')) throw new Error('missing Apache 2.0 header');
   if (!html.includes('Copyright 2026 Garrett Davis')) throw new Error('missing copyright line');

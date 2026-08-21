@@ -33,9 +33,15 @@ Qwen (Alibaba Group); Llama (Meta Platforms, Inc.); Gemma (Google LLC);
 Granite (International Business Machines Corporation); Mistral (Mistral AI);
 GLM (Z.ai); and gpt-oss (OpenAI).
 
+It also names Hugging Face and embeds the Hugging Face logo on the control that
+reads public model metadata from that service (Hugging Face, Inc.). The logo is
+reproduced from that company's own published asset, unmodified apart from
+scaling, and marks the control that talks to their service.
+
 All trademarks are the property of their respective owners. They are used here
-only to identify the hardware and models being planned for. Explore Failure is
-not affiliated with, endorsed by, or sponsored by any of these organizations.
+only to identify the hardware and models being planned for, and the service a
+model's own figures are read from. Explore Failure is not affiliated with,
+endorsed by, or sponsored by any of these organizations.
 
 
 ACCURACY OF FIGURES
