@@ -2,6 +2,9 @@
 
 _An [Explore Failure](https://explorefailure.com/) field instrument._
 
+[![CI](https://github.com/explorefailure/harness-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/explorefailure/harness-planner/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 Plan a local LLM coding harness against real hardware: pick a model, see what
 each machine can actually host, then assign different models to different jobs
 and pack them onto one box together.
