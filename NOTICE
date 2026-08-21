@@ -1,0 +1,53 @@
+Explore Failure's Harness Planner
+Copyright 2026 Garrett Davis
+
+This software is developed as part of Explore Failure, an independent
+research project by Garrett Davis.
+
+"Explore Failure" is a research and project identity. It is not a company,
+corporation, partnership, or other legal entity, and nothing in this
+repository should be read as implying one. Copyright is held by the
+individual named above.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+
+
+THIRD-PARTY NAMES AND TRADEMARKS
+--------------------------------
+
+This project references hardware and model names owned by third parties,
+including but not limited to: NVIDIA, DGX, Jetson, Blackwell, Ampere, Grace
+and CUDA (NVIDIA Corporation); Apple, Mac, MacBook, Mac Studio, Mac mini and
+MLX (Apple Inc.); AMD, Ryzen, Radeon and EPYC (Advanced Micro Devices, Inc.);
+Qwen (Alibaba Group); Llama (Meta Platforms, Inc.); Gemma (Google LLC);
+Granite (International Business Machines Corporation); Mistral (Mistral AI);
+GLM (Z.ai); and gpt-oss (OpenAI).
+
+All trademarks are the property of their respective owners. They are used here
+only to identify the hardware and models being planned for. Explore Failure is
+not affiliated with, endorsed by, or sponsored by any of these organizations.
+
+
+ACCURACY OF FIGURES
+-------------------
+
+Hardware specifications and model artifact sizes in this project are drawn from
+vendor documentation and published model repositories, cited in the page's
+"Sources and uncertainty" section and in the model registry's provenance
+fields. They were accurate as read on the dates recorded and may since have
+changed.
+
+Worker counts are memory arithmetic, not benchmarks. They do not account for
+backend choice, multimodal input, preserved reasoning state, or runtime
+overhead beyond the stated context reserve. Verify against the actual hardware
+and runtime before making a purchase.

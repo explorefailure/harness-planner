@@ -1,0 +1,2381 @@
+<!doctype html>
+<!--
+  Harness Planner — an Explore Failure field instrument
+  https://explorefailure.com/
+
+  Copyright 2026 Garrett Davis
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Third-party hardware and model names are trademarks of their respective
+  owners; see NOTICE. Worker counts are memory arithmetic, not benchmarks.
+-->
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An Explore Failure field instrument: compare local AI hardware and plan coding-harness deployments against a chosen model.">
+  <title>Harness Planner — Explore Failure</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+
+      /* Explore Failure brand constants — identical in both themes.
+         Source: explore-failure-site/DESIGN.md palette. */
+      --ef-paper: #FFF8E7;
+      --ef-ink: #17202A;
+      --ef-cyan: #20A7C4;
+      --ef-cyan-deep: #116F86;
+      --ef-yellow: #F2C94C;
+      --ef-coral: #F26B50;
+      --ef-green: #79A85B;
+      --ef-brass: #6B4700;
+
+      --ink: #17202A;
+      --muted: #52636d;
+      --paper: #edf1f2;
+      --panel: #dfe6e8;
+      --panel-2: #f7f9f9;
+      --line: #aab8bd;
+      /* EF uses deep signal cyan wherever cyan must hold its own contrast. */
+      --signal: #116F86;
+      --signal-soft: #cfe9ef;
+      /* Progress yellow cannot carry text on paper; EF's own answer is a
+         darkened brass. The pure yellow stays available as --ef-yellow for fills. */
+      --amber: #6B4700;
+      --amber-soft: #f7e6b4;
+      --danger: #B23F27;
+      --danger-soft: #f8d3c9;
+      --verified: #4C7436;
+      --verified-soft: #d9e8cd;
+      --white: #ffffff;
+      --shadow: 0 8px 24px rgba(19, 33, 42, .08);
+      --radius: 3px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    html[data-theme="dark"] {
+      --ink: #e9f0f2;
+      --muted: #a6b6bc;
+      --paper: #10191e;
+      --panel: #18252b;
+      --panel-2: #1e2d34;
+      --line: #3a4d55;
+      /* Derived from the EF hues, lightened for a dark ground.
+         EF's identity defines no dark values; these preserve the hue roles. */
+      --signal: #4FC4DC;
+      --signal-soft: #123c46;
+      --amber: #F2C94C;
+      --amber-soft: #443716;
+      --danger: #F58E75;
+      --danger-soft: #492a22;
+      --verified: #9CC77E;
+      --verified-soft: #24361c;
+      --white: #132127;
+      --shadow: 0 10px 30px rgba(0, 0, 0, .22);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        linear-gradient(rgba(8,127,140,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(8,127,140,.045) 1px, transparent 1px),
+        var(--paper);
+      background-size: 24px 24px;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    button, select, input { font: inherit; }
+    button, select { min-height: 36px; }
+    button { color: inherit; }
+    a { color: var(--signal); text-underline-offset: 3px; }
+    a:hover { color: var(--ink); }
+    :focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+
+    .shell { width: min(1440px, calc(100% - 32px)); margin: 0 auto; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--paper) 92%, transparent);
+      backdrop-filter: blur(14px);
+    }
+    .topbar-inner {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .brand { display: flex; align-items: baseline; gap: 9px; letter-spacing: -.02em; }
+    .brand-org { font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: 13px; }
+    .brand-sep { color: var(--line); font-weight: 400; }
+    .brand-tool { font-weight: 800; }
+    .specimen-label {
+      display: inline-block;
+      align-self: flex-end;
+      margin-top: 18px;
+      padding: 7px 12px;
+      background: var(--white);
+      color: var(--ef-ink);
+      font: 10px var(--mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    html[data-theme="dark"] .specimen-label { background: #f4f6f6; }
+    .classification-strip {
+      background: var(--ef-yellow);
+      color: #000;
+      font: 800 13px var(--mono);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      padding: 9px 14px;
+      margin-bottom: 22px;
+    }
+    .brand-mark { width: 14px; height: 14px; border: 4px solid var(--signal); transform: rotate(45deg); }
+    .status-live { font: 11px var(--mono); color: var(--signal); text-transform: uppercase; letter-spacing: .12em; }
+    .topbar-tools { display: flex; align-items: center; gap: 12px; }
+    .model-picker { display: flex; align-items: center; gap: 8px; }
+    .model-picker-label { font: 10px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .12em; }
+    .model-picker select { max-width: 260px; }
+    .model-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .model-flag { font: 10px var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border: 1px solid var(--line); color: var(--muted); }
+    .model-flag.warn { color: var(--amber); border-color: var(--amber); }
+    .model-flag.ok { color: var(--verified); border-color: var(--verified); }
+    .model-flag.verified { color: var(--verified); border-color: var(--verified); }
+    .theme-toggle {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 7px 11px;
+      cursor: pointer;
+    }
+    .theme-toggle:hover { background: var(--panel-2); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, .6fr);
+      gap: 48px 48px;
+      padding: 72px 0 44px;
+      border-bottom: 1px solid var(--line);
+      align-items: start;
+    }
+    .hero > .specimen-label { grid-column: 2; justify-self: end; margin-top: 0; }
+    .eyebrow { font: 12px var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--signal); }
+    h1 { max-width: 900px; margin: 12px 0 18px; font-size: clamp(42px, 6.5vw, 90px); line-height: .92; letter-spacing: -.065em; }
+    .hero p { max-width: 760px; margin: 0; color: var(--muted); font-size: clamp(17px, 2vw, 22px); }
+    .release-card {
+      align-self: end;
+      padding: 18px;
+      border: 1px solid var(--signal);
+      border-top-width: 5px;
+      background: var(--panel-2);
+      box-shadow: var(--shadow);
+    }
+    .release-card strong { display: block; margin: 5px 0 8px; font-size: 24px; }
+    .release-card p { font-size: 14px; }
+
+    .mode-nav {
+      display: flex;
+      gap: 0;
+      margin: 34px 0 24px;
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+    }
+    .mode-tab {
+      min-width: 150px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      border-top: 1px solid var(--line);
+      background: var(--panel);
+      padding: 14px 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .mode-tab:first-child { border-left: 1px solid var(--line); }
+    .mode-tab[aria-selected="true"] { background: var(--signal); color: #061b1e; }
+    .mode-tab:hover { filter: brightness(1.06); }
+    .view[hidden] { display: none; }
+
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin: 26px 0 18px; }
+    .section-head h2 { margin: 0; font-size: clamp(28px, 4vw, 46px); letter-spacing: -.045em; }
+    .section-head p { max-width: 620px; margin: 0; color: var(--muted); }
+
+    .control-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      border: 1px solid var(--line);
+      background: var(--line);
+      margin-bottom: 20px;
+    }
+    .control {
+      min-width: 0;
+      padding: 14px;
+      background: var(--panel-2);
+    }
+    .control label, .control .label { display: block; margin-bottom: 7px; font: 11px var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+    .control select, .control input[type="range"] { width: 100%; }
+    select {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      color: var(--ink);
+      padding: 7px 9px;
+    }
+    input[type="range"] { accent-color: var(--signal); }
+
+    .action {
+      border: 1px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--ink);
+      color: var(--paper);
+      padding: 10px 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .action:hover { background: var(--signal); color: #061b1e; border-color: var(--signal); }
+
+    .mac-catalog { margin: 0 0 24px; }
+    .catalog-layout { display: grid; grid-template-columns: minmax(300px, .4fr) minmax(0, .6fr); gap: 16px; }
+    .catalog-summary { min-width: 0; }
+    .catalog-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .catalog-actions .mini-button { min-height: 40px; }
+    .catalog-table { margin: 0; max-height: 420px; overflow: auto; }
+    .catalog-table table { min-width: 720px; }
+    .catalog-table th { top: 0; }
+    .catalog-table tr[aria-current="true"] td { background: var(--signal-soft); }
+    .catalog-table button { min-height: 30px; }
+
+    .builder { margin: 0 0 24px; border-top: 5px solid var(--signal); }
+    .builder-controls { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .builder-layout { display: grid; grid-template-columns: minmax(300px, .38fr) minmax(0, .62fr); gap: 16px; }
+    .builder-verdict { min-width: 0; }
+    .builder-verdict h4 { margin: 8px 0 5px; font-size: 27px; letter-spacing: -.035em; }
+    .builder-verdict p { margin: 0; color: var(--muted); }
+    .builder-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+    .builder-actions button { min-height: 44px; }
+    .derived-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--line); background: var(--line); }
+    .derived-cell { min-width: 0; padding: 12px; background: var(--paper); }
+    .derived-cell span { display: block; font: 10px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .derived-cell strong { display: block; margin-top: 4px; overflow-wrap: anywhere; }
+    .build-flags { display: grid; gap: 8px; margin-top: 12px; }
+    .build-flag { padding: 10px 12px; border-left: 4px solid var(--signal); background: var(--signal-soft); color: var(--muted); }
+    .build-flag.warn { border-color: var(--amber); background: var(--amber-soft); }
+    .build-flag.stop { border-color: var(--danger); background: var(--danger-soft); }
+    .build-flag strong { color: var(--ink); }
+
+    .setup-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .setup-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 320px;
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--line);
+      background: var(--panel-2);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease;
+    }
+    .setup-card:hover { transform: translateY(-3px); border-color: var(--signal); }
+    .setup-card.selected { border-color: var(--signal); border-top-color: var(--signal); }
+    .setup-kicker { font: 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+    .setup-card h3 { margin: 20px 0 4px; font-size: 23px; letter-spacing: -.03em; }
+    .setup-card .sub { min-height: 44px; color: var(--muted); }
+    .cap-block { margin: 16px 0 12px; border: 1px solid var(--line); }
+    .cap-head { padding: 7px 10px; border-bottom: 1px solid var(--line); font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .cap-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+    .cap-row:last-child { border-bottom: 0; }
+    .cap-row span { font: 11px var(--mono); color: var(--muted); }
+    .cap-row strong { font: 700 15px var(--mono); }
+    .cap-row.active { background: var(--signal-soft); }
+    .cap-row.active span { color: var(--ink); }
+    .cap-none { color: var(--danger); font-weight: 400; }
+    .cap-note { margin-bottom: 14px; font-size: 13px; color: var(--muted); }
+    .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; margin: 16px 0; background: var(--line); border: 1px solid var(--line); }
+    .metric { padding: 9px; background: var(--paper); }
+    .metric span { display: block; font: 10px var(--mono); color: var(--muted); text-transform: uppercase; }
+    .metric strong { display: block; margin-top: 3px; font-size: 14px; }
+    .setup-card ul { margin: 0 0 18px; padding-left: 18px; color: var(--muted); }
+    .card-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .fit { font: 11px var(--mono); color: var(--signal); }
+    .mini-button { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 7px 9px; cursor: pointer; }
+    .mini-button:hover { border-color: var(--signal); }
+
+    .compare-wrap { overflow-x: auto; margin: 30px 0; border: 1px solid var(--line); }
+    table { width: 100%; min-width: 920px; border-collapse: collapse; background: var(--panel-2); }
+    th, td { padding: 12px 13px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { position: sticky; top: 58px; background: var(--panel); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    tr:last-child td { border-bottom: 0; }
+
+    .deploy-layout { display: grid; grid-template-columns: minmax(280px, .38fr) minmax(0, .62fr); gap: 16px; }
+    .cluster-layout { display: grid; grid-template-columns: minmax(300px, .36fr) minmax(0, .64fr); gap: 16px; }
+    .panel { border: 1px solid var(--line); background: var(--panel-2); box-shadow: var(--shadow); }
+    .panel-head { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+    .panel-head h3 { margin: 0; font-size: 17px; }
+    .panel-body { padding: 16px; }
+    .fit-banner { padding: 13px; border-left: 5px solid var(--signal); background: var(--signal-soft); margin-bottom: 15px; }
+    .fit-banner.warn { border-color: var(--amber); background: var(--amber-soft); }
+    .fit-banner.stop { border-color: var(--danger); background: var(--danger-soft); }
+    .fit-banner strong { display: block; margin-bottom: 3px; }
+    .fit-banner p { margin: 0; color: var(--muted); }
+
+    .memory-bar { height: 18px; display: flex; overflow: hidden; border: 1px solid var(--line); background: var(--paper); }
+    .memory-seg { height: 100%; transition: width .2s ease; }
+    .memory-seg.weights { background: var(--signal); }
+    .memory-seg.context { background: var(--amber); }
+    .memory-seg.reserve { background: var(--line); }
+    .legend { display: flex; flex-wrap: wrap; gap: 13px; margin: 9px 0 20px; font: 11px var(--mono); color: var(--muted); }
+    .legend i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; }
+
+    .roster-intro { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+    .roster-rows { display: grid; gap: 8px; }
+    .roster-row {
+      display: grid;
+      grid-template-columns: minmax(90px, .9fr) minmax(120px, 1.3fr) 78px 74px 62px auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+    .roster-row input, .roster-row select { min-width: 0; }
+    .roster-role { font: 11px var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+    .roster-need { font: 700 13px var(--mono); text-align: right; }
+    .roster-drop { border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; padding: 4px 8px; font: 11px var(--mono); }
+    .roster-drop:hover { color: var(--danger); border-color: var(--danger); }
+    .roster-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 12px 0 14px; }
+    .lane-map { display: grid; gap: 6px; margin-top: 14px; }
+    .lane-bar { display: grid; grid-template-columns: 88px minmax(0, 1fr) 96px; gap: 10px; align-items: center; }
+    .lane-bar > span:first-child { font: 10px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .lane-track { height: 16px; background: var(--line); display: flex; gap: 1px; overflow: hidden; }
+    .lane-fill { background: var(--signal); }
+    .lane-fill.over { background: var(--danger); }
+    .lane-free { background: var(--panel); flex: 1 1 auto; }
+    .lane-bar > span:last-child { font: 11px var(--mono); text-align: right; color: var(--muted); }
+    .lanes { display: grid; gap: 8px; }
+    .lane {
+      display: grid;
+      grid-template-columns: minmax(90px, .24fr) 24px minmax(0, .76fr);
+      gap: 8px;
+      align-items: stretch;
+    }
+    .hardware-node, .worker-node { padding: 11px; border: 1px solid var(--line); background: var(--paper); }
+    .hardware-node { font: 12px var(--mono); }
+    .worker-node strong { display: block; }
+    .worker-node span { color: var(--muted); font-size: 13px; }
+    .wire { position: relative; }
+    .wire::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px solid var(--signal); }
+    .wire::after { content: "›"; position: absolute; right: -1px; top: 50%; transform: translateY(-57%); color: var(--signal); font-size: 19px; }
+    .worker-node.primary { border-left: 5px solid var(--signal); }
+    .worker-node.support { border-left: 5px solid var(--amber); }
+    .worker-node.cloud { border-left: 5px solid var(--danger); }
+
+    .topology {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(110px, 1fr));
+      gap: 10px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, transparent 49.7%, color-mix(in srgb, var(--signal) 30%, transparent) 50%, transparent 50.3%),
+        var(--paper);
+    }
+    .cluster-node {
+      position: relative;
+      z-index: 1;
+      min-height: 108px;
+      padding: 12px;
+      border: 1px solid var(--signal);
+      border-top-width: 4px;
+      background: var(--panel-2);
+    }
+    .cluster-node span { display: block; font: 10px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .cluster-node strong { display: block; margin: 9px 0 4px; font-size: 15px; }
+    .cluster-node small { color: var(--muted); }
+    .cluster-node.cuda { border-color: var(--amber); }
+    .cluster-node.judge { border-color: var(--danger); background: var(--danger-soft); }
+    .cluster-callout { margin-top: 12px; padding: 12px; border: 1px dashed var(--line); color: var(--muted); }
+    .cluster-callout strong { color: var(--ink); }
+    .cluster-action { width: 100%; margin-top: 14px; min-height: 44px; }
+    .mix-builder { margin-bottom: 20px; }
+    .mix-rows { display: grid; gap: 8px; }
+    .mix-row { display: grid; grid-template-columns: minmax(220px, 1fr) 110px auto; gap: 8px; align-items: end; padding: 10px; border: 1px solid var(--line); background: var(--paper); }
+    .mix-row label { display: block; margin-bottom: 6px; font: 10px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .mix-row select, .mix-row input { width: 100%; min-height: 38px; }
+    .mix-row input { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); color: var(--ink); padding: 7px 9px; }
+    .mix-row .mini-button { min-height: 38px; }
+    .mix-builder-foot { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-top: 10px; color: var(--muted); }
+
+    .maturity-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 20px; }
+    .maturity-card { padding: 14px; border: 1px solid var(--line); border-top: 4px solid var(--verified); background: var(--panel-2); }
+    .maturity-card.conditional { border-top-color: var(--amber); }
+    .maturity-card.experimental { border-top-color: var(--danger); }
+    .maturity-card strong { display: block; margin: 8px 0 4px; }
+    .maturity-card p { margin: 0; color: var(--muted); font-size: 13px; }
+    .status-pill { display: inline-block; padding: 3px 7px; border: 1px solid currentColor; color: var(--verified); font: 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    .conditional .status-pill { color: var(--amber); }
+    .experimental .status-pill { color: var(--danger); }
+
+    .phase-flow { display: grid; grid-template-columns: minmax(130px, 1fr) 28px minmax(150px, .8fr) 28px minmax(130px, 1fr); gap: 8px; align-items: stretch; }
+    .phase-node, .transfer-node { min-height: 144px; padding: 14px; border: 1px solid var(--line); background: var(--paper); }
+    .phase-node { border-top: 5px solid var(--signal); }
+    .phase-node.decode { border-top-color: var(--amber); }
+    .phase-node span, .transfer-node span { display: block; font: 10px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .09em; }
+    .phase-node strong, .transfer-node strong { display: block; margin: 13px 0 6px; font-size: 17px; }
+    .phase-node small, .transfer-node small { color: var(--muted); }
+    .transfer-node { border-style: dashed; }
+    .phase-arrow { position: relative; min-height: 40px; }
+    .phase-arrow::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px solid var(--signal); }
+    .phase-arrow::after { content: "›"; position: absolute; right: -1px; top: 50%; transform: translateY(-57%); color: var(--signal); font-size: 21px; }
+    .evidence-note { margin-top: 16px; padding: 14px; border-left: 5px solid var(--amber); background: var(--amber-soft); }
+    .evidence-note p { margin: 4px 0 0; color: var(--muted); }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+
+    .recipe { margin-top: 16px; border: 1px solid var(--line); background: #0d1519; color: #d7e2e5; }
+    .recipe-head { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border-bottom: 1px solid #34464e; font: 11px var(--mono); color: #9eb1b8; }
+    pre { margin: 0; padding: 14px; overflow: auto; font: 12px/1.55 var(--mono); white-space: pre-wrap; }
+
+    .model-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--line); background: var(--line); margin: 34px 0; }
+    .model-cell { padding: 15px; background: var(--panel-2); }
+    .model-cell strong { display: block; margin: 6px 0; }
+    .model-cell p { margin: 0; color: var(--muted); font-size: 13px; }
+    .model-tag { font: 10px var(--mono); color: var(--signal); text-transform: uppercase; letter-spacing: .1em; }
+
+    .notes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 34px 0 64px; border-top: 1px solid var(--line); }
+    .notes h2 { margin: 0 0 10px; font-size: 24px; }
+    .notes p, .notes li { color: var(--muted); }
+    .notes ul { padding-left: 20px; }
+    footer { padding: 18px 0 32px; border-top: 1px solid var(--line); color: var(--muted); font: 11px var(--mono); }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 1100px) {
+      .setup-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .control-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .model-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .phase-flow { grid-template-columns: 1fr; }
+      .catalog-layout { grid-template-columns: 1fr; }
+      .builder-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .builder-layout { grid-template-columns: 1fr; }
+      .phase-arrow { height: 22px; min-height: 22px; }
+      .phase-arrow::before { left: 16px; right: auto; top: 0; bottom: 0; border-top: 0; border-left: 2px solid var(--signal); }
+      .phase-arrow::after { left: 10px; right: auto; top: auto; bottom: -8px; transform: rotate(90deg); }
+    }
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 20px, 1440px); }
+      .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 46px; }
+      .mode-tab { min-width: 0; flex: 1; min-height: 48px; }
+      .topbar-inner { flex-wrap: wrap; gap: 10px; padding-top: 10px; padding-bottom: 10px; }
+      .model-picker select { max-width: 150px; }
+      .section-head { display: block; }
+      .control-strip, .setup-grid, .deploy-layout, .cluster-layout, .model-strip, .notes, .maturity-grid { grid-template-columns: 1fr; }
+      .builder-controls, .derived-grid { grid-template-columns: 1fr; }
+      .mix-row { grid-template-columns: 1fr; }
+      .setup-card { min-height: 0; }
+      .topology { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .lane { grid-template-columns: 1fr; }
+      .roster-row { grid-template-columns: 1fr 1fr; }
+      .lane-bar { grid-template-columns: 70px minmax(0,1fr); }
+      .lane-bar > span:last-child { grid-column: 2; text-align: left; }
+      .wire { height: 16px; }
+      .wire::before { left: 12px; right: auto; top: 0; bottom: 0; border-top: 0; border-left: 2px solid var(--signal); }
+      .wire::after { left: 6px; right: auto; top: auto; bottom: -7px; transform: rotate(90deg); }
+      th { top: 58px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-org">Explore Failure</span><span class="brand-sep" aria-hidden="true">/</span><span class="brand-tool">Harness Planner</span><span class="status-live">Aug 2026</span></div>
+      <div class="topbar-tools">
+        <label class="model-picker">
+          <span class="model-picker-label">Model</span>
+          <select id="modelSelect" aria-label="Model to plan for"></select>
+        </label>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme">Light mode</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="classification-strip">Independent research lab</div>
+        <div class="eyebrow">Local coding systems / field instrument</div>
+        <h1>Buy the machine.<br>Route the models.</h1>
+        <p>Compare realistic local-AI builds, then turn the winning hardware into a coding harness for the model you pick — with explicit workers, memory limits, and escalation paths.</p>
+      </div>
+      <aside class="release-card" aria-label="Selected model">
+        <span class="eyebrow">Local flagship</span>
+        <strong id="flagshipName">Qwen3.8-27B</strong>
+        <p id="flagshipDesc"></p>
+        <div class="model-meta" id="flagshipMeta"></div>
+      </aside>
+      <span class="specimen-label">One-person research lab / Est. 2026</span>
+    </section>
+
+    <nav class="mode-nav" aria-label="Planner mode" role="tablist">
+      <button class="mode-tab" id="buyTab" role="tab" aria-selected="true" aria-controls="buyView">01 / Buy</button>
+      <button class="mode-tab" id="deployTab" role="tab" aria-selected="false" aria-controls="deployView">02 / Deploy</button>
+      <button class="mode-tab" id="clusterTab" role="tab" aria-selected="false" aria-controls="clusterView">03 / Cluster</button>
+      <button class="mode-tab" id="mixTab" role="tab" aria-selected="false" aria-controls="mixView">04 / Mix</button>
+      <button class="mode-tab" id="splitTab" role="tab" aria-selected="false" aria-controls="splitView">05 / Phase split</button>
+    </nav>
+
+    <section class="view" id="buyView" role="tabpanel" aria-labelledby="buyTab">
+      <div class="section-head">
+        <div><div class="eyebrow">Question one</div><h2>What should you build?</h2></div>
+        <p>Each build reports what it can actually host at the precision and context you pick. Counts are memory arithmetic, not a ranking.</p>
+      </div>
+
+      <div class="control-strip" aria-label="Capability assumptions">
+        <div class="control">
+          <label for="buyQuant">Precision</label>
+          <select id="buyQuant">
+            <option value="q4" selected>Q4 balanced</option>
+            <option value="q8">Q8 quality</option>
+            <option value="bf16">BF16 reference</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="buyContext">Working context</label>
+          <select id="buyContext">
+            <option value="16">16K</option>
+            <option value="32" selected>32K</option>
+            <option value="64">64K</option>
+            <option value="128">128K</option>
+          </select>
+        </div>
+        <div class="control">
+          <span class="label">Memory per worker</span>
+          <strong id="buyWorkerCost">20 GB</strong><br><span style="color:var(--muted)" id="buyWorkerCostDetail">16GB weights + 4GB context reserve</span>
+        </div>
+        <div class="control">
+          <span class="label">Reading rule</span>
+          <strong>Counts are estimates</strong><br><span style="color:var(--muted)">Memory arithmetic only. Backend choice, multimodal input, and preserved thinking all raise real use.</span>
+        </div>
+      </div>
+
+      <section class="panel mac-catalog" aria-labelledby="macCatalogTitle">
+        <div class="panel-head"><h3 id="macCatalogTitle">Mac configuration catalog</h3><span class="eyebrow" id="macCatalogCount">47 profiles / Neo excluded</span></div>
+        <div class="panel-body">
+          <div class="control-strip" aria-label="Mac catalog controls">
+            <div class="control"><label for="macFamily">Mac family</label><select id="macFamily"></select></div>
+            <div class="control"><label for="macProfile">Exact configuration</label><select id="macProfile"></select></div>
+            <div class="control"><span class="label">Catalog scope</span><strong>Chip + GPU + memory</strong><br><span style="color:var(--muted)">Storage, finish, and duplicate screen sizes are collapsed.</span></div>
+            <div class="control"><span class="label">Selection rule</span><strong id="macCatalogRole">Best decode candidate</strong><br><span style="color:var(--muted)" id="macCatalogRule">Use the strongest machine only where its bandwidth changes the experiment.</span></div>
+          </div>
+          <div class="catalog-layout">
+            <div class="catalog-summary">
+              <div class="fit-banner" id="macCatalogBanner"><strong id="macCatalogName">Mac Studio M3 Ultra</strong><p id="macCatalogNote"></p></div>
+              <div class="metrics">
+                <div class="metric"><span>Planning memory</span><strong id="macCatalogMemory">232 / 256 GB</strong></div>
+                <div class="metric"><span>Memory bandwidth</span><strong id="macCatalogBandwidth">819 GB/s</strong></div>
+                <div class="metric"><span id="macCatalogFitLabel">Model fit</span><strong id="macCatalogFit">Comfortable</strong></div>
+                <div class="metric"><span>Phase-split class</span><strong id="macCatalogClass">Best match</strong></div>
+              </div>
+              <div class="catalog-actions" aria-label="Use selected Mac configuration">
+                <button class="action" id="macToDeploy" type="button">Use in Deploy →</button>
+                <button class="mini-button" id="macToCluster" type="button">Build a cluster</button>
+                <button class="mini-button" id="macToMix" type="button">Add to Mix</button>
+                <button class="mini-button" id="macToSplit" type="button">Try phase split</button>
+              </div>
+            </div>
+            <div class="compare-wrap catalog-table">
+              <table aria-label="Selected Mac family configurations">
+                <thead><tr><th>Configuration</th><th>Usable</th><th>Bandwidth</th><th>Fit</th><th></th></tr></thead>
+                <tbody id="macCatalogBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel builder" aria-labelledby="epycBuilderTitle">
+        <div class="panel-head">
+          <h3 id="epycBuilderTitle">EPYC / GPU Build Designer</h3>
+          <span class="eyebrow">Payload first / host derived</span>
+        </div>
+        <div class="panel-body">
+          <div class="control-strip builder-controls" aria-label="EPYC build controls">
+            <div class="control"><label for="epycGpu">GPU payload</label><select id="epycGpu"></select></div>
+            <div class="control"><label for="epycGpuCount">GPU count</label><select id="epycGpuCount"></select></div>
+            <div class="control"><label for="epycHost">Reference platform</label><select id="epycHost"></select></div>
+            <div class="control"><label for="epycCpu">CPU override</label><select id="epycCpu"></select></div>
+            <div class="control"><label for="epycRam">System RAM</label><select id="epycRam"></select></div>
+          </div>
+
+          <div class="builder-layout">
+            <div class="builder-verdict">
+              <div class="fit-banner" id="epycBuildBanner">
+                <span class="eyebrow" id="epycConfidence">Derived reference</span>
+                <h4 id="epycBuildName">4× RTX 3090 · SP3 value workstation</h4>
+                <p id="epycBuildSummary"></p>
+              </div>
+              <div class="build-flags" id="epycBuildFlags" aria-live="polite"></div>
+              <div class="builder-actions">
+                <button class="action" id="saveEpycBuild" type="button">Save build to planner →</button>
+                <button class="mini-button" id="resetEpycBuild" type="button">Reset to value build</button>
+              </div>
+            </div>
+
+            <div class="derived-grid" aria-label="Derived build specifications">
+              <div class="derived-cell"><span>CPU</span><strong id="epycSpecCpu"></strong></div>
+              <div class="derived-cell"><span>GPU memory</span><strong id="epycSpecVram"></strong></div>
+              <div class="derived-cell"><span>PCIe topology</span><strong id="epycSpecPcie"></strong></div>
+              <div class="derived-cell"><span>System memory</span><strong id="epycSpecRam"></strong></div>
+              <div class="derived-cell"><span>Board / system</span><strong id="epycSpecBoard"></strong></div>
+              <div class="derived-cell"><span>Chassis</span><strong id="epycSpecChassis"></strong></div>
+              <div class="derived-cell"><span>Estimated draw</span><strong id="epycSpecPower"></strong></div>
+              <div class="derived-cell"><span>PSU target</span><strong id="epycSpecPsu"></strong></div>
+              <div class="derived-cell"><span>Electrical class</span><strong id="epycSpecCircuit"></strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="setup-grid" id="setupGrid" aria-label="Hardware choices"></div>
+
+      <div class="compare-wrap">
+        <table>
+          <caption class="sr-only">Comparison of local AI hardware setups</caption>
+          <thead><tr><th>Setup</th><th>Investment</th><th>Usable model memory</th><th>Q4 workers</th><th>Q8 workers</th><th>BF16 workers</th><th>Noise / power</th><th>Notes</th></tr></thead>
+          <tbody id="compareBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" id="deployView" role="tabpanel" aria-labelledby="deployTab" hidden>
+      <div class="section-head">
+        <div><div class="eyebrow">Question two</div><h2>How should it work?</h2></div>
+        <p>Choose a machine and experiment. The planner assigns a flagship, supporting workers, and an optional cloud judge.</p>
+      </div>
+
+      <div class="control-strip" aria-label="Deployment controls">
+        <div class="control"><label for="deploySetup">Hardware</label><select id="deploySetup"></select></div>
+        <div class="control">
+          <label for="experiment">Experiment</label>
+          <select id="experiment">
+            <option value="coding">Daily coding loop</option>
+            <option value="repo">Deep repository task</option>
+            <option value="ab">Harness A/B test</option>
+            <option value="swarm">Parallel attempt swarm</option>
+            <option value="vision">Visual coding / browser task</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="quant">Precision</label>
+          <select id="quant">
+            <option value="q4">Q4 balanced</option>
+            <option value="q8">Q8 quality</option>
+            <option value="bf16">BF16 reference</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="context">Working context</label>
+          <select id="context">
+            <option value="16">16K</option>
+            <option value="32" selected>32K</option>
+            <option value="64">64K</option>
+            <option value="128">128K</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="deploy-layout">
+        <section class="panel">
+          <div class="panel-head"><h3>Fit report</h3><span class="eyebrow" id="fitCode">FIT / 01</span></div>
+          <div class="panel-body">
+            <div class="fit-banner" id="fitBanner"><strong id="fitTitle">Comfortable fit</strong><p id="fitText"></p></div>
+            <div class="eyebrow">Per primary worker</div>
+            <div class="memory-bar" aria-label="Estimated memory allocation">
+              <span class="memory-seg weights" id="weightBar"></span><span class="memory-seg context" id="contextBar"></span><span class="memory-seg reserve" id="reserveBar"></span>
+            </div>
+            <div class="legend"><span><i style="background:var(--signal)"></i>weights</span><span><i style="background:var(--amber)"></i>context/runtime</span><span><i style="background:var(--line)"></i>headroom</span></div>
+            <div class="metrics">
+              <div class="metric"><span>Weight estimate</span><strong id="weightMetric">16 GB</strong></div>
+              <div class="metric"><span>Context reserve</span><strong id="contextMetric">4 GB</strong></div>
+              <div class="metric"><span>Primary copies</span><strong id="copyMetric">4</strong></div>
+              <div class="metric"><span>Reasoning mode</span><strong id="reasonMetric">Medium</strong></div>
+            </div>
+            <p style="color:var(--muted);margin-bottom:0">Weights are measured artifact sizes; the context reserve is computed from the model's own attention config. Multimodal input, backend choice, and preserved thinking can raise memory use.</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h3>Model roster</h3><span class="eyebrow" id="rosterVerdict">—</span></div>
+          <div class="panel-body">
+            <p class="roster-intro">Assign a model to each job, then pack them onto the machine together. Memory pools only where the hardware actually pools it.</p>
+            <div class="roster-rows" id="rosterRows"></div>
+            <div class="roster-actions">
+              <button class="mini-button" id="addRosterRow" type="button">+ Add a role</button>
+              <span class="eyebrow" id="rosterTotal"></span>
+            </div>
+            <div class="fit-banner" id="rosterBanner"><strong id="rosterTitle"></strong><p id="rosterText"></p></div>
+            <div class="lane-map" id="laneMap"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h3>Worker routing</h3><span class="eyebrow" id="routeLabel">Coding loop</span></div>
+          <div class="panel-body">
+            <div class="lanes" id="lanes"></div>
+            <div class="recipe">
+              <div class="recipe-head"><span>HARNESS BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copyRecipe" type="button">Copy</button></div>
+              <pre id="recipeText"></pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="clusterView" role="tabpanel" aria-labelledby="clusterTab" hidden>
+      <div class="section-head">
+        <div><div class="eyebrow">Question three</div><h2>What should the cluster do?</h2></div>
+        <p>Build a quiet Mac swarm or a CUDA Spark cluster. Aggregate memory is shown separately from per-node memory because those numbers answer different questions.</p>
+      </div>
+
+      <div class="control-strip" aria-label="Cluster controls">
+        <div class="control">
+          <label for="clusterFamily">Node family</label>
+          <select id="clusterFamily">
+            <option value="mac:studio_m4max_16c40g_128" selected>Mac Studio M4 Max · 16CPU/40GPU · 128GB</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="clusterCount">Node count</label>
+          <input id="clusterCount" type="range" min="2" max="8" value="2" step="1">
+          <output id="clusterCountOut" for="clusterCount">2 nodes</output>
+        </div>
+        <div class="control">
+          <label for="clusterStrategy">Topology strategy</label>
+          <select id="clusterStrategy">
+            <option value="replicas" selected>Independent replicas</option>
+            <option value="mixed">Workers + local judge</option>
+            <option value="distributed">Distributed single model</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="clusterQuant">Precision</label>
+          <select id="clusterQuant">
+            <option value="q4">Q4 balanced</option>
+            <option value="q8" selected>Q8 quality</option>
+            <option value="bf16">BF16 reference</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="cluster-layout">
+        <section class="panel">
+          <div class="panel-head"><h3>Cluster envelope</h3><span class="eyebrow" id="clusterBackend">MLX / JACCL</span></div>
+          <div class="panel-body">
+            <div class="fit-banner" id="clusterBanner"><strong id="clusterTitle">Replica swarm recommended</strong><p id="clusterText"></p></div>
+            <div class="metrics">
+              <div class="metric"><span>Aggregate usable memory</span><strong id="clusterMemory">224 GB</strong></div>
+              <div class="metric"><span>Per node</span><strong id="clusterPerNode">112 GB</strong></div>
+              <div class="metric"><span>Primary replicas</span><strong id="clusterReplicas">6</strong></div>
+              <div class="metric"><span>Interconnect</span><strong id="clusterNetwork">TB5 / 10GbE</strong></div>
+            </div>
+            <div class="cluster-callout" id="clusterCaveat"><strong>Memory rule:</strong> aggregate memory is directly useful for replicas. A single model can use it only through a compatible distributed backend, with communication overhead.</div>
+            <button class="action cluster-action" id="deployCluster" type="button">Use this cluster in Deploy →</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h3>Node topology</h3><span class="eyebrow" id="clusterTopologyLabel">2-node replica pool</span></div>
+          <div class="panel-body">
+            <div class="topology" id="clusterNodes" aria-label="Cluster node topology"></div>
+            <div class="recipe">
+              <div class="recipe-head"><span>CLUSTER BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copyCluster" type="button">Copy</button></div>
+              <pre id="clusterRecipe"></pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="mixView" role="tabpanel" aria-labelledby="mixTab" hidden>
+      <div class="section-head">
+        <div><div class="eyebrow">Question four</div><h2>How should the islands mix?</h2></div>
+        <p>Compose a heterogeneous harness from quiet MLX nodes and CUDA Sparks. The router shares work and evidence—not physical memory—between platform islands.</p>
+      </div>
+
+      <div class="maturity-grid" aria-label="Mixed cluster operating modes">
+        <article class="maturity-card"><span class="status-pill">Dependable default</span><strong>Whole-request routing</strong><p>Every Mac or Spark runs a complete endpoint. The harness sends each coding task to the cheapest capable node.</p></article>
+        <article class="maturity-card conditional"><span class="status-pill">Backend-specific</span><strong>Capacity sharding</strong><p>Split one model only within a compatible MLX or CUDA island. Networking and synchronization determine whether it helps.</p></article>
+        <article class="maturity-card experimental"><span class="status-pill">Research path</span><strong>Spark prefill → Mac decode</strong><p>EXO demonstrated the phase match, but the public accelerated Metal + CUDA path is not turnkey for Qwen3.8.</p><button class="mini-button" id="openSplit" type="button" style="margin-top:10px">Open phase-split lab →</button></article>
+      </div>
+
+      <section class="panel mix-builder" aria-labelledby="mixBuilderTitle">
+        <div class="panel-head"><h3 id="mixBuilderTitle">Pool composition</h3><span class="eyebrow">Exact profiles</span></div>
+        <div class="panel-body">
+          <div class="mix-rows" id="mixRows"></div>
+          <div class="mix-builder-foot"><span>Combine any Mac configurations with DGX Spark. Memory remains local to each node.</span><button class="mini-button" id="addMixRow" type="button">+ Add profile</button></div>
+        </div>
+      </section>
+
+      <div class="control-strip" aria-label="Mixed pool policy">
+        <div class="control"><label for="mixStrategy">Harness policy</label><select id="mixStrategy"><option value="replicas">All nodes run workers</option><option value="mixed" selected>Workers + strongest-node judge</option></select></div>
+        <div class="control"><label for="mixQuant">Precision</label><select id="mixQuant"><option value="q4">Q4 balanced</option><option value="q8" selected>Q8 quality</option><option value="bf16">BF16 reference</option></select></div>
+        <div class="control"><label for="mixContext">Working context</label><select id="mixContext"><option value="16">16K</option><option value="32" selected>32K</option><option value="64">64K</option><option value="128">128K</option></select></div>
+        <div class="control"><span class="label">Federation rule</span><strong>Endpoints, not pooled RAM</strong><br><span style="color:var(--muted)">Route by capability; merge results at the harness layer.</span></div>
+      </div>
+
+      <div class="cluster-layout">
+        <section class="panel">
+          <div class="panel-head"><h3>Federated envelope</h3><span class="eyebrow">MLX + CUDA</span></div>
+          <div class="panel-body">
+            <div class="fit-banner" id="mixBanner"><strong id="mixTitle">Role-based federation</strong><p id="mixText"></p></div>
+            <div class="metrics">
+              <div class="metric"><span>Aggregate usable memory</span><strong id="mixMemory">304 GB</strong></div>
+              <div class="metric"><span>Total nodes</span><strong id="mixNodesMetric">4</strong></div>
+              <div class="metric"><span>Primary workers</span><strong id="mixReplicas">7</strong></div>
+              <div class="metric"><span>Execution islands</span><strong id="mixPlatforms">MLX + CUDA</strong></div>
+            </div>
+            <div class="cluster-callout" id="mixCaveat"><strong>Architecture rule:</strong> expose every node through a common API and let the router assign work. Keep tensor-parallel jobs inside one compatible platform family.</div>
+            <button class="action cluster-action" id="deployMix" type="button">Use this mixed pool in Deploy →</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h3>Federated topology</h3><span class="eyebrow" id="mixTopologyLabel">4 nodes / 2 islands</span></div>
+          <div class="panel-body">
+            <div class="topology" id="mixNodes" aria-label="Mixed cluster node topology"></div>
+            <div class="recipe">
+              <div class="recipe-head"><span>FEDERATION BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copyMix" type="button">Copy</button></div>
+              <pre id="mixRecipe"></pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="splitView" role="tabpanel" aria-labelledby="splitTab" hidden>
+      <div class="section-head">
+        <div><div class="eyebrow">Question five</div><h2>Should Spark prefill for a Mac?</h2></div>
+        <p>Model the EXO-style phase split without treating a vendor Llama benchmark as a Qwen forecast. This is an experiment planner, not a purchase promise.</p>
+      </div>
+
+      <div class="maturity-grid" aria-label="Phase split evidence status">
+        <article class="maturity-card"><span class="status-pill">Demonstrated</span><strong>The phase match is real</strong><p>EXO measured Spark prefill plus M3 Ultra decode over 10GbE on Llama 3.1 8B FP16.</p></article>
+        <article class="maturity-card conditional"><span class="status-pill">Partially public</span><strong>Control plumbing exists</strong><p>Public EXO contains prefill/decode routing, but stock Linux execution remains CPU-only.</p></article>
+        <article class="maturity-card experimental"><span class="status-pill">Unverified</span><strong id="splitAccelPath">Accelerated path</strong><p>No public stock recipe or benchmark was found. Hybrid model state makes correctness testing mandatory.</p></article>
+      </div>
+
+      <div class="control-strip" aria-label="Phase split controls">
+        <div class="control"><label for="splitSparks">Prefill Sparks</label><select id="splitSparks"><option value="1" selected>1× DGX Spark</option><option value="2">2× DGX Spark island</option></select></div>
+        <div class="control"><label for="splitDecode">Decode machine</label><select id="splitDecode"><option value="studio_m3ultra_32c80g_256" selected>Mac Studio M3 Ultra · 32CPU/80GPU · 256GB</option></select></div>
+        <div class="control"><label for="splitNetwork">Cross-platform link</label><select id="splitNetwork"><option value="10" selected>10Gb Ethernet</option><option value="1">1Gb Ethernet</option></select></div>
+        <div class="control"><label for="splitPrompt">Typical input prompt</label><select id="splitPrompt"><option value="4">4K tokens</option><option value="8" selected>8K tokens</option><option value="16">16K tokens</option><option value="32">32K tokens</option><option value="64">64K tokens</option></select></div>
+      </div>
+
+      <div class="cluster-layout">
+        <section class="panel">
+          <div class="panel-head"><h3>Experiment gate</h3><span class="eyebrow" id="splitGateCode">RESEARCH / GO</span></div>
+          <div class="panel-body">
+            <div class="fit-banner warn" id="splitBanner"><strong id="splitTitle">Strongest research pairing</strong><p id="splitText"></p></div>
+            <div class="metrics">
+              <div class="metric"><span>Runtime status</span><strong id="splitRuntime">Experimental fork</strong></div>
+              <div class="metric"><span>Planning memory</span><strong id="splitMemory">≈232 GB usable</strong></div>
+              <div class="metric"><span>Decode bandwidth</span><strong id="splitBandwidth">819 GB/s</strong></div>
+              <div class="metric"><span>Cross-platform link</span><strong id="splitNetworkMetric">10GbE</strong></div>
+              <div class="metric"><span>Candidate class</span><strong id="splitCandidate">Best match</strong></div>
+              <div class="metric"><span>Promotion rule</span><strong id="splitPromotion">Correct + faster</strong></div>
+            </div>
+            <div class="cluster-callout" id="splitCaveat"><strong>State-transfer rule:</strong> transfer and validate every recurrent, convolutional, and attention state—not only a conventional KV cache.</div>
+            <div class="evidence-note"><strong>What EXO measured—not a Qwen estimate</strong><p>Spark prefill 1.47s + M3 Ultra generation 0.85s = 2.32s total on Llama 3.1 8B FP16, with 8,192 input tokens and 32 output tokens. That was 2.8× faster than the Mac-only total in the reported test.</p></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h3>Phase topology</h3><span class="eyebrow" id="splitTopologyLabel">1 Spark → 1 Mac</span></div>
+          <div class="panel-body">
+            <div class="phase-flow" aria-label="Prefill and decode phase topology">
+              <article class="phase-node"><span>Phase 01 / CUDA</span><strong id="splitPrefillNode">DGX Spark</strong><small>Process the long input prompt and produce model state.</small></article>
+              <div class="phase-arrow" aria-hidden="true"></div>
+              <article class="transfer-node"><span>State handoff</span><strong id="splitTransferNode">10GbE</strong><small id="splitTransferText">Overlap layer-state transfer with later prefill computation.</small></article>
+              <div class="phase-arrow" aria-hidden="true"></div>
+              <article class="phase-node decode"><span>Phase 02 / MLX</span><strong id="splitDecodeNode">M3 Ultra Studio</strong><small>Generate output tokens on the higher-bandwidth decode node.</small></article>
+            </div>
+            <div class="recipe">
+              <div class="recipe-head"><span>EXPERIMENT BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copySplit" type="button">Copy</button></div>
+              <pre id="splitRecipe"></pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="model-strip" aria-label="Suggested model roles">
+      <article class="model-cell"><span class="model-tag">Fast worker</span><strong>Qwen3.5-9B</strong><p>Repository scout, test writer, summarizer, and router for memory-limited machines.</p></article>
+      <article class="model-cell"><span class="model-tag">Efficient agent</span><strong>Qwen3.6-35B-A3B</strong><p>MoE alternative when you want low active compute but can afford the full quantized weights.</p></article>
+      <article class="model-cell"><span class="model-tag">Local flagship</span><strong id="stripFlagship">Qwen3.8-27B</strong><p>Main coder, reviewer, visual agent, and long-horizon experiment subject.</p></article>
+      <article class="model-cell"><span class="model-tag">Escalation</span><strong>Qwen3.8 Max / 2.4T</strong><p>Cloud judge or hard-task fallback. Not a plausible single-rack local target.</p></article>
+    </section>
+
+    <section class="notes">
+      <div>
+        <h2>How to read these numbers</h2>
+        <ul>
+          <li>A 24GB device is the natural unit for one Q4 worker of a ~27B model at modest context; the selected model changes that threshold.</li>
+          <li>Two GPUs can improve precision or host two independent workers; those are different experiments.</li>
+          <li>RTX 5090 cards have 32GB each and no NVLink. Independent workers avoid PCIe sharding overhead; a BF16 model of this class requires at least two cards.</li>
+          <li>RTX PRO 6000 Blackwell cards provide 96GB ECC each. Workstation Edition favors one fast 600W card; 300W Max-Q is the practical dense two- or four-GPU path.</li>
+          <li>For harness research, independent workers are usually more valuable than splitting one small model across many GPUs.</li>
+          <li>The M4 Air remains useful as the router, interface, telemetry collector, and small-model worker.</li>
+          <li>The Phase split selector covers every current Apple-sold Mac chip, GPU, and unified-memory combination except MacBook Neo, deliberately excluded because its fixed 8GB cannot launch a 27B-class model.</li>
+          <li>Buy, Deploy, Cluster, Mix, and Phase split now read exact Mac configurations from one shared catalog, so memory and bandwidth assumptions stay consistent across views.</li>
+          <li>Storage, finishes, port bundles, and screen sizes are collapsed when they do not change the machine’s model-fit or inference-bandwidth profile.</li>
+          <li>Air, base M5, and M5 Pro MacBooks are usually control-plane or whole-request-routing machines here; M5 Max is the first MacBook tier with a strong enough bandwidth contrast to merit a measured Spark-prefill / Mac-decode trial.</li>
+          <li>Mini, Studio, and Spark clusters should default to complete model replicas; distributed single-model execution is a separate, communication-sensitive experiment.</li>
+          <li>Cross-platform prefill/decode is a third mode: phase-matched and promising, but not equivalent to pooling Mac and Spark memory.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Sources and uncertainty</h2>
+        <p>Hardware facts come from <a href="https://github.com/QwenLM/Qwen3.8">Qwen’s official Qwen3.8 repository</a>, the <a href="https://huggingface.co/Qwen/Qwen3.8-27B">official 27B model card</a>, Apple’s current <a href="https://www.apple.com/macbook-air/specs/">MacBook Air</a>, <a href="https://www.apple.com/macbook-pro/specs/">MacBook Pro</a>, <a href="https://www.apple.com/imac/specs/">iMac</a>, <a href="https://www.apple.com/mac-mini/specs/">Mac mini</a>, and <a href="https://www.apple.com/mac-studio/specs/">Mac Studio</a> matrices. Configuration compatibility is cross-checked against Apple’s detailed <a href="https://support.apple.com/en-gb/122209">M4 Air</a>, <a href="https://support.apple.com/en-us/126321">M5 Air</a>, <a href="https://support.apple.com/en-gb/125405">M5 MacBook Pro</a>, <a href="https://support.apple.com/en-us/126318">M5 Pro / Max MacBook Pro</a>, <a href="https://support.apple.com/en-us/121556">two-port iMac</a>, <a href="https://support.apple.com/en-euro/121557">four-port iMac</a>, <a href="https://support.apple.com/en-euro/121555">Mac mini</a>, and <a href="https://support.apple.com/en-gb/122211">Mac Studio</a> specifications; Apple’s <a href="https://www.apple.com/newsroom/2025/03/apple-unveils-new-mac-studio-the-most-powerful-mac-ever/">M3 Ultra announcement</a> documents the 512GB ceiling. NVIDIA facts come from the official <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5090/">RTX 5090 specifications</a>, <a href="https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000-family/">RTX PRO 6000 Blackwell family specifications</a>, and the <a href="https://docs.nvidia.com/dgx/dgx-spark/hardware.html">DGX Spark hardware guide</a>.</p>
+        <p>The EPYC builder derives its SP3 lane and memory assumptions from AMD’s <a href="https://www.amd.com/content/dam/amd/en/documents/epyc-technical-docs/white-papers/overview-amd-epyc7003-series-processors-microarchitecture.pdf">EPYC 7003 architecture</a> and the <a href="https://www.asrockrack.com/general/2022_AMDEPYC7000DM.pdf">ASRock Rack ROMED8-2T</a>; its SP5 workstation is based on the <a href="https://www.supermicro.com/en/products/motherboard/h13ssl-nt">Supermicro H13SSL-NT</a>. Exact SP5 CPU values come from AMD’s official <a href="https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9254.html">9254</a>, <a href="https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9354p.html">9354P</a>, and <a href="https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9454p.html">9454P</a> specifications. The validated eight-GPU topology follows the <a href="https://servers.asus.com/products/Servers/GPU-Servers/ESC8000A-E13">ASUS ESC8000A-E13</a>. Power, PSU headroom, circuit class, cooling, and consumer-GPU compatibility remain planning estimates.</p>
+        <p>Cluster behavior is grounded in the official <a href="https://github.com/ml-explore/mlx/blob/main/docs/src/usage/distributed.rst">MLX distributed communication guide</a> and NVIDIA’s <a href="https://docs.nvidia.com/dgx/dgx-spark/spark-clustering.html">DGX Spark clustering guide</a>. Phase-split guidance distinguishes <a href="https://blog.exolabs.net/nvidia-dgx-spark/">EXO’s measured Mac + Spark demonstration</a> from the <a href="https://github.com/exo-explore/exo">public EXO runtime</a> and its still-open <a href="https://github.com/exo-explore/exo/pull/2129">Metal + CUDA work</a>.</p>
+        <p>Quantized weight sizes, context reserves, concurrency, fit grades, and relative investment bands are planning estimates as of August 20, 2026. Dollar-sign bands are comparative and exclude facility, cooling, and used-market volatility. Validate the exact backend and quant before purchasing hardware.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="shell">QWEN HARNESS PLANNER / LOCAL-FIRST / ESTIMATES ARE DECISION AIDS, NOT BENCHMARK CLAIMS</div></footer>
+
+  <script>
+    const setups = [
+      {
+        id: 'm4', name: 'M4 Air · 24GB', kicker: 'Use what you own', sub: 'Router, UI, telemetry, and small local workers.', memory: 17, displayMemory: '≈17GB after OS', investment: 'Owned', complexity: 'Low', gpus: 0, unit: 17, power: 'Very low / quiet', fit: 'API-assisted', reason: 'Start immediately and learn the harness before buying compute.', bullets: ['Small local Q4 worker', 'Cloud flagship primary', 'Best client/router node']
+      },
+      {
+        id: 'mini', name: 'Mac mini M4 Pro · 48GB', kicker: 'Quiet middle tier', sub: 'A compact always-on MLX node with enough memory for a 27B-class Q8 worker.', memory: 40, displayMemory: '≈40GB after OS', investment: '$$', complexity: 'Low', shared: true, capacityCap: 2, workerCapacity: 2, gpus: 1, unit: 40, power: '≤155W system', fit: 'Q8 / 32K', reason: 'The cleanest step up from the Air when you want a quiet dedicated model server.', bullets: ['One Q8 or two Q4 workers', 'Thunderbolt 5 cluster-ready', 'Optional 10Gb Ethernet']
+      },
+      {
+        id: 'x1', name: '1× RTX 3090', kicker: 'CUDA entry', sub: 'The smallest credible local coding node for a 27B-class model.', memory: 24, displayMemory: '24GB VRAM', investment: '$', complexity: 'Low–mid', gpus: 1, unit: 24, power: '≈350W GPU', fit: 'Q4 / 16–32K', reason: 'Cheapest path to a real local Qwen3.8-27B coding worker.', bullets: ['One Q4 flagship worker', 'CUDA ecosystem', 'Limited context headroom']
+      },
+      {
+        id: 'x2', name: '2× RTX 3090', kicker: 'Value sweet spot', sub: 'Two workers—or one higher-precision worker across cards.', memory: 48, displayMemory: '48GB VRAM', investment: '$$', complexity: 'Mid', gpus: 2, unit: 24, power: '≈700W GPUs', fit: '2× Q4 or 1× Q8', reason: 'The strongest starting balance of price, CUDA, and experiment variety.', bullets: ['A/B harness experiments', 'Coder + reviewer', 'Straightforward expansion']
+      },
+      {
+        id: 'x4', name: '4× RTX 3090 · EPYC', kicker: 'Serious harness lab', sub: 'Four independent 24GB CUDA lanes with rack-level thermals.', memory: 96, displayMemory: '96GB VRAM', investment: '$$$', complexity: 'High', gpus: 4, unit: 24, power: '≈1.4kW GPUs', fit: '4× Q4 workers', reason: 'Best balance of CUDA, independent workers, and an upgrade path for harness experiments.', bullets: ['Parallel attempts', 'Local judge/reviewer', 'Cooling becomes a project']
+      },
+      {
+        id: 'g5090x1', name: '1× RTX 5090', kicker: 'Fast CUDA worker', sub: 'Maximum single-card throughput with 32GB of GDDR7.', memory: 32, displayMemory: '32GB VRAM', investment: '$$$', complexity: 'Mid', gpus: 1, unit: 32, workerCapacity: 1, noNvlink: true, power: '575W GPU / 1kW system', fit: 'Q4 long-context', reason: 'Choose it for fast single-agent CUDA throughput, not for the most memory per dollar.', bullets: ['One fast Q4 worker', 'Q8 only at modest context', '32GB is the hard ceiling']
+      },
+      {
+        id: 'g5090x2', name: '2× RTX 5090', kicker: 'Premium dual worker', sub: 'Two independent 32GB workers—or one PCIe-sharded high-precision worker.', memory: 64, displayMemory: '64GB across cards', investment: '$$$$', complexity: 'High', gpus: 2, unit: 32, workerCapacity: 2, noNvlink: true, multiGpuLink: 'PCIe 5.0 (no NVLink)', power: '≈1.15kW GPUs', fit: '2× Q4 or 1× BF16', reason: 'A strong throughput lab when two fast independent coding agents justify the power and cost.', bullets: ['Two independent Q4 workers', 'BF16 spans both cards', 'PCIe 5.0; no NVLink']
+      },
+      {
+        id: 'g5090x4', name: '4× RTX 5090 · rack', kicker: 'Blackwell harness rack', sub: 'Four 32GB CUDA lanes with server-class power, spacing, and cooling demands.', memory: 128, displayMemory: '128GB across cards', investment: '$$$$$+', complexity: 'Very high', gpus: 4, unit: 32, workerCapacity: 4, noNvlink: true, multiGpuLink: 'PCIe 5.0 (no NVLink)', power: '≈2.3kW GPUs', fit: '4× Q4 or 2× BF16', reason: 'Build this only when high-throughput CUDA harness research justifies rack-level infrastructure.', bullets: ['Four fast Q4 attempts', 'Two PCIe-sharded BF16 workers', 'Chassis and circuit planning']
+      },
+      {
+        id: 'pro6000x1', name: '1× RTX PRO 6000 · 96GB', kicker: 'Large-memory CUDA workstation', sub: 'One 96GB ECC Blackwell card for complete high-precision models and dense local workers.', memory: 96, displayMemory: '96GB ECC VRAM', investment: '$$$$$', complexity: 'Mid', gpus: 1, unit: 96, copiesPerGpu: 4, workerCapacity: 4, power: '600W GPU', fit: 'BF16 or 4× Q4', reason: 'Buy it when 96GB of fast ECC VRAM and CUDA compatibility matter more than consumer-GPU value.', bullets: ['One BF16 flagship worker', 'Up to four estimated Q4 replicas', '1,792GB/s memory bandwidth']
+      },
+      {
+        id: 'pro6000x2', name: '2× RTX PRO 6000 Max-Q', kicker: 'Dense professional node', sub: 'Two 96GB ECC cards designed for efficient multi-GPU workstation density.', memory: 192, displayMemory: '192GB ECC across cards', investment: 'Enterprise', complexity: 'High', gpus: 2, unit: 96, copiesPerGpu: 4, workerCapacity: 8, multiGpuLink: 'PCIe Gen 5 x16 per GPU; NVLink not listed', power: '≈600W GPUs', fit: '2× BF16 or 8× Q4', reason: 'A high-capacity professional inference node with two independent 96GB CUDA islands.', bullets: ['Two independent BF16 workers', 'Up to eight estimated Q4 replicas', '300W Max-Q cards']
+      },
+      {
+        id: 'pro6000x4', name: '4× RTX PRO 6000 Max-Q · rack', kicker: 'Dense professional rack', sub: 'Four 96GB ECC cards in the configuration class NVIDIA designed Max-Q to serve.', memory: 384, displayMemory: '384GB ECC across cards', investment: 'Enterprise+', complexity: 'Very high', gpus: 4, unit: 96, copiesPerGpu: 4, workerCapacity: 16, multiGpuLink: 'PCIe Gen 5 x16 per GPU; NVLink not listed', power: '≈1.2kW GPUs', fit: '4× BF16 or 16× Q4', reason: 'Use it for high-concurrency professional CUDA inference, not as a cost-optimized personal build.', bullets: ['Four independent BF16 workers', 'Up to sixteen estimated Q4 replicas', 'Rack, NUMA, and airflow planning']
+      },
+      {
+        id: 'm5', name: 'MacBook Pro M5 Max · 128GB', kicker: 'Portable powerhouse', sub: 'A mobile unified-memory workstation with exceptional capacity.', memory: 112, displayMemory: '≈112GB after OS', investment: '$$$$', complexity: 'Low', shared: true, capacityCap: 4, workerCapacity: 4, gpus: 1, unit: 112, power: 'Laptop / quiet', fit: 'BF16 + context', reason: 'Choose this when portability, memory, and quiet operation outrank CUDA.', bullets: ['Flagship BF16 or Q8', 'Several Q4 workers', 'No multi-GPU engineering']
+      },
+      {
+        id: 'studio', name: 'Mac Studio M4 Max · 128GB', kicker: 'Desktop powerhouse', sub: 'Sustained high-bandwidth MLX inference in one quiet desktop.', memory: 112, displayMemory: '≈112GB after OS', investment: '$$$$', complexity: 'Low', shared: true, capacityCap: 4, workerCapacity: 4, gpus: 1, unit: 112, power: '≤480W system', fit: 'BF16 or 4× Q4', reason: 'The simplest stationary Qwen3.8 lab with enough memory for precision or concurrency.', bullets: ['546GB/s top configuration', 'Thunderbolt 5 clustering', 'Built-in 10Gb Ethernet']
+      },
+      {
+        id: 'ultra', name: 'Mac Studio M3 Ultra · 256GB', kicker: 'Huge-memory desktop', sub: 'A large unified-memory envelope for many workers or distributed-model research.', memory: 232, displayMemory: '≈232GB after OS', investment: '$$$$$', complexity: 'Low–mid', shared: true, capacityCap: 8, workerCapacity: 8, gpus: 1, unit: 232, power: '≤480W system', fit: '8× Q4 capacity', reason: 'Buy this for larger models and memory-heavy experiments, not merely one 27B worker.', bullets: ['819GB/s memory bandwidth', '256GB shown; 512GB available', 'TB5/JACCL cluster research']
+      },
+      {
+        id: 'spark', name: 'DGX Spark · 128GB', kicker: 'Compact CUDA lab', sub: 'Coherent memory, CUDA software, and strong networking in a tiny box.', memory: 112, displayMemory: '≈112GB usable', investment: '$$$', complexity: 'Low–mid', shared: true, capacityCap: 4, workerCapacity: 4, gpus: 1, unit: 112, power: '140W SoC', fit: 'BF16 + CUDA', reason: 'Compact CUDA development with enough coherent memory for large experiments.', bullets: ['128GB coherent memory', 'ARM64 compatibility check', 'Excellent portable lab node']
+      },
+      {
+        id: 'a6000x1', name: '1× RTX A6000 · 48GB', kicker: 'Used pro card', sub: 'Ampere-era 48GB ECC — the cheapest route to a single large allocation.', memory: 48, displayMemory: '48GB ECC VRAM', investment: '$$ used', complexity: 'Low', gpus: 1, unit: 48, power: '300W board',
+        multiGpuLink: 'single card', fit: 'Q8 or 2× Q4', reason: 'Buy used when 48GB in one card matters more than Blackwell throughput.', bullets: ['48GB GDDR6 ECC', '768GB/s bandwidth', 'Ampere GA102, 300W', 'Widely available used']
+      },
+      {
+        id: 'a6000x2', name: '2× RTX A6000 · NVLink', kicker: 'NVLinked pair', sub: 'The one multi-GPU build here whose cards are bridged rather than independent.', memory: 96, displayMemory: '96GB combined via NVLink', investment: '$$$ used', complexity: 'Mid', gpus: 2, unit: 48, power: '600W GPUs',
+        multiGpuLink: 'NVLink 3rd gen · 112GB/s bridge', fit: 'BF16 or 4× Q4', reason: 'Choose it when a worker must exceed 48GB without paying Blackwell prices — the bridge, not PCIe, carries the span.', bullets: ['NVIDIA states a combined 96GB', '112GB/s bridge vs 768GB/s local', '2-way bridge only', 'No 4-way NVLink on this card']
+      },
+      {
+        id: 'spark2', name: '2× DGX Spark · linked', kicker: 'Cabled pair', sub: 'Two coherent 128GB nodes joined by QSFP — two machines, not one pool.', memory: 224, displayMemory: '2 × ≈112GB usable', investment: '$$$$', complexity: 'Mid', power: '≈480W pair',
+        cluster: true, nodes: 2, strategy: 'replica', usablePerNode: 112, replicaCap: 6, gpus: 2, unit: 112, interconnect: 'QSFP 200Gb/s', backend: 'NCCL / distributed',
+        fit: 'Two independent nodes', reason: 'Buy the second Spark for capacity and independent workers; the 200Gb/s link is far slower than either node’s own memory.', bullets: ['NVIDIA documents up to 3 cabled', '200Gb/s per QSFP port ≈ 25GB/s', 'Each node keeps 273GB/s locally', 'Memory does not pool across nodes']
+      },
+      {
+        id: 'strixhalo', name: 'Ryzen AI Max+ 395 · 128GB', kicker: 'Unified x86', sub: 'An x86 desktop with 128GB unified memory, 96GB of it dedicated to the iGPU.', memory: 112, displayMemory: '96GB VGM + 16GB shared', investment: '$$', complexity: 'Low–mid', shared: true, capacityCap: 5, workerCapacity: 5, gpus: 1, unit: 112, power: '≈120–140W',
+        tiers: [{ name: 'Dedicated VGM', capacity: 96, bandwidth: '256 GB/s' }, { name: 'Shared overflow', capacity: 16, bandwidth: 'reduced performance' }],
+        fit: 'Large model, low power', reason: 'The cheapest way to hold a very large model on x86 — provided its 256GB/s bandwidth is enough for the decode speed you need.', bullets: ['128GB unified LPDDR5X', '256GB/s memory bandwidth', 'Radeon 8060S, 40 RDNA 3.5 CUs', 'AMD advises staying within 96GB']
+      },
+      {
+        id: 'dgxstation', name: 'DGX Station · GB300', kicker: 'Deskside superchip', sub: 'Grace Blackwell Ultra with 748GB of coherent — but tiered — memory.', memory: 748, displayMemory: '252GB HBM3e + 496GB LPDDR5X', investment: 'Quote / enterprise', complexity: 'High', shared: true, capacityCap: 16, workerCapacity: 16, gpus: 1, unit: 748, power: '≈1.6kW platform',
+        tiers: [{ name: 'HBM3e', capacity: 252, bandwidth: '7.1 TB/s' }, { name: 'LPDDR5X', capacity: 496, bandwidth: '396 GB/s' }],
+        fit: 'Very large or many models', reason: 'The only single box here that holds a frontier-scale model locally — but its memory is two tiers, not one pool.', bullets: ['252GB HBM3e at 7.1TB/s', '496GB LPDDR5X at 396GB/s', 'NVLink-C2C 900GB/s', '72-core Grace + Blackwell Ultra']
+      },
+      {
+        id: 'thor', name: 'Jetson AGX Thor · 128GB', kicker: 'Edge Blackwell', sub: 'A 128GB Blackwell platform built for physical AI rather than desk inference.', memory: 112, displayMemory: '≈112GB usable', investment: '$$$$', complexity: 'Mid', shared: true, capacityCap: 6, workerCapacity: 6, gpus: 1, unit: 112, power: '40–130W platform',
+        fit: 'Large model, low power', reason: 'Buy it for embedded and robotics work; as a desk inference box you pay for I/O you will not use.', bullets: ['128GB 256-bit LPDDR5X', '273GB/s bandwidth', '2560-core Blackwell GPU', '14-core Neoverse-V3AE']
+      },
+      {
+        id: 'x8', name: '8× RTX 3090 · rack', kicker: 'Parallelism first', sub: 'A purpose-built orchestration platform, not a normal PC.', memory: 192, displayMemory: '192GB VRAM', investment: '$$$$$', complexity: 'Very high', gpus: 8, unit: 24, power: '≈2.8kW GPUs', fit: '8× Q4 workers', reason: 'Only choose this when the harness itself—not a single model—is the research project.', bullets: ['Large agent swarms', 'Power/cooling engineering', 'Operational complexity']
+      },
+      {
+        id: 'hybrid', name: 'M4 + 2×3090 pool', kicker: 'Recommended architecture', sub: 'Your M4 client + CUDA workers + cloud escalation behind one router.', memory: 65, displayMemory: 'Heterogeneous', investment: '$$ + owned M4', complexity: 'Mid', gpus: 2, unit: 24, power: 'Workload dependent', fit: 'Role-based routing', reason: 'Build incrementally while keeping every machine useful through one routing layer.', bullets: ['Cheapest-capable routing', 'Cloud only when needed', 'Hardware can evolve']
+      }
+    ];
+
+    const sparkProfile = { key: 'spark128', name: 'DGX Spark · 128GB', short: 'DGX Spark', usable: 112, total: 128, replicaCap: 4, backend: 'CUDA / NCCL', network: 'ConnectX-7 / RoCE', investment: '$$$', platform: 'cuda', maxNodes: 4 };
+
+    const epycGpuProfiles = {
+      rtx3090: { name: 'RTX 3090', short: '3090', vram: 24, tdp: 350, pcie: 4, slot: '3-slot planning clearance', max: 8, fit: 'Q4 lane' },
+      rtx5090: { name: 'RTX 5090', short: '5090', vram: 32, tdp: 575, pcie: 5, slot: '3-slot airflow clearance', max: 8, fit: 'fast Q4 lane' },
+      pro6000maxq: { name: 'RTX PRO 6000 Max-Q', short: 'PRO 6000 Max-Q', vram: 96, tdp: 300, pcie: 5, slot: 'dual-slot active', max: 4, fit: 'BF16 / 4× Q4 lane' },
+      pro6000server: { name: 'RTX PRO 6000 Server', short: 'PRO 6000 Server', vram: 96, tdp: 600, pcie: 5, slot: 'dual-slot passive', max: 8, fit: 'BF16 / 4× Q4 lane' }
+    };
+
+    const epycHostProfiles = {
+      sp3: {
+        name: 'SP3 value workstation', platform: 'SP3 / EPYC 7003', board: 'ASRock Rack ROMED8-2T', maxGpu: 4, pcie: 4, channels: 8, memoryType: 'DDR4-3200 ECC',
+        chassis: '4U custom or open-frame with powered risers', ramOptions: [256, 512, 1024], defaultRam: 256,
+        cpus: [
+          { id: 'auto', name: 'Auto → EPYC 7443P', model: 'EPYC 7443P', cores: 24, tdp: 200 },
+          { id: '7313p', name: 'EPYC 7313P · 16 cores', model: 'EPYC 7313P', cores: 16, tdp: 155 },
+          { id: '7443p', name: 'EPYC 7443P · 24 cores', model: 'EPYC 7443P', cores: 24, tdp: 200 },
+          { id: '7543p', name: 'EPYC 7543P · 32 cores', model: 'EPYC 7543P', cores: 32, tdp: 225 }
+        ]
+      },
+      sp5: {
+        name: 'SP5 PCIe 5 workstation', platform: 'SP5 / EPYC 9004', board: 'Supermicro H13SSL-NT', maxGpu: 4, pcie: 5, channels: 12, memoryType: 'DDR5-4800 ECC',
+        chassis: '4U custom chassis; riser/backplane above 3 GPUs', ramOptions: [384, 768, 1536], defaultRam: 384,
+        cpus: [
+          { id: 'auto', name: 'Auto → EPYC 9254', model: 'EPYC 9254', cores: 24, tdp: 200 },
+          { id: '9254', name: 'EPYC 9254 · 24 cores', model: 'EPYC 9254', cores: 24, tdp: 200 },
+          { id: '9354p', name: 'EPYC 9354P · 32 cores', model: 'EPYC 9354P', cores: 32, tdp: 280 },
+          { id: '9454p', name: 'EPYC 9454P · 48 cores', model: 'EPYC 9454P', cores: 48, tdp: 290 }
+        ]
+      },
+      rack8: {
+        name: '4U eight-GPU server', platform: 'Dual SP5 / EPYC 9004–9005', board: 'ASUS ESC8000A-E13 reference system', maxGpu: 8, minGpu: 4, pcie: 5, channels: 24, memoryType: 'DDR5 ECC',
+        chassis: 'Manufacturer 4U GPU server with switch/riser complex', ramOptions: [768, 1536, 3072], defaultRam: 768,
+        cpus: [
+          { id: 'auto', name: 'Auto → 2× EPYC 9354', model: '2× EPYC 9354', cores: 64, tdp: 560 },
+          { id: '2x9254', name: '2× EPYC 9254 · 48 cores', model: '2× EPYC 9254', cores: 48, tdp: 400 },
+          { id: '2x9354', name: '2× EPYC 9354 · 64 cores', model: '2× EPYC 9354', cores: 64, tdp: 560 },
+          { id: '2x9454', name: '2× EPYC 9454 · 96 cores', model: '2× EPYC 9454', cores: 96, tdp: 580 }
+        ]
+      }
+    };
+
+    let generatedBuild = null;
+
+    const macProfiles = {};
+    const macProfileGroups = [];
+    const macPlanningMemory = { 16: 9, 24: 17, 32: 25, 36: 29, 48: 40, 64: 54, 96: 83, 128: 112, 256: 232, 512: 472 };
+
+    function addMacDecodeGroup(label, configs, formFactor = 'desktop') {
+      const options = [];
+      configs.forEach(config => {
+        const planningMemory = macPlanningMemory[config.memory];
+        // Stance, candidate class, and note are NOT baked here: they depend on the
+        // selected model's footprint, so they are computed at render time below.
+        const stanceOverride = config.stance || null;
+        const candidateOverride = config.candidate || null;
+        const noteOverride = config.note || null;
+        macProfiles[config.key] = { key: config.key, group: label, formFactor, name: config.name, bandwidth: config.bandwidth, totalMemory: config.memory, planningMemory, stanceOverride, candidateOverride, noteOverride };
+        options.push(config.key);
+      });
+      macProfileGroups.push({ label, options });
+    }
+
+    addMacDecodeGroup('Mac Studio — M3 Ultra', [
+      ...[96, 256].map(memory => ({ key: `studio_m3ultra_28c60g_${memory}`, name: `Mac Studio M3 Ultra · 28CPU/60GPU · ${memory}GB`, bandwidth: 819, memory, stance: 'best' })),
+      ...[96, 256, 512].map(memory => ({ key: `studio_m3ultra_32c80g_${memory}`, name: `Mac Studio M3 Ultra · 32CPU/80GPU · ${memory}GB`, bandwidth: 819, memory, stance: 'best' }))
+    ]);
+    addMacDecodeGroup('Mac Studio — M4 Max', [
+      { key: 'studio_m4max_14c32g_36', name: 'Mac Studio M4 Max · 14CPU/32GPU · 36GB', bandwidth: 410, memory: 36 },
+      ...[48, 64, 128].map(memory => ({ key: `studio_m4max_16c40g_${memory}`, name: `Mac Studio M4 Max · 16CPU/40GPU · ${memory}GB`, bandwidth: 546, memory }))
+    ]);
+    addMacDecodeGroup('Mac mini — M4 Pro', [
+      ...[24, 48, 64].map(memory => ({ key: `mini_m4pro_12c16g_${memory}`, name: `Mac mini M4 Pro · 12CPU/16GPU · ${memory}GB`, bandwidth: 273, memory })),
+      ...[24, 48, 64].map(memory => ({ key: `mini_m4pro_14c20g_${memory}`, name: `Mac mini M4 Pro · 14CPU/20GPU · ${memory}GB`, bandwidth: 273, memory }))
+    ]);
+    addMacDecodeGroup('Mac mini — M4', [16, 24, 32].map(memory => ({
+      key: `mini_m4_10c10g_${memory}`,
+      name: `Mac mini M4 · 10CPU/10GPU · ${memory}GB`,
+      bandwidth: 120,
+      memory
+    })));
+    addMacDecodeGroup('iMac — M4', [
+      ...[16, 24].map(memory => ({ key: `imac_m4_8c8g_${memory}`, name: `iMac M4 · 8CPU/8GPU · ${memory}GB`, bandwidth: 120, memory })),
+      ...[16, 24, 32].map(memory => ({ key: `imac_m4_10c10g_${memory}`, name: `iMac M4 · 10CPU/10GPU · ${memory}GB`, bandwidth: 120, memory }))
+    ]);
+
+    addMacDecodeGroup('MacBook Air — M4', [8, 10].flatMap(gpu => [16, 24, 32].map(memory => ({
+      key: `air_m4_g${gpu}_${memory}`,
+      name: `MacBook Air M4 · 10CPU/${gpu}GPU · ${memory}GB`,
+      bandwidth: 120,
+      memory
+    }))), 'mobile');
+    addMacDecodeGroup('MacBook Air — M5', [8, 10].flatMap(gpu => [16, 24, 32].map(memory => ({
+      key: `air_m5_g${gpu}_${memory}`,
+      name: `MacBook Air M5 · 10CPU/${gpu}GPU · ${memory}GB`,
+      bandwidth: 153,
+      memory
+    }))), 'mobile');
+    addMacDecodeGroup('MacBook Pro — M5', [16, 24, 32].map(memory => ({
+      key: `mbp_m5_${memory}`,
+      name: `MacBook Pro M5 · 10CPU/10GPU · ${memory}GB`,
+      bandwidth: 153,
+      memory
+    })), 'mobile');
+    addMacDecodeGroup('MacBook Pro — M5 Pro', [
+      ...[24, 48].map(memory => ({ key: `mbp_m5pro_15c16g_${memory}`, name: `MacBook Pro M5 Pro · 15CPU/16GPU · ${memory}GB`, bandwidth: 307, memory })),
+      ...[24, 48, 64].map(memory => ({ key: `mbp_m5pro_18c20g_${memory}`, name: `MacBook Pro M5 Pro · 18CPU/20GPU · ${memory}GB`, bandwidth: 307, memory }))
+    ], 'mobile');
+    addMacDecodeGroup('MacBook Pro — M5 Max', [
+      { key: 'mbp_m5max_18c32g_36', name: 'MacBook Pro M5 Max · 18CPU/32GPU · 36GB', bandwidth: 460, memory: 36 },
+      ...[48, 64, 128].map(memory => ({ key: `mbp_m5max_18c40g_${memory}`, name: `MacBook Pro M5 Max · 18CPU/40GPU · ${memory}GB`, bandwidth: 614, memory }))
+    ], 'mobile');
+
+    const defaultMacKey = 'studio_m3ultra_32c80g_256';
+    let selectedMacKey = defaultMacKey;
+    let mixComposition = [
+      { profile: 'mac:mini_m4pro_12c16g_48', count: 2 },
+      { profile: 'mac:studio_m4max_16c40g_128', count: 1 },
+      { profile: 'spark128', count: 1 }
+    ];
+
+    function macOptionGroups(valuePrefix = '') {
+      return macProfileGroups.map(group =>
+        `<optgroup label="${group.label}">${group.options.map(key => `<option value="${valuePrefix}${key}">${macProfiles[key].name}</option>`).join('')}</optgroup>`
+      ).join('');
+    }
+
+    function macFitLabel(profile) {
+      const need = modelNeeds();
+      if (profile.planningMemory < need.q4) return 'Client / router only';
+      if (profile.planningMemory < need.q8) return 'Q4 with limited headroom';
+      if (profile.planningMemory < need.bf16) return 'Q8 or multiple Q4 workers';
+      return 'BF16, Q8, or multiple workers';
+    }
+
+    function macProfileToSetup(key) {
+      const profile = macProfiles[key];
+      const capacityCap = Math.max(1, Math.min(12, Math.floor(profile.planningMemory / modelNeeds().q4)));
+      const mobile = profile.formFactor === 'mobile';
+      const need = modelNeeds();
+      const fit = profile.planningMemory < need.q4 ? 'API-assisted' : profile.planningMemory < need.q8 ? 'Q4 / modest context' : profile.planningMemory < need.bf16 ? 'Q8 or 2× Q4' : 'BF16 / multi-worker';
+      return {
+        id: `mac:${key}`,
+        name: profile.name,
+        kicker: profile.group,
+        sub: macNote(profile),
+        memory: profile.planningMemory,
+        displayMemory: `≈${profile.planningMemory}GB after OS`,
+        investment: 'Configuration dependent',
+        complexity: 'Low',
+        shared: true,
+        capacityCap,
+        workerCapacity: capacityCap,
+        gpus: 1,
+        unit: profile.planningMemory,
+        power: mobile ? 'Mobile / quiet' : profile.group.includes('Studio') ? 'Desktop / sustained' : 'Compact / quiet',
+        fit,
+        reason: macNote(profile),
+        bullets: [macFitLabel(profile), `${profile.bandwidth}GB/s unified-memory bandwidth`, macCandidate(profile)]
+      };
+    }
+
+    function macProfileToCluster(key) {
+      const profile = macProfiles[key];
+      const fastLink = profile.group.includes('Studio') || profile.group.includes('M4 Pro') || profile.group.includes('M5 Pro') || profile.group.includes('M5 Max');
+      return {
+        key: `mac:${key}`,
+        name: profile.name,
+        short: profile.name.replace(/ · \d+CPU\/\d+GPU/, ''),
+        usable: profile.planningMemory,
+        total: profile.totalMemory,
+        replicaCap: Math.max(0, Math.min(12, Math.floor(profile.planningMemory / modelNeeds().q4))),
+        backend: 'MLX / JACCL',
+        network: fastLink ? 'TB5 / 10GbE' : 'TB4 / Ethernet',
+        investment: 'Varies',
+        platform: 'mlx',
+        maxNodes: 8,
+        profile
+      };
+    }
+
+    function clusterProfileByValue(value) {
+      if (value === 'build:epyc-current' && generatedBuild) return epycBuildToCluster(generatedBuild);
+      return value === 'spark128' ? sparkProfile : macProfileToCluster(value.replace(/^mac:/, ''));
+    }
+
+    function currentSetups() {
+      return generatedBuild ? [...setups, generatedBuild] : setups;
+    }
+
+    function allHardwareOptions() {
+      const custom = generatedBuild ? `<optgroup label="Your derived build"><option value="${generatedBuild.id}">${generatedBuild.name}</option></optgroup>` : '';
+      return `${custom}<optgroup label="Reference builds">${setups.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</optgroup>${macOptionGroups('mac:')}`;
+    }
+
+    function allClusterOptions() {
+      const custom = generatedBuild ? `<optgroup label="Your derived build"><option value="${generatedBuild.id}">${generatedBuild.name}</option></optgroup>` : '';
+      return `${custom}${macOptionGroups('mac:')}<optgroup label="NVIDIA"><option value="spark128">DGX Spark · 128GB</option></optgroup>`;
+    }
+
+    const labels = { q4: 'Q4', q8: 'Q8', bf16: 'BF16' };
+
+    // Generic fallback used only when a model's architecture could not be read
+    // (gated config.json). Real per-model reserve is computed from the config.
+    const genericReserve = { 16: 2, 32: 4, 64: 8, 128: 16 };
+
+    // Model registry. Sizes are measured artifact bytes (decimal GB) from the
+    // Hugging Face model-tree API. Params are derived from the BF16 artifact
+    // (exactly 2 bytes/param), not from the model name. arch: null means the
+    // repo is gated and its config could not be read.
+    const models = [
+      { id: 'qwen3.8-27b', name: 'Qwen3.8-27B', repo: 'Qwen/Qwen3.8-27B', family: 'Qwen',
+        params: 27, active: null, kind: 'dense', sizes: { q4: 16, q8: 29, bf16: 55 },
+        arch: null, context: 262144, license: null, gated: false, native: null,
+        provenance: 'site default', note: 'Retained as the planner\u2019s original default.' },
+
+      { id: 'qwen3-8b', name: 'Qwen3-8B', repo: 'Qwen/Qwen3-8B', family: 'Qwen',
+        params: 8.20, active: null, kind: 'dense', sizes: { q4: 5.03, q8: 8.71, bf16: 16.39 },
+        arch: { layers: 36, kvHeads: 8, headDim: 128 }, context: 40960,
+        license: 'apache-2.0', gated: false, native: null, provenance: 'measured' },
+
+      { id: 'mistral-small-24b', name: 'Mistral Small 24B', repo: 'mistralai/Mistral-Small-24B-Instruct-2501', family: 'Mistral',
+        params: 23.57, active: null, kind: 'dense', sizes: { q4: 14.33, q8: 25.05, bf16: 47.15 },
+        arch: { layers: 40, kvHeads: 8, headDim: 128 }, context: 32768,
+        license: 'apache-2.0', gated: false, native: null, provenance: 'measured' },
+
+      { id: 'gemma-3-27b', name: 'Gemma 3 27B', repo: 'google/gemma-3-27b-it', family: 'Google',
+        params: 27.02, active: null, kind: 'dense', sizes: { q4: 16.55, q8: 28.71, bf16: 54.03 },
+        arch: null, context: null, license: 'gemma', gated: true, native: null,
+        provenance: 'sizes measured', note: 'Config is gated (HTTP 401), so context reserve falls back to the generic estimate.' },
+
+      { id: 'qwen3-30b-a3b', name: 'Qwen3-30B-A3B', repo: 'Qwen/Qwen3-30B-A3B', family: 'Qwen',
+        params: 30.55, active: 3.3, kind: 'moe', sizes: { q4: 18.56, q8: 32.48, bf16: 61.10 },
+        arch: { layers: 48, kvHeads: 4, headDim: 128 }, context: 262144,
+        license: 'apache-2.0', gated: false, native: null, provenance: 'measured' },
+
+      { id: 'qwen3-coder-30b-a3b', name: 'Qwen3-Coder-30B-A3B', repo: 'Qwen/Qwen3-Coder-30B-A3B-Instruct', family: 'Qwen',
+        params: 30.55, active: 3.3, kind: 'moe', sizes: { q4: 18.56, q8: 32.48, bf16: 61.10 },
+        arch: { layers: 48, kvHeads: 4, headDim: 128 }, context: 262144,
+        license: 'apache-2.0', gated: false, native: null, provenance: 'measured' },
+
+      { id: 'granite-4-h-small', name: 'Granite 4.0 H Small', repo: 'ibm-granite/granite-4.0-h-small', family: 'IBM',
+        params: 32.23, active: null, kind: 'moe', sizes: { q4: 19.57, q8: 34.26, bf16: 64.45 },
+        arch: { layers: 40, kvHeads: 8, headDim: 128 }, context: 131072,
+        license: 'apache-2.0', gated: false, native: null, provenance: 'measured',
+        kvUpperBound: true, note: 'Hybrid architecture — its Mamba layers hold no KV cache, so the reserve shown is an upper bound.' },
+
+      { id: 'qwen3-32b', name: 'Qwen3-32B', repo: 'Qwen/Qwen3-32B', family: 'Qwen',
+        params: 32.77, active: null, kind: 'dense', sizes: { q4: 19.76, q8: 34.82, bf16: 65.53 },
+        arch: { layers: 64, kvHeads: 8, headDim: 128 }, context: 40960,
+        license: 'apache-2.0', gated: false, native: null, provenance: 'measured' },
+
+      { id: 'llama-3.3-70b', name: 'Llama 3.3 70B', repo: 'meta-llama/Llama-3.3-70B-Instruct', family: 'Meta',
+        params: 70.56, active: null, kind: 'dense', sizes: { q4: 42.52, q8: 74.98, bf16: 141.12 },
+        arch: null, context: null, license: 'llama3.3', gated: true, native: null,
+        provenance: 'sizes measured', note: 'Config is gated (HTTP 401), so context reserve falls back to the generic estimate.' },
+
+      { id: 'glm-4.5-air', name: 'GLM-4.5-Air', repo: 'zai-org/GLM-4.5-Air', family: 'Z.ai',
+        params: 110.50, active: null, kind: 'moe', sizes: { q4: 72.98, q8: 117.46, bf16: 221.00 },
+        arch: { layers: 46, kvHeads: 8, headDim: 128 }, context: 131072,
+        license: 'mit', gated: false, native: null, provenance: 'measured' },
+
+      { id: 'gpt-oss-20b', name: 'gpt-oss-20b', repo: 'openai/gpt-oss-20b', family: 'OpenAI',
+        params: 20, active: null, kind: 'moe', sizes: { q4: 11.62, q8: 12.11, bf16: 13.79 },
+        arch: { layers: 24, kvHeads: 8, headDim: 64 }, context: 131072,
+        license: 'apache-2.0', gated: false, native: 'mxfp4', provenance: 'measured',
+        note: 'Ships natively MXFP4, so its weights barely change across precisions and no size formula applies.' },
+
+      { id: 'gpt-oss-120b', name: 'gpt-oss-120b', repo: 'openai/gpt-oss-120b', family: 'OpenAI',
+        params: 120, active: null, kind: 'moe', sizes: { q4: 62.77, q8: 63.39, bf16: 65.37 },
+        arch: { layers: 36, kvHeads: 8, headDim: 64 }, context: 131072,
+        license: 'apache-2.0', gated: false, native: 'mxfp4', provenance: 'measured',
+        note: 'Ships natively MXFP4, so its weights barely change across precisions and no size formula applies.' }
+    ];
+
+    let selectedModel = 'qwen3.8-27b';
+
+    // Which model does which job. Row 0 is the primary and follows the global
+    // model picker; the rest are independent assignments.
+    let roster = [
+      { role: 'Primary coder', model: 'qwen3.8-27b', quant: 'q4', context: 32, count: 2, primary: true },
+      { role: 'Scout / summarizer', model: 'qwen3-8b', quant: 'q4', context: 16, count: 1 },
+      { role: 'Judge / reviewer', model: 'qwen3-coder-30b-a3b', quant: 'q4', context: 32, count: 1 }
+    ];
+    const activeModel = () => models.find(m => m.id === selectedModel) || models[0];
+
+    function weightFor(quant, m = activeModel()) {
+      return m.sizes[quant];
+    }
+
+    // Per-model KV reserve: 2 (K,V) x layers x kv_heads x head_dim x tokens x 2 bytes.
+    function reserveFor(contextK, m = activeModel()) {
+      if (!m.arch) return genericReserve[contextK];
+      const perToken = 2 * m.arch.layers * m.arch.kvHeads * m.arch.headDim * 2;
+      return Math.round(perToken * contextK * 1024 / 1e9 * 100) / 100;
+    }
+
+    // Sizes are decimal GB with two-decimal precision; strip float noise for display.
+    const gb = (n) => `${Math.round(n * 100) / 100}`;
+
+    // The footprint of one worker of the ACTIVE model at a 32K reference context.
+    // These replace the 20 / 33 / 59 GB literals that were Qwen3.8-27B's numbers.
+    function modelNeeds(m = activeModel()) {
+      const r = reserveFor(32, m);
+      return { q4: m.sizes.q4 + r, q8: m.sizes.q8 + r, bf16: m.sizes.bf16 + r };
+    }
+
+    function macStance(profile) {
+      if (profile.stanceOverride) return profile.stanceOverride;
+      return profile.planningMemory < modelNeeds().q4 ? 'no-fit'
+        : profile.bandwidth >= 400 ? 'viable' : 'weak';
+    }
+
+    function macCandidate(profile) {
+      if (profile.candidateOverride) return profile.candidateOverride;
+      const stance = macStance(profile);
+      return stance === 'no-fit' ? 'Does not fit'
+        : stance === 'best' ? 'Best match'
+        : stance === 'viable' ? `Viable ${profile.formFactor}`
+        : 'Weak complement';
+    }
+
+    function macNote(profile) {
+      if (profile.noteOverride) return profile.noteOverride;
+      const stance = macStance(profile);
+      const m = activeModel();
+      return stance === 'no-fit'
+        ? `Leaves about ${profile.planningMemory}GB after the OS, below the ${gb(modelNeeds().q4)}GB a ${m.name} Q4 worker needs at 32K.`
+        : stance === 'best'
+          ? `The strongest decode complement in Apple’s current lineup: ${profile.bandwidth}GB/s bandwidth with ample model and state headroom.`
+        : stance === 'viable'
+          ? `A high-bandwidth ${profile.formFactor} decode candidate; sustained behavior and the lack of an exact EXO benchmark must be measured.`
+          : `A quantized ${m.name} fits, but ${profile.bandwidth}GB/s memory bandwidth offers too little decode advantage over Spark for phase splitting.`;
+    }
+
+    function modelContextWarning(contextK, m = activeModel()) {
+      if (!m.context) return '';
+      return contextK * 1024 > m.context
+        ? ` Exceeds ${m.name}'s ${(m.context / 1024).toFixed(0)}K native context.`
+        : '';
+    }
+    let selectedSetup = 'x4';
+    let customCluster = null;
+
+    const $ = (id) => document.getElementById(id);
+    const setupById = (id) => id === 'custom-cluster' ? customCluster : id === 'build:epyc-current' ? generatedBuild : id.startsWith('mac:') ? macProfileToSetup(id.slice(4)) : setups.find(s => s.id === id);
+
+    function setView(name) {
+      const views = ['buy', 'deploy', 'cluster', 'mix', 'split'];
+      views.forEach(view => {
+        const active = name === view;
+        $(`${view}View`).hidden = !active;
+        $(`${view}Tab`).setAttribute('aria-selected', String(active));
+      });
+      $(`${name}Tab`).focus();
+      if (name === 'deploy') updateDeploy();
+      if (name === 'cluster') updateCluster();
+      if (name === 'mix') updateMix();
+      if (name === 'split') updateSplit();
+    }
+
+    function populateMacProfileSelect() {
+      const group = macProfileGroups.find(item => item.label === $('macFamily').value) || macProfileGroups[0];
+      $('macProfile').innerHTML = group.options.map(key => `<option value="${key}">${macProfiles[key].name}</option>`).join('');
+      if (group.options.includes(selectedMacKey)) $('macProfile').value = selectedMacKey;
+      else selectedMacKey = $('macProfile').value;
+    }
+
+    function selectMacProfile(key) {
+      selectedMacKey = key;
+      const group = macProfileGroups.find(item => item.options.includes(key));
+      $('macFamily').value = group.label;
+      populateMacProfileSelect();
+      $('macProfile').value = key;
+      updateMacCatalog();
+    }
+
+    function updateMacCatalog() {
+      selectedMacKey = $('macProfile').value;
+      const profile = macProfiles[selectedMacKey];
+      const group = macProfileGroups.find(item => item.label === $('macFamily').value);
+      const fits = profile.planningMemory >= modelNeeds().q4;
+      $('macCatalogBanner').className = `fit-banner ${!fits ? 'stop' : macStance(profile) === 'weak' ? 'warn' : ''}`;
+      $('macCatalogName').textContent = profile.name;
+      $('macCatalogNote').textContent = macNote(profile);
+      $('macCatalogMemory').textContent = `≈${profile.planningMemory} / ${profile.totalMemory} GB`;
+      $('macCatalogBandwidth').textContent = `${profile.bandwidth} GB/s`;
+      $('macCatalogFit').textContent = macFitLabel(profile);
+      $('macCatalogClass').textContent = macCandidate(profile);
+      $('macCatalogRole').textContent = !fits ? 'Client / router' : macStance(profile) === 'best' ? 'Large-model decoder' : macStance(profile) === 'viable' ? 'Primary MLX worker' : 'Whole-request worker';
+      $('macCatalogFitLabel').textContent = `${activeModel().name} fit`;
+      $('macCatalogRule').textContent = !fits ? `Run a smaller worker locally and route ${activeModel().name} elsewhere.` : macStance(profile) === 'weak' ? 'Use complete local requests; phase splitting adds little obvious advantage.' : 'Benchmark exact quantization and sustained throughput before purchase.';
+      $('macCatalogBody').innerHTML = group.options.map(key => {
+        const item = macProfiles[key];
+        return `<tr aria-current="${key === selectedMacKey}"><td><strong>${item.name}</strong></td><td>≈${item.planningMemory}GB</td><td>${item.bandwidth}GB/s</td><td>${macFitLabel(item)}</td><td><button class="mini-button" type="button" data-mac-key="${key}">${key === selectedMacKey ? 'Selected' : 'Select'}</button></td></tr>`;
+      }).join('');
+      document.querySelectorAll('[data-mac-key]').forEach(button => button.addEventListener('click', () => selectMacProfile(button.dataset.macKey)));
+    }
+
+    function automaticEpycHost() {
+      const gpuKey = $('epycGpu').value;
+      const count = Number($('epycGpuCount').value);
+      if (count > 4 || gpuKey === 'pro6000server') return 'rack8';
+      if (gpuKey === 'rtx3090') return 'sp3';
+      return 'sp5';
+    }
+
+    function resolvedEpycHost() {
+      return $('epycHost').value === 'auto' ? automaticEpycHost() : $('epycHost').value;
+    }
+
+    function fillEpycDependentControls(forceDefaults = false) {
+      const host = epycHostProfiles[resolvedEpycHost()];
+      const oldCpu = $('epycCpu').value;
+      const oldRam = Number($('epycRam').value);
+      $('epycCpu').innerHTML = host.cpus.map(cpu => `<option value="${cpu.id}">${cpu.name}</option>`).join('');
+      $('epycRam').innerHTML = host.ramOptions.map(ram => `<option value="${ram}">${ram}GB · ${host.channels} channels populated</option>`).join('');
+      if (!forceDefaults && host.cpus.some(cpu => cpu.id === oldCpu)) $('epycCpu').value = oldCpu;
+      else $('epycCpu').value = 'auto';
+      if (!forceDefaults && host.ramOptions.includes(oldRam)) $('epycRam').value = String(oldRam);
+      else $('epycRam').value = String(host.defaultRam);
+    }
+
+    function deriveEpycBuild() {
+      const gpuKey = $('epycGpu').value;
+      const gpu = epycGpuProfiles[gpuKey];
+      const count = Number($('epycGpuCount').value);
+      const hostKey = resolvedEpycHost();
+      const host = epycHostProfiles[hostKey];
+      const cpu = host.cpus.find(item => item.id === $('epycCpu').value) || host.cpus[0];
+      const ram = Number($('epycRam').value);
+      const gpuPower = gpu.tdp * count;
+      const estimatedDraw = gpuPower + cpu.tdp + 180 + count * 20;
+      const psuTarget = Math.ceil(estimatedDraw * 1.2 / 100) * 100;
+      const validCount = count <= host.maxGpu && (!host.minGpu || count >= host.minGpu) && count <= gpu.max;
+      const pcieTopology = hostKey === 'sp5' && count === 4
+        ? '3× Gen5 x16 + 1× Gen5 x8'
+        : `${count}× Gen${Math.min(gpu.pcie, host.pcie)} x16`;
+      const manufacturerValidated = hostKey === 'rack8' && gpuKey === 'pro6000server';
+      const confidence = manufacturerValidated ? 'Manufacturer-validated class' : hostKey === 'rack8' ? 'Derived / GPU certification required' : 'Derived reference build';
+      const circuit = psuTarget <= 1400 ? '120V / 15A possible' : psuTarget <= 1900 ? 'Dedicated 120V / 20A' : psuTarget <= 2800 ? 'Dedicated 240V / 15A' : psuTarget <= 3800 ? 'Dedicated 240V / 20A' : 'Datacenter power planning';
+      const flags = [];
+      if (!validCount) flags.push({ cls: 'stop', title: 'Incompatible count', text: `${host.name} supports ${host.minGpu ? `${host.minGpu}–` : 'up to '}${host.maxGpu} GPUs in this planner.` });
+      if (hostKey === 'sp5' && count === 4) flags.push({ cls: 'warn', title: 'Riser required', text: 'H13SSL-NT exposes three x16 and two x8 slots; the fourth GPU is planned at x8 and physical spacing needs a custom riser or backplane.' });
+      if (gpuKey === 'rtx5090') flags.push({ cls: 'warn', title: 'Consumer GPU thermals', text: 'The 575W reference card needs three-slot airflow clearance; add-in-board dimensions vary and server certification is not assumed.' });
+      if (hostKey === 'rack8' && !manufacturerValidated) flags.push({ cls: 'warn', title: 'Validate the exact GPU', text: 'The chassis topology is a real eight-GPU reference, but consumer cards and active-cooling variants require vendor, power-cable, and airflow confirmation.' });
+      if (gpuKey === 'pro6000maxq') flags.push({ cls: '', title: 'Density-optimized payload', text: 'NVIDIA positions the 300W dual-slot Max-Q for configurations of up to four GPUs.' });
+      if (!flags.length) flags.push({ cls: '', title: 'Buildable reference', text: 'The lane budget, memory population, and CPU choice are coherent; verify the exact risers, card model, and PSU cabling before purchase.' });
+      const perGpuCopies = Math.max(1, Math.floor(gpu.vram / 20));
+      const complexity = hostKey === 'rack8' ? 'Very high' : count >= 4 ? 'High' : 'Mid';
+      return {
+        id: 'build:epyc-current',
+        name: `${count}× ${gpu.name} · ${host.name}`,
+        kicker: 'Your derived EPYC build',
+        sub: `${confidence}. CPU remains secondary to the ${pcieTopology} payload, physical layout, and ${psuTarget}W PSU target.`,
+        memory: gpu.vram * count,
+        displayMemory: `${gpu.vram * count}GB across ${count} GPU${count === 1 ? '' : 's'}`,
+        investment: hostKey === 'rack8' || gpuKey.includes('pro6000') ? 'Enterprise / quote' : count >= 4 ? '$$$$' : '$$$',
+        complexity,
+        gpus: count,
+        unit: gpu.vram,
+        copiesPerGpu: perGpuCopies,
+        workerCapacity: count * perGpuCopies,
+        power: `≈${estimatedDraw}W estimated`,
+        fit: count === 1 ? gpu.fit : `${count} independent ${gpu.fit}s`,
+        reason: validCount ? `${manufacturerValidated ? 'A manufacturer-validated system class' : 'A reference-derived host'} based on ${host.board}; CPU, RAM, PCIe, chassis, power, and electrical class remain visible.` : 'The selected GPU count is incompatible with this reference platform.',
+        bullets: [`${cpu.model} · ${cpu.cores} cores`, `${ram}GB ${host.memoryType}`, pcieTopology],
+        valid: validCount,
+        hostKey, gpuKey, gpu, host, cpu, ram, estimatedDraw, psuTarget, pcieTopology, confidence, circuit, flags
+      };
+    }
+
+    function epycBuildToCluster(build) {
+      return {
+        key: build.id,
+        name: build.name,
+        short: `${build.gpus}× ${build.gpu.short} EPYC`,
+        usable: build.memory,
+        total: build.memory,
+        replicaCap: build.workerCapacity,
+        backend: 'CUDA / NCCL',
+        network: build.hostKey === 'rack8' ? '25–100GbE recommended' : '10–25GbE recommended',
+        investment: build.investment,
+        platform: 'cuda',
+        maxNodes: 8,
+        build
+      };
+    }
+
+    function renderEpycBuilder(refill = false) {
+      if (refill) fillEpycDependentControls();
+      const build = deriveEpycBuild();
+      $('epycBuildBanner').className = `fit-banner ${build.valid ? build.flags.some(flag => flag.cls === 'warn') ? 'warn' : '' : 'stop'}`;
+      $('epycConfidence').textContent = build.confidence;
+      $('epycBuildName').textContent = build.name;
+      $('epycBuildSummary').textContent = build.valid ? build.reason : 'Choose Auto or a compatible host platform to continue.';
+      $('epycSpecCpu').textContent = `${build.cpu.model} · ${build.cpu.cores} cores · ${build.cpu.tdp}W`;
+      $('epycSpecVram').textContent = `${build.memory}GB total · ${build.gpu.vram}GB each`;
+      $('epycSpecPcie').textContent = build.pcieTopology;
+      $('epycSpecRam').textContent = `${build.ram}GB · ${build.host.channels} channels · ${build.host.memoryType}`;
+      $('epycSpecBoard').textContent = build.host.board;
+      $('epycSpecChassis').textContent = `${build.host.chassis} · ${build.gpu.slot}`;
+      $('epycSpecPower').textContent = `≈${build.estimatedDraw}W · GPUs ${build.gpu.tdp * build.gpus}W`;
+      $('epycSpecPsu').textContent = `${build.psuTarget}W minimum target / redundant equivalent`;
+      $('epycSpecCircuit').textContent = build.circuit;
+      $('epycBuildFlags').innerHTML = build.flags.map(flag => `<div class="build-flag ${flag.cls}"><strong>${flag.title}:</strong> ${flag.text}</div>`).join('');
+      $('saveEpycBuild').disabled = !build.valid;
+    }
+
+    function refreshPlannerOptions() {
+      const deployValue = selectedSetup;
+      const clusterValue = $('clusterFamily').value;
+      $('deploySetup').innerHTML = allHardwareOptions();
+      $('deploySetup').value = deployValue;
+      $('clusterFamily').innerHTML = allClusterOptions();
+      const clusterOption = $('clusterFamily').querySelector(`option[value="${clusterValue}"]`);
+      $('clusterFamily').value = clusterOption ? clusterValue : 'mac:studio_m4max_16c40g_128';
+      renderMixRows();
+    }
+
+    const quantOrder = ['q4', 'q8', 'bf16'];
+
+    function buyQuant() { return $('buyQuant').value; }
+    function buyReserve() { return reserveFor(Number($('buyContext').value)); }
+
+    function workerCounts(s) {
+      const reserve = buyReserve();
+      return quantOrder.map(q => ({
+        quant: q,
+        label: labels[q],
+        required: weightFor(q) + reserve,
+        count: capacityFor(s, weightFor(q) + reserve)
+      }));
+    }
+
+    function countText(n) {
+      return n === 0 ? 'not locally' : `${n} worker${n === 1 ? '' : 's'}`;
+    }
+
+    function poolingNote(s) {
+      if (s.id === 'm4') return `Control-plane node. ${activeModel().name} does not fit; route it to an API.`;
+      if (s.id === 'hybrid') return 'Mac router plus CUDA workers; memory does not pool across them.';
+      if (s.tiers) return `Tiered, not one flat pool: ${s.tiers.map(t => `${t.capacity}GB ${t.name} (${t.bandwidth})`).join(', ')}. `
+        + `Work that spills past the first tier does not run at the first tier's speed.`;
+      if (s.shared) return 'One pooled unified-memory allocation.';
+      if (s.cluster) return `${s.nodes} separate machines linked by ${s.interconnect || 'a network'}. Each holds ${s.usablePerNode}GB; memory does not pool across nodes, and the link is far slower than local memory.`;
+      if (s.copiesPerGpu) return `${s.unit}GB per card. Replicas stay per-GPU rather than pooled.`;
+      if (s.gpus > 1 && s.multiGpuLink && s.multiGpuLink.startsWith('NVLink')) return `${s.gpus} × ${s.unit}GB bridged by ${s.multiGpuLink}. NVIDIA states a combined ${s.memory}GB; a worker spanning the bridge runs at bridge bandwidth, not local.`;
+      if (s.gpus > 1) return `${s.gpus} × ${s.unit}GB lanes. No pooling without sharding across cards.`;
+      if (s.gpus === 1) return `${s.unit}GB on a single card.`;
+      return '';
+    }
+
+    function renderBuy() {
+      const visibleSetups = currentSetups();
+      const quant = buyQuant();
+      const reserve = buyReserve();
+      const contextLabel = `${$('buyContext').value}K`;
+      const required = weightFor(quant) + reserve;
+
+      $('buyWorkerCost').textContent = `${gb(required)} GB`;
+      $('buyWorkerCostDetail').textContent = `${gb(weightFor(quant))}GB ${labels[quant]} weights + ${gb(reserve)}GB context reserve at ${contextLabel}${modelContextWarning(Number($('buyContext').value))}`;
+
+      $('setupGrid').innerHTML = visibleSetups.map(s => {
+        const rows = workerCounts(s);
+        return `
+        <article class="setup-card ${s.id === selectedSetup ? 'selected' : ''}" tabindex="0" data-setup="${s.id}" aria-label="Select ${s.name}">
+          <span class="setup-kicker">${s.kicker}</span>
+          <h3>${s.name}</h3>
+          <div class="sub">${s.displayMemory} · ${s.power}</div>
+          <div class="cap-block">
+            <div class="cap-head">Runs at ${contextLabel} context</div>
+            ${rows.map(r => `<div class="cap-row${r.quant === quant ? ' active' : ''}"><span>${r.label} · ${gb(r.required)}GB each</span><strong${r.count === 0 ? ' class="cap-none"' : ''}>${countText(r.count)}</strong></div>`).join('')}
+          </div>
+          <div class="cap-note">${poolingNote(s)}</div>
+          <ul>${(s.bullets || []).map(b => `<li>${b}</li>`).join('')}</ul>
+          <div class="card-foot"><span class="fit">${s.fit}</span><button class="mini-button" type="button" data-setup="${s.id}">Deploy →</button></div>
+        </article>`;
+      }).join('');
+
+      $('compareBody').innerHTML = visibleSetups.map(s => {
+        const rows = workerCounts(s);
+        const cell = r => `<td${r.count === 0 ? ' class="cap-none"' : ''}>${r.count === 0 ? '—' : r.count}</td>`;
+        return `<tr><td><strong>${s.name}</strong></td><td>${s.investment}</td><td>${s.displayMemory}</td>${rows.map(cell).join('')}<td>${s.power}</td><td>${poolingNote(s)}</td></tr>`;
+      }).join('');
+
+      document.querySelectorAll('[data-setup]').forEach(el => {
+        el.addEventListener('click', (event) => {
+          event.stopPropagation();
+          selectedSetup = el.dataset.setup;
+          $('deploySetup').value = selectedSetup;
+          if (el.tagName === 'BUTTON') setView('deploy'); else renderBuy();
+        });
+        if (el.classList.contains('setup-card')) el.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectedSetup = el.dataset.setup; $('deploySetup').value = selectedSetup; renderBuy(); }
+        });
+      });
+    }
+
+    function nodeCapacity(node, required) {
+      return Math.max(0, Math.min(node.replicaCap, Math.floor(node.usable / required)));
+    }
+
+    function judgeNodeIndex(nodes) {
+      return nodes.reduce((best, node, index, list) => node.usable > list[best].usable ? index : best, 0);
+    }
+
+    function capacityFor(s, required) {
+      if (s.cluster) {
+        if (s.heterogeneous) {
+          const judgeIndex = s.strategy === 'mixed' ? judgeNodeIndex(s.nodeSpecs) : -1;
+          return s.nodeSpecs.reduce((total, node, index) => total + (index === judgeIndex ? 0 : nodeCapacity(node, required)), 0);
+        }
+        if (s.strategy === 'distributed') return s.memory >= required ? 1 : 0;
+        const perNode = Math.min(s.replicaCap, Math.floor(s.usablePerNode / required));
+        return s.strategy === 'mixed' ? Math.max(1, perNode * Math.max(1, s.nodes - 1)) : perNode * s.nodes;
+      }
+      if (s.id === 'm4') return required <= s.memory ? 1 : 0;
+      if (s.shared) return Math.max(0, Math.min(s.capacityCap, Math.floor(s.memory / required)));
+      if (s.id === 'hybrid') return required <= 24 ? 2 : required <= 48 ? 1 : 0;
+      if (s.copiesPerGpu && required <= s.unit) return s.gpus * Math.min(s.copiesPerGpu, Math.floor(s.unit / required));
+      if (required <= s.unit) return s.gpus;
+      const lanesPerCopy = Math.ceil(required / s.unit);
+      return Math.floor(s.gpus / lanesPerCopy);
+    }
+
+    function assignedMemoryFor(s, required) {
+      if (s.cluster && s.heterogeneous) {
+        const judgeIndex = s.strategy === 'mixed' ? judgeNodeIndex(s.nodeSpecs) : -1;
+        const eligible = s.nodeSpecs.filter((node,index) => index !== judgeIndex && nodeCapacity(node, required) > 0);
+        return eligible.length ? Math.min(...eligible.map(node => node.usable)) : Math.max(...s.nodeSpecs.map(node => node.usable));
+      }
+      if (s.cluster) return s.strategy === 'distributed' ? s.memory : s.usablePerNode;
+      if (s.id === 'm4' || s.shared) return s.memory;
+      if (s.id === 'hybrid') return required <= 24 ? 24 : required <= 48 ? 48 : s.memory;
+      return Math.min(s.memory, Math.ceil(required / s.unit) * s.unit);
+    }
+
+    // A machine's memory is not one pool unless it actually is one. Consumer
+    // multi-GPU builds are N independent lanes; unified-memory Macs are one pool.
+    function binsFor(s) {
+      if (s.heterogeneous && s.nodeSpecs) return s.nodeSpecs.map((n,i) => ({ name: n.name || `Node ${i+1}`, capacity: n.usable, pooled: true }));
+      if (s.cluster) return Array.from({ length: s.nodes }, (_, i) => ({ name: `Node ${i+1}`, capacity: s.usablePerNode, pooled: true }));
+      if (s.id === 'hybrid') return [{ name: 'GPU 1', capacity: 24 }, { name: 'GPU 2', capacity: 24 }];
+      if (s.tiers) return s.tiers.map(t => ({ name: `${t.name} · ${t.bandwidth}`, capacity: t.capacity, pooled: true, tiered: true }));
+      if (s.shared || s.id === 'm4') return [{ name: 'Unified memory', capacity: s.memory, pooled: true }];
+      return Array.from({ length: Math.max(1, s.gpus) }, (_, i) => ({ name: `GPU ${i+1}`, capacity: s.unit }));
+    }
+
+    function rosterItems() {
+      const out = [];
+      roster.forEach((row, ri) => {
+        const m = models.find(x => x.id === row.model) || activeModel();
+        const need = weightFor(row.quant, m) + reserveFor(row.context, m);
+        for (let i = 0; i < Math.max(0, row.count); i++) {
+          out.push({ rowIndex: ri, role: row.role, model: m.name, quant: labels[row.quant], need, key: `${ri}-${i}` });
+        }
+      });
+      return out;
+    }
+
+    // First-fit-decreasing. A worker larger than one lane must span several,
+    // which is reported rather than silently allowed.
+    function packRoster(s, items) {
+      const bins = binsFor(s).map(b => ({ ...b, used: 0, items: [] }));
+      const laneSize = bins.length ? bins[0].capacity : 0;
+      const sorted = [...items].sort((a, b) => b.need - a.need);
+      const unplaced = [];
+
+      // Tiered memory is ONE coherent address space: a worker may straddle the
+      // boundary and simply runs at the slower tier's speed. That is unlike
+      // separate GPUs, where spanning needs explicit sharding. So tiers fit
+      // against total capacity and are filled in order purely for display.
+      if (bins.length && bins[0].tiered) {
+        const capacity = bins.reduce((t, b) => t + b.capacity, 0);
+        const total = items.reduce((t, i) => t + i.need, 0);
+        let remaining = total;
+        bins.forEach(b => { b.used = Math.min(b.capacity, remaining); remaining -= b.used; });
+        let cursor = 0, bi = 0;
+        sorted.forEach(item => {
+          while (bi < bins.length - 1 && cursor >= bins[bi].capacity) { cursor -= bins[bi].capacity; bi++; }
+          bins[bi].items.push(item);
+          cursor += item.need;
+        });
+        const overFast = total > bins[0].capacity;
+        return { bins, unplaced: remaining > 0 ? sorted.slice(-1) : [], capacity, used: Math.min(total, capacity),
+                 fits: total <= capacity && items.length > 0, tiered: true, overFast };
+      }
+
+      sorted.forEach(item => {
+        const bin = bins.find(b => b.capacity - b.used >= item.need);
+        if (bin) { bin.used += item.need; bin.items.push(item); return; }
+        const span = Math.ceil(item.need / laneSize);
+        if (span > 1 && !bins[0].pooled) {
+          const free = bins.filter(b => b.used === 0);
+          if (free.length >= span) {
+            free.slice(0, span).forEach((b, i) => { b.used = b.capacity; b.items.push({ ...item, spanPart: `${i + 1}/${span}` }); });
+            return;
+          }
+        }
+        unplaced.push(item);
+      });
+      const capacity = bins.reduce((t, b) => t + b.capacity, 0);
+      const used = bins.reduce((t, b) => t + b.used, 0);
+      return { bins, unplaced, capacity, used, fits: unplaced.length === 0 && items.length > 0 };
+    }
+
+    function buildLanes(s, copies, experiment, fit) {
+      const lanes = [];
+      const required = weightFor($('quant').value) + reserveFor(Number($('context').value));
+      const gpuSpan = !s.cluster && !s.shared && s.id !== 'hybrid' ? Math.ceil(required / s.unit) : 1;
+      const perGpuReplicas = s.copiesPerGpu && gpuSpan === 1 ? Math.min(s.copiesPerGpu, Math.floor(s.unit / required)) : 1;
+      const heteroWorkers = [];
+      if (s.heterogeneous) {
+        const judgeIndex = s.strategy === 'mixed' ? judgeNodeIndex(s.nodeSpecs) : -1;
+        s.nodeSpecs.forEach((node,index) => {
+          if (index !== judgeIndex) for (let slot = 0; slot < nodeCapacity(node, required); slot++) heteroWorkers.push(node.name);
+        });
+      }
+      const primaryCount = Math.max(1, Math.min(copies, experiment === 'coding' || experiment === 'vision' ? 1 : experiment === 'repo' ? 2 : experiment === 'ab' ? 2 : 4));
+      if (fit) {
+        for (let i = 0; i < primaryCount; i++) {
+          const role = experiment === 'ab' ? `Attempt ${String.fromCharCode(65+i)} · prompt variant` : experiment === 'repo' && i === 1 ? 'Independent reviewer' : experiment === 'swarm' ? `Parallel implementer ${i+1}` : experiment === 'vision' ? 'Visual coding agent' : 'Primary coding agent';
+          const shardStart = i * gpuSpan + 1;
+          const shardEnd = shardStart + gpuSpan - 1;
+          const replicaGpu = (i % s.gpus) + 1;
+          const replicaSlot = Math.floor(i / s.gpus) + 1;
+          const hardware = s.heterogeneous ? heteroWorkers[i] : s.cluster ? (s.strategy === 'distributed' ? `${s.nodes}-node shard` : `Node ${(i % s.nodes) + 1}`) : s.copiesPerGpu && gpuSpan === 1 ? `GPU ${replicaGpu} · replica ${replicaSlot}/${perGpuReplicas}` : (s.gpus > 1 && s.id !== 'hybrid') ? gpuSpan > 1 ? `GPUs ${shardStart}–${shardEnd} · PCIe shard` : `GPU lane ${i+1}` : s.id === 'hybrid' ? `3090 lane ${i+1}` : s.name.split('·')[0].trim();
+          lanes.push({ hardware, title: `${activeModel().name} ${labels[$('quant').value]}`, detail: role, cls: 'primary' });
+        }
+      }
+      const heteroJudge = s.heterogeneous && s.strategy === 'mixed' ? s.nodeSpecs[judgeNodeIndex(s.nodeSpecs)].name : null;
+      const supportHardware = heteroJudge || (s.cluster ? (s.strategy === 'mixed' ? `Node ${s.nodes} · judge` : 'Control node') : s.id === 'hybrid' || s.id === 'm4' ? 'M4 Air' : s.copiesPerGpu ? 'GPU 1 · support worker' : copies > primaryCount ? `Lane ${primaryCount+1}` : 'CPU / client');
+      roster.filter(r => !r.primary && r.count > 0).forEach(r => {
+        const rm = models.find(x => x.id === r.model) || activeModel();
+        lanes.push({ hardware: supportHardware, title: `${rm.name} ${labels[r.quant]}${r.count > 1 ? ` ×${r.count}` : ''}`, detail: r.role, cls: 'support' });
+      });
+      if (!fit || experiment === 'repo' || experiment === 'ab' || experiment === 'swarm') lanes.push({ hardware: 'Cloud API', title: 'Qwen3.8 Max', detail: !fit ? 'Primary fallback: local flagship does not fit' : 'Optional final judge and hard-task escalation', cls: 'cloud' });
+      return lanes;
+    }
+
+    function modelOptionsFor(selected) {
+      const byFamily = {};
+      models.forEach(m => (byFamily[m.family] = byFamily[m.family] || []).push(m));
+      return Object.entries(byFamily).map(([fam, list]) =>
+        `<optgroup label="${fam}">${list.map(m =>
+          `<option value="${m.id}"${m.id === selected ? ' selected' : ''}>${m.name}</option>`).join('')}</optgroup>`).join('');
+    }
+
+    function renderRoster() {
+      $('rosterRows').innerHTML = roster.map((row, i) => {
+        const m = models.find(x => x.id === row.model) || activeModel();
+        const need = weightFor(row.quant, m) + reserveFor(row.context, m);
+        return `
+        <div class="roster-row" data-row="${i}">
+          <span class="roster-role">${row.role}${row.primary ? ' ·&nbsp;primary' : ''}</span>
+          <select data-field="model" aria-label="Model for ${row.role}">${modelOptionsFor(row.model)}</select>
+          <select data-field="quant" aria-label="Precision for ${row.role}">
+            ${quantOrder.map(q => `<option value="${q}"${q === row.quant ? ' selected' : ''}>${labels[q]}</option>`).join('')}
+          </select>
+          <select data-field="context" aria-label="Context for ${row.role}">
+            ${[16,32,64,128].map(c => `<option value="${c}"${c === row.context ? ' selected' : ''}>${c}K</option>`).join('')}
+          </select>
+          <input type="number" min="0" max="16" step="1" value="${row.count}" data-field="count" aria-label="How many ${row.role}">
+          <span class="roster-need">${gb(need * row.count)}GB</span>
+          ${row.primary ? '<span></span>' : '<button class="roster-drop" type="button" data-drop="' + i + '">Remove</button>'}
+        </div>`;
+      }).join('');
+
+      $('rosterRows').querySelectorAll('.roster-row').forEach(el => {
+        const i = Number(el.dataset.row);
+        el.querySelectorAll('[data-field]').forEach(ctrl => {
+          ctrl.addEventListener('change', () => {
+            const f = ctrl.dataset.field;
+            roster[i][f] = f === 'count' || f === 'context' ? Number(ctrl.value) : ctrl.value;
+            // the primary row and the global picker are the same choice
+            if (f === 'model' && roster[i].primary) {
+              selectedModel = ctrl.value;
+              $('modelSelect').value = ctrl.value;
+              renderFlagship();
+              renderBuy();
+              updateMacCatalog();
+            }
+            renderRoster();
+            updateDeploy();
+          });
+        });
+      });
+      $('rosterRows').querySelectorAll('[data-drop]').forEach(btn =>
+        btn.addEventListener('click', () => {
+          roster.splice(Number(btn.dataset.drop), 1);
+          renderRoster();
+          updateDeploy();
+        }));
+    }
+
+    function updateRoster(s) {
+      const items = rosterItems();
+      const packed = packRoster(s, items);
+      const workers = items.length;
+
+      $('rosterTotal').textContent = `${workers} worker${workers === 1 ? '' : 's'} · ${gb(packed.used)}GB assigned of ${gb(packed.capacity)}GB`;
+      $('rosterBanner').className = `fit-banner ${!packed.fits ? 'stop' : (packed.overFast || packed.used / packed.capacity > .85) ? 'warn' : ''}`;
+
+      if (!workers) {
+        $('rosterVerdict').textContent = 'Empty';
+        $('rosterTitle').textContent = 'No roles assigned';
+        $('rosterText').textContent = 'Add a role to plan a multi-model harness.';
+      } else if (packed.fits) {
+        $('rosterVerdict').textContent = packed.overFast ? 'Fits, spilling' : 'Fits';
+        $('rosterTitle').textContent = packed.overFast
+          ? `All ${workers} workers fit, but past the fast tier`
+          : `All ${workers} workers fit`;
+        $('rosterText').textContent = packed.overFast
+          ? `${gb(packed.used - packed.bins[0].capacity)}GB sits beyond the ${gb(packed.bins[0].capacity)}GB ${packed.bins[0].name.split(' · ')[0]} tier and runs at the slower path.`
+          : `${gb(packed.capacity - packed.used)}GB free across ${packed.bins.length} ${packed.tiered ? 'tier' : packed.bins[0].pooled ? 'pool' : 'lane'}${packed.bins.length === 1 ? '' : 's'}.`;
+      } else {
+        const worst = packed.unplaced[0];
+        $('rosterVerdict').textContent = 'Does not fit';
+        $('rosterTitle').textContent = `${packed.unplaced.length} of ${workers} workers do not fit`;
+        $('rosterText').textContent = `${worst.role} (${worst.model} ${worst.quant}, ${gb(worst.need)}GB) has nowhere to go. `
+          + (packed.bins[0].pooled
+            ? `The pool holds ${gb(packed.capacity)}GB.`
+            : packed.bins.length === 1
+          ? `The single ${gb(packed.bins[0].capacity)}GB allocation is already full.`
+          : `Each lane holds ${gb(packed.bins[0].capacity)}GB; memory does not pool across them without sharding.`);
+      }
+
+      $('laneMap').innerHTML = packed.bins.map(b => {
+        const pct = Math.min(100, b.used / b.capacity * 100);
+        return `<div class="lane-bar">
+          <span>${b.name}</span>
+          <span class="lane-track">
+            ${b.items.map(it => `<span class="lane-fill" style="width:${Math.min(100, it.need / b.capacity * 100)}%" title="${it.role}: ${it.model} ${it.quant}, ${gb(it.need)}GB"></span>`).join('')}
+            <span class="lane-free"></span>
+          </span>
+          <span>${gb(b.used)} / ${gb(b.capacity)}GB</span>
+        </div>`;
+      }).join('');
+      return packed;
+    }
+
+    function updateDeploy() {
+      const s = setupById($('deploySetup').value);
+      selectedSetup = s.id;
+      const quant = $('quant').value;
+      const context = $('context').value;
+      const experiment = $('experiment').value;
+
+      const primary = roster.find(r => r.primary);
+      if (primary) {
+        primary.model = selectedModel;
+        primary.quant = quant;
+        primary.context = Number(context);
+      }
+      renderRoster();
+      const packed = updateRoster(s);
+
+      const w = weightFor(quant);
+      const c = reserveFor(Number(context));
+      const required = w + c;
+      const copies = capacityFor(s, required);
+      const fit = copies > 0;
+      const assignedMemory = assignedMemoryFor(s, required);
+      const tight = fit && required / assignedMemory > .82;
+      const gpuSpan = !s.cluster && !s.shared && s.id !== 'hybrid' ? Math.ceil(required / s.unit) : 1;
+      const spansGpus = fit && gpuSpan > 1;
+
+      $('fitBanner').className = `fit-banner ${!fit ? 'stop' : tight || spansGpus ? 'warn' : ''}`;
+      $('fitTitle').textContent = !fit ? 'Local flagship does not fit' : spansGpus ? `Fits across ${gpuSpan} GPUs` : tight ? 'Fits, with limited headroom' : 'Comfortable fit';
+      $('fitText').textContent = !fit ? `Use a smaller local worker and route ${activeModel().name} through an API, or lower precision/context.` : s.cluster && s.strategy === 'distributed' ? `One Qwen3.8 worker is sharded across ${s.nodes} nodes; expect communication overhead and backend-specific tuning.` : s.cluster ? `${copies} primary ${copies === 1 ? 'replica' : 'replicas'} estimated at ${gb(required)}GB each across ${s.nodes} independent nodes.` : spansGpus ? `${copies} primary ${copies === 1 ? 'copy spans' : 'copies each span'} ${gpuSpan} GPUs. ${s.noNvlink ? 'Communication stays on PCIe because RTX 5090 has no NVLink; benchmark against independent Q4 workers.' : s.multiGpuLink && s.multiGpuLink.startsWith('NVLink') ? `The span crosses ${s.multiGpuLink}, which is faster than PCIe but still well below each card's local bandwidth.` : 'Benchmark communication overhead against independent workers.'}` : s.copiesPerGpu ? `${copies} complete ${copies === 1 ? 'replica fits' : 'replicas fit'} across ${s.gpus} physical GPU${s.gpus === 1 ? '' : 's'} at ${gb(required)}GB each. VRAM remains per-card rather than one pooled allocation.` : `${copies} primary ${copies === 1 ? 'copy' : 'copies'} estimated at ${gb(required)}GB each on ${s.name}.`;
+      $('fitCode').textContent = !fit ? 'FIT / NO' : tight ? 'FIT / TIGHT' : 'FIT / YES';
+      $('weightMetric').textContent = `${gb(w)} GB`;
+      $('contextMetric').textContent = `${gb(c)} GB`;
+      $('copyMetric').textContent = String(copies);
+      $('reasonMetric').textContent = experiment === 'coding' || experiment === 'vision' ? 'Medium' : 'XHigh';
+
+      const barBase = assignedMemory;
+      $('weightBar').style.width = `${Math.min(100, w/barBase*100)}%`;
+      $('contextBar').style.width = `${Math.min(100, c/barBase*100)}%`;
+      $('reserveBar').style.width = `${Math.max(0, 100-(w+c)/barBase*100)}%`;
+
+      const experimentNames = { coding: 'Daily coding loop', repo: 'Deep repository task', ab: 'Harness A/B test', swarm: 'Parallel attempt swarm', vision: 'Visual coding task' };
+      $('routeLabel').textContent = experimentNames[experiment];
+      const lanes = buildLanes(s, copies, experiment, fit);
+      $('lanes').innerHTML = lanes.map(l => `<div class="lane"><div class="hardware-node">${l.hardware}</div><div class="wire" aria-hidden="true"></div><div class="worker-node ${l.cls}"><strong>${l.title}</strong><span>${l.detail}</span></div></div>`).join('');
+
+      const recipe = [
+        `hardware: ${s.name}`,
+        `topology: ${s.cluster ? s.strategy : 'single-node'}`,
+        ...(s.cluster ? [`nodes: ${s.nodes}`, `interconnect: ${s.interconnect}`, `backend: ${s.backend}`] : []),
+        ...(s.multiGpuLink && s.gpus > 1 ? [`multi_gpu_link: ${s.multiGpuLink}`, `gpu_placement: ${spansGpus ? `${gpuSpan} GPUs per replica` : s.copiesPerGpu ? 'complete replicas placed within each GPU' : 'one independent replica per GPU'}`] : []),
+        ...(s.copiesPerGpu ? [`per_gpu_memory_gb: ${s.unit}`, `per_gpu_replica_cap: ${Math.min(s.copiesPerGpu, Math.floor(s.unit / required))}`] : []),
+        `experiment: ${experimentNames[experiment]}`,
+        `primary:`,
+        `  model: ${activeModel().repo}`,
+        `  quantization: ${labels[quant]}`,
+        `  context: ${context}K`,
+        `  reasoning_effort: ${experiment === 'coding' || experiment === 'vision' ? 'medium' : 'xhigh'}`,
+        `  preserve_thinking: true`,
+        `  replicas: ${copies}`,
+        ...roster.filter(r => !r.primary && r.count > 0).map(r => {
+          const rm = models.find(x => x.id === r.model) || activeModel();
+          return `support: ${rm.repo}  # ${r.role} x${r.count}, ${labels[r.quant]}, ${r.context}K`;
+        }),
+        `router_policy: cheapest-capable`,
+        `cloud_escalation: ${(!fit || ['repo','ab','swarm'].includes(experiment)) ? 'Qwen3.8-Max' : 'off-by-default'}`,
+        `note: validate exact quant + backend before purchase`
+      ].join('\n');
+      $('recipeText').textContent = recipe;
+    }
+
+    function makeClusterSetup() {
+      const family = clusterProfileByValue($('clusterFamily').value);
+      const nodes = Math.min(Number($('clusterCount').value), family.maxNodes);
+      const strategy = $('clusterStrategy').value;
+      return {
+        id: 'custom-cluster',
+        name: `${nodes}× ${family.short} cluster`,
+        cluster: true,
+        nodes,
+        strategy,
+        memory: family.usable * nodes,
+        usablePerNode: family.usable,
+        replicaCap: family.replicaCap,
+        interconnect: family.network,
+        backend: family.backend,
+        gpus: nodes,
+        unit: family.usable
+      };
+    }
+
+    function updateCluster() {
+      const family = clusterProfileByValue($('clusterFamily').value);
+      $('clusterCount').max = family.maxNodes;
+      if (Number($('clusterCount').value) > family.maxNodes) $('clusterCount').value = family.maxNodes;
+      const nodes = Number($('clusterCount').value);
+      const strategy = $('clusterStrategy').value;
+      const quant = $('clusterQuant').value;
+      const required = weightFor(quant) + reserveFor(32);
+      const perNodeCopies = Math.min(family.replicaCap, Math.floor(family.usable / required));
+      const aggregate = family.usable * nodes;
+      const replicas = strategy === 'distributed' ? (aggregate >= required ? 1 : 0) : strategy === 'mixed' ? perNodeCopies * Math.max(1, nodes - 1) : perNodeCopies * nodes;
+      const noReplica = strategy !== 'distributed' && perNodeCopies === 0;
+
+      $('clusterCountOut').textContent = `${nodes} nodes`;
+      $('clusterBackend').textContent = family.backend;
+      $('clusterMemory').textContent = `${aggregate} GB`;
+      $('clusterPerNode').textContent = `${family.usable} GB usable`;
+      $('clusterReplicas').textContent = strategy === 'distributed' ? '1 sharded' : String(replicas);
+      $('clusterNetwork').textContent = family.network;
+      $('clusterTopologyLabel').textContent = `${nodes}-node ${strategy === 'distributed' ? 'distributed model' : strategy === 'mixed' ? 'worker + judge pool' : 'replica pool'}`;
+
+      $('clusterBanner').className = `fit-banner ${noReplica ? 'stop' : strategy === 'distributed' ? 'warn' : ''}`;
+      $('clusterTitle').textContent = noReplica ? 'Per-node model does not fit' : strategy === 'distributed' ? 'Experimental distributed path' : strategy === 'mixed' ? 'Reserve one node as judge' : 'Replica swarm recommended';
+      $('clusterText').textContent = noReplica ? `${family.name} cannot host this ${labels[quant]} profile independently. Use smaller workers, choose a larger node, or treat distributed execution as a separate experiment.` : strategy === 'distributed' ? `The cluster exposes about ${aggregate}GB usable across nodes, but it is not one automatically coherent memory pool.` : strategy === 'mixed' ? `${nodes - 1} node${nodes === 2 ? '' : 's'} generate attempts while the final node reviews, ranks, and escalates.` : `${replicas} estimated Qwen3.8 ${labels[quant]} replica slots across ${nodes} independent nodes at 32K planning context.`;
+
+      const sparkNote = family.platform === 'cuda' ? 'NVIDIA documents up to three directly connected Sparks, or four with a switch and Cluster Assistant.' : 'MLX supports multi-host ring and JACCL backends; Thunderbolt/RDMA is the serious distributed path, while replicas avoid synchronization cost.';
+      const fitNote = family.replicaCap === 0 ? ` This profile cannot host one practical ${activeModel().name} Q4 replica by itself; use it as a client node or test distributed capacity only.` : '';
+      $('clusterCaveat').innerHTML = `<strong>Memory rule:</strong> ${strategy === 'distributed' ? 'aggregate memory can hold a sharded model only through compatible distributed execution.' : 'aggregate memory is directly useful because each node owns complete replicas.'} ${sparkNote}${fitNote}`;
+
+      $('clusterNodes').innerHTML = Array.from({length:nodes}, (_,i) => {
+        const isJudge = strategy === 'mixed' && i === nodes - 1;
+        const role = strategy === 'distributed' ? `Shard ${i+1} / ${nodes}` : isJudge ? 'Local judge + evaluator' : `${perNodeCopies} ${labels[quant]} replica slot${perNodeCopies === 1 ? '' : 's'}`;
+        return `<article class="cluster-node"><span>Node ${String(i+1).padStart(2,'0')}</span><strong>${family.short}</strong><small>${role}<br>${family.usable}GB usable</small></article>`;
+      }).join('');
+
+      $('clusterRecipe').textContent = [
+        `family: ${family.name}`,
+        `nodes: ${nodes}`,
+        `strategy: ${strategy}`,
+        `backend: ${family.backend}`,
+        `interconnect: ${family.network}`,
+        `aggregate_usable_memory_gb: ${aggregate}`,
+        `per_node_usable_memory_gb: ${family.usable}`,
+        `model: ${activeModel().repo}`,
+        `quantization: ${labels[quant]}`,
+        `planning_context: 32K`,
+        `primary_replicas: ${replicas}`,
+        `routing: cheapest-capable`,
+        `note: replicas are the dependable default; distributed mode needs benchmarking`
+      ].join('\n');
+      customCluster = makeClusterSetup();
+    }
+
+    function renderMixRows() {
+      $('mixRows').innerHTML = mixComposition.map((item,index) => `
+        <div class="mix-row">
+          <div><label for="mixProfile${index}">Hardware profile</label><select id="mixProfile${index}" data-mix-profile="${index}">${allClusterOptions()}</select></div>
+          <div><label for="mixCount${index}">Node count</label><input id="mixCount${index}" data-mix-count="${index}" type="number" min="1" max="8" value="${item.count}"></div>
+          <button class="mini-button" type="button" data-mix-remove="${index}" aria-label="Remove ${item.profile}">Remove</button>
+        </div>`).join('') || '<div class="cluster-callout">Add at least two hardware profiles to compose a mixed pool.</div>';
+      mixComposition.forEach((item,index) => { const select = $(`mixProfile${index}`); if (select) select.value = item.profile; });
+      document.querySelectorAll('[data-mix-profile]').forEach(select => select.addEventListener('change', () => { mixComposition[Number(select.dataset.mixProfile)].profile = select.value; updateMix(); }));
+      document.querySelectorAll('[data-mix-count]').forEach(input => input.addEventListener('input', () => { mixComposition[Number(input.dataset.mixCount)].count = Math.max(1, Math.min(8, Number(input.value) || 1)); updateMix(); }));
+      document.querySelectorAll('[data-mix-remove]').forEach(button => button.addEventListener('click', () => { mixComposition.splice(Number(button.dataset.mixRemove), 1); renderMixRows(); }));
+      updateMix();
+    }
+
+    function getMixedNodes() {
+      const nodes = [];
+      mixComposition.forEach(item => {
+        const family = clusterProfileByValue(item.profile);
+        for (let index = 0; index < item.count; index++) nodes.push({
+          familyKey: item.profile,
+          name: `${family.short} ${String(index+1).padStart(2,'0')}`,
+          short: family.short,
+          usable: family.usable,
+          replicaCap: family.replicaCap,
+          platform: family.platform
+        });
+      });
+      return nodes;
+    }
+
+    function makeMixedSetup() {
+      const nodeSpecs = getMixedNodes();
+      return {
+        id: 'custom-cluster',
+        name: `Mixed MLX + CUDA pool · ${nodeSpecs.length} nodes`,
+        cluster: true,
+        heterogeneous: true,
+        nodes: nodeSpecs.length,
+        nodeSpecs,
+        strategy: $('mixStrategy').value,
+        memory: nodeSpecs.reduce((sum,node) => sum + node.usable, 0),
+        interconnect: '10GbE control + TB5/RoCE islands',
+        backend: 'Federated OpenAI-compatible endpoints',
+        gpus: nodeSpecs.length
+      };
+    }
+
+    function updateMix() {
+      const nodes = getMixedNodes();
+      const familyCount = new Set(nodes.map(node => node.familyKey)).size;
+      const platforms = new Set(nodes.map(node => node.platform));
+      const valid = nodes.length >= 2 && familyCount >= 2;
+      const strategy = $('mixStrategy').value;
+      const quant = $('mixQuant').value;
+      const context = $('mixContext').value;
+      const required = weightFor(quant) + reserveFor(Number(context));
+      const judgeIndex = strategy === 'mixed' && nodes.length ? judgeNodeIndex(nodes) : -1;
+      const workers = nodes.reduce((total,node,index) => total + (index === judgeIndex ? 0 : nodeCapacity(node,required)), 0);
+      const aggregate = nodes.reduce((sum,node) => sum + node.usable, 0);
+
+      $('mixBanner').className = `fit-banner ${valid ? '' : 'stop'}`;
+      $('mixTitle').textContent = valid ? strategy === 'mixed' ? 'Role-based federation + local judge' : 'Role-based federation' : 'Choose at least two node families';
+      $('mixText').textContent = valid ? `${workers} estimated primary ${activeModel().name} ${labels[quant]} workers across ${nodes.length} nodes at ${context}K context; each stays inside its native execution island.` : 'A mixed pool needs at least two total nodes from two different families.';
+      $('mixMemory').textContent = `${aggregate} GB`;
+      $('mixNodesMetric').textContent = String(nodes.length);
+      $('mixReplicas').textContent = String(workers);
+      $('mixPlatforms').textContent = platforms.size === 2 ? 'MLX + CUDA' : platforms.has('cuda') ? 'CUDA only' : 'MLX only';
+      $('mixTopologyLabel').textContent = `${nodes.length} nodes / ${platforms.size} execution island${platforms.size === 1 ? '' : 's'}`;
+      $('deployMix').disabled = !valid;
+
+      const judgeName = judgeIndex >= 0 ? nodes[judgeIndex].name : null;
+      $('mixNodes').innerHTML = nodes.map((node,index) => {
+        const capacity = nodeCapacity(node,required);
+        const judge = index === judgeIndex;
+        const role = judge ? 'Local judge + evaluator' : capacity ? `${capacity} ${labels[quant]} worker slot${capacity === 1 ? '' : 's'}` : `${labels[quant]} does not fit`; 
+        return `<article class="cluster-node ${node.platform === 'cuda' ? 'cuda' : ''} ${judge ? 'judge' : ''}"><span>${node.platform.toUpperCase()} · Node ${String(index+1).padStart(2,'0')}</span><strong>${node.short}</strong><small>${role}<br>${node.usable}GB usable</small></article>`;
+      }).join('') || '<div class="cluster-callout">Add nodes to draw the federated topology.</div>';
+
+      $('mixCaveat').innerHTML = `<strong>Architecture rule:</strong> expose MLX and CUDA nodes as compatible endpoints, then route tasks and merge results at the harness layer. ${platforms.size === 2 ? 'Do not tensor-shard one model across Mac and Spark nodes; keep distributed jobs within a compatible island.' : 'Heterogeneous Macs still benefit most from role-based replicas because uneven nodes create synchronization drag.'}`;
+      $('mixRecipe').textContent = [
+        `topology: heterogeneous-federation`,
+        `nodes: ${nodes.length}`,
+        `mlx_nodes: ${nodes.filter(node => node.platform === 'mlx').length}`,
+        `cuda_nodes: ${nodes.filter(node => node.platform === 'cuda').length}`,
+        `policy: ${strategy}`,
+        `router: cheapest-capable`,
+        `endpoint_contract: OpenAI-compatible`,
+        `interconnect: 10GbE control + native high-speed islands`,
+        `model: ${activeModel().repo}`,
+        `quantization: ${labels[quant]}`,
+        `context: ${context}K`,
+        `primary_workers: ${workers}`,
+        `judge: ${judgeName || 'off'}`,
+        `rule: never assume cross-platform memory pooling`
+      ].join('\n');
+    }
+
+    function updateSplit() {
+      const sparks = Number($('splitSparks').value);
+      const decode = macProfiles[$('splitDecode').value];
+      const network = $('splitNetwork').value;
+      const prompt = Number($('splitPrompt').value);
+      const slowNetwork = network === '1';
+      const shortPrompt = prompt < 8;
+      const noFit = macStance(decode) === 'no-fit';
+      const weakDecode = macStance(decode) === 'weak';
+      const viableDecode = macStance(decode) === 'viable';
+      const multiSpark = sparks > 1;
+      const cleanExperiment = !noFit && !slowNetwork && !weakDecode && !shortPrompt && !multiSpark;
+      const strongest = macStance(decode) === 'best' && cleanExperiment;
+      const viable = viableDecode && cleanExperiment;
+
+      $('splitBanner').className = `fit-banner ${strongest || viable ? 'warn' : 'stop'}`;
+      $('splitGateCode').textContent = strongest ? 'RESEARCH / GO' : viable ? 'RESEARCH / TRY' : 'RESEARCH / HOLD';
+      $('splitTitle').textContent = noFit ? `${activeModel().name} does not fit` : slowNetwork ? 'Network likely dominates' : weakDecode ? 'Weak decode complement' : multiSpark ? 'Added sharding variable' : shortPrompt ? 'Prompt may be too short' : viable ? 'Viable decode candidate' : 'Strongest research pairing';
+      $('splitText').textContent = strongest
+        ? `${sparks} Spark${sparks === 1 ? '' : 's'} ${sparks === 1 ? 'handles' : 'handle'} ${prompt}K-token prefill; ${decode.name} handles decode. Benchmark against two independent endpoints before promoting it.`
+        : viable
+          ? `${decode.name} is a credible ${decode.bandwidth}GB/s decoder, but it is not the exact M3 Ultra pairing EXO measured. Test sustained decode and end-to-end latency before promotion.`
+          : noFit
+            ? `${decode.name} leaves about ${decode.planningMemory}GB for models after the OS, below the ${gb(modelNeeds().q4)}GB a ${activeModel().name} Q4 worker needs at 32K. Use it as the client/router instead.`
+            : slowNetwork
+              ? `A 1GbE state handoff is the wrong baseline for this experiment. Use whole-request routing until a dedicated 10GbE path exists.`
+              : weakDecode
+                ? `${decode.name} offers ${decode.bandwidth}GB/s memory bandwidth, so Spark-to-Mac phase specialization has little obvious decode-side advantage. Whole-request routing is the better default.`
+                : multiSpark
+                  ? `Two-Spark prefill adds intra-CUDA sharding to an already experimental cross-platform handoff. Prove the one-Spark baseline first.`
+                  : `At ${prompt}K input tokens, orchestration and state-transfer overhead may erase the prefill win. Start with whole-request routing.`;
+
+      $('splitRuntime').textContent = noFit ? 'Model cannot launch' : 'Experimental fork';
+      $('splitMemory').textContent = `≈${decode.planningMemory} / ${decode.totalMemory} GB`;
+      $('splitBandwidth').textContent = `${decode.bandwidth} GB/s`;
+      $('splitNetworkMetric').textContent = network === '10' ? '10GbE' : '1GbE';
+      $('splitCandidate').textContent = macCandidate(decode);
+      $('splitPromotion').textContent = noFit ? 'Choose larger Mac' : 'Correct + faster';
+      $('splitTopologyLabel').textContent = `${sparks} Spark${sparks === 1 ? '' : 's'} → 1 Mac`;
+      $('splitPrefillNode').textContent = `${sparks}× DGX Spark`;
+      $('splitTransferNode').textContent = network === '10' ? '10Gb Ethernet' : '1Gb Ethernet';
+      $('splitDecodeNode').textContent = decode.name;
+      $('splitTransferText').textContent = slowNetwork ? 'Expected bottleneck: the state handoff can overwhelm compute saved by splitting phases.' : 'Overlap layer-state transfer with later prefill computation; isolate this traffic from ordinary LAN use.';
+      $('splitCaveat').innerHTML = `<strong>State-transfer rule:</strong> transfer and validate every recurrent, convolutional, and attention state—not only a conventional KV cache. ${macNote(decode)}${multiSpark ? ' A two-Spark prefill island is an additional unverified variable.' : ''}`;
+
+      $('splitRecipe').textContent = [
+        `status: experimental`,
+        `decision_gate: ${strongest ? 'go' : viable ? 'try' : 'hold'}`,
+        `model: ${activeModel().repo}`,
+        `topology: disaggregated-prefill-decode`,
+        `prefill:`,
+        `  hardware: ${sparks}x DGX Spark`,
+        `  runtime: CUDA`,
+        `decode:`,
+        `  hardware: ${decode.name}`,
+        `  runtime: MLX`,
+        `  unified_memory_gb: ${decode.totalMemory}`,
+        `  planning_memory_gb: ${decode.planningMemory}`,
+        `  memory_bandwidth_gb_s: ${decode.bandwidth}`,
+        `  candidate_class: ${macCandidate(decode)}`,
+        `handoff: ${network === '10' ? 'dedicated 10GbE' : '1GbE -- replace before testing'}`,
+        `typical_input_tokens: ${prompt * 1024}`,
+        `public_stock_exo_cuda_path: unavailable`,
+        `required_runtime: experimental Metal+CUDA implementation`,
+        `correctness_oracle: compare logits and generated output with single-node baseline`,
+        `performance_gate: beat both Mac-only and Spark-only end-to-end latency`,
+        `fallback: whole-request routing between independent endpoints`,
+        `warning: EXO Llama 8B result is evidence, not a ${activeModel().name} forecast`
+      ].join('\n');
+    }
+
+    function renderModelPicker() {
+      const byFamily = {};
+      models.forEach(m => (byFamily[m.family] = byFamily[m.family] || []).push(m));
+      $('modelSelect').innerHTML = Object.entries(byFamily).map(([fam, list]) =>
+        `<optgroup label="${fam}">${list.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}</optgroup>`).join('');
+      $('modelSelect').value = selectedModel;
+    }
+
+    function renderFlagship() {
+      const m = activeModel();
+      $('flagshipName').textContent = m.name;
+
+      const size = m.kind === 'moe'
+        ? `${m.params}B total${m.active ? ` / ${m.active}B active` : ''} (MoE)`
+        : `${m.params}B dense`;
+      const ctx = m.context ? `${Math.round(m.context / 1024)}K native context` : 'native context unverified';
+      const kv = m.arch
+        ? `KV reserve computed from its own config (${m.arch.layers} layers, ${m.arch.kvHeads} KV heads).`
+        : m.gated
+          ? 'Config is gated, so context reserve falls back to a generic estimate.'
+          : 'Architecture unverified, so context reserve falls back to a generic estimate.';
+      $('flagshipDesc').textContent = `${size}. ${ctx}. ${kv}${m.note ? ' ' + m.note : ''}`;
+
+      const flags = [];
+      flags.push(m.provenance === 'measured'
+        ? { cls: 'ok', text: 'sizes measured' }
+        : { cls: 'warn', text: m.provenance });
+      if (m.native) flags.push({ cls: 'warn', text: `native ${m.native} — no size formula` });
+      if (m.gated) flags.push({ cls: 'warn', text: 'gated repo' });
+      if (m.kvUpperBound) flags.push({ cls: 'warn', text: 'KV is an upper bound' });
+      if (m.license) flags.push({ cls: m.license === 'apache-2.0' || m.license === 'mit' ? 'ok' : 'warn', text: m.license });
+      $('flagshipMeta').innerHTML = flags.map(f => `<span class="model-flag ${f.cls}">${f.text}</span>`).join('');
+      const strip = $('stripFlagship'); if (strip) strip.textContent = m.name;
+      const accel = $('splitAccelPath'); if (accel) accel.textContent = `${m.name} accelerated path`;
+    }
+
+    function applyModel() {
+      selectedModel = $('modelSelect').value;
+      renderFlagship();
+      renderBuy();
+      updateMacCatalog();
+      updateDeploy();
+      updateCluster();
+      updateMix();
+      updateSplit();
+    }
+
+    function init() {
+      $('epycGpu').innerHTML = Object.entries(epycGpuProfiles).map(([key,gpu]) => `<option value="${key}">${gpu.name} · ${gpu.vram}GB · ${gpu.tdp}W</option>`).join('');
+      $('epycGpuCount').innerHTML = [1,2,4,8].map(count => `<option value="${count}">${count} GPU${count === 1 ? '' : 's'}</option>`).join('');
+      $('epycHost').innerHTML = `<option value="auto">Auto-select compatible platform</option>${Object.entries(epycHostProfiles).map(([key,host]) => `<option value="${key}">${host.name}</option>`).join('')}`;
+      $('epycGpu').value = 'rtx3090';
+      $('epycGpuCount').value = '4';
+      $('epycHost').value = 'auto';
+      fillEpycDependentControls(true);
+      $('deploySetup').innerHTML = allHardwareOptions();
+      $('deploySetup').value = selectedSetup;
+      $('clusterFamily').innerHTML = allClusterOptions();
+      $('clusterFamily').value = 'mac:studio_m4max_16c40g_128';
+      $('splitDecode').innerHTML = macOptionGroups();
+      $('splitDecode').value = defaultMacKey;
+      $('macFamily').innerHTML = macProfileGroups.map(group => `<option value="${group.label}">${group.label}</option>`).join('');
+      $('macCatalogCount').textContent = `${Object.keys(macProfiles).length} profiles / Neo excluded`;
+      $('macFamily').value = macProfileGroups.find(group => group.options.includes(selectedMacKey)).label;
+      populateMacProfileSelect();
+      $('macProfile').value = selectedMacKey;
+      ['buyQuant','buyContext'].forEach(id => $(id).addEventListener('change', renderBuy));
+      renderModelPicker();
+      renderFlagship();
+      $('modelSelect').addEventListener('change', applyModel);
+      renderRoster();
+      $('addRosterRow').addEventListener('click', () => {
+        roster.push({ role: 'Support worker', model: selectedModel, quant: 'q4', context: 32, count: 1 });
+        renderRoster();
+        updateDeploy();
+      });
+      ['epycGpu','epycGpuCount','epycHost'].forEach(id => $(id).addEventListener('change', () => renderEpycBuilder(true)));
+      ['epycCpu','epycRam'].forEach(id => $(id).addEventListener('change', () => renderEpycBuilder(false)));
+      ['deploySetup','experiment','quant','context'].forEach(id => $(id).addEventListener('change', updateDeploy));
+      ['clusterFamily','clusterCount','clusterStrategy','clusterQuant'].forEach(id => $(id).addEventListener('input', updateCluster));
+      ['mixStrategy','mixQuant','mixContext'].forEach(id => $(id).addEventListener('input', updateMix));
+      ['splitSparks','splitDecode','splitNetwork','splitPrompt'].forEach(id => $(id).addEventListener('input', updateSplit));
+      $('macFamily').addEventListener('change', () => { selectedMacKey = macProfileGroups.find(group => group.label === $('macFamily').value).options[0]; populateMacProfileSelect(); updateMacCatalog(); });
+      $('macProfile').addEventListener('change', updateMacCatalog);
+      $('addMixRow').addEventListener('click', () => { mixComposition.push({ profile: `mac:${selectedMacKey}`, count: 1 }); renderMixRows(); });
+      $('buyTab').addEventListener('click', () => setView('buy'));
+      $('deployTab').addEventListener('click', () => setView('deploy'));
+      $('clusterTab').addEventListener('click', () => setView('cluster'));
+      $('mixTab').addEventListener('click', () => setView('mix'));
+      $('splitTab').addEventListener('click', () => setView('split'));
+      $('openSplit').addEventListener('click', () => setView('split'));
+      $('macToDeploy').addEventListener('click', () => { selectedSetup = `mac:${selectedMacKey}`; $('deploySetup').value = selectedSetup; setView('deploy'); });
+      $('macToCluster').addEventListener('click', () => { $('clusterFamily').value = `mac:${selectedMacKey}`; setView('cluster'); });
+      $('macToMix').addEventListener('click', () => {
+        const value = `mac:${selectedMacKey}`;
+        const existing = mixComposition.find(item => item.profile === value);
+        if (existing) existing.count += 1; else mixComposition.push({ profile: value, count: 1 });
+        renderMixRows();
+        setView('mix');
+      });
+      $('macToSplit').addEventListener('click', () => { $('splitDecode').value = selectedMacKey; setView('split'); });
+      $('saveEpycBuild').addEventListener('click', () => {
+        const build = deriveEpycBuild();
+        if (!build.valid) return;
+        generatedBuild = build;
+        selectedSetup = generatedBuild.id;
+        refreshPlannerOptions();
+        renderBuy();
+        $('saveEpycBuild').textContent = 'Saved to Deploy, Cluster, and Mix';
+        setTimeout(() => $('saveEpycBuild').textContent = 'Update saved build →', 1800);
+      });
+      $('resetEpycBuild').addEventListener('click', () => {
+        $('epycGpu').value = 'rtx3090';
+        $('epycGpuCount').value = '4';
+        $('epycHost').value = 'auto';
+        fillEpycDependentControls(true);
+        renderEpycBuilder();
+      });
+      $('deployCluster').addEventListener('click', () => {
+        updateCluster();
+        let option = $('deploySetup').querySelector('option[value="custom-cluster"]');
+        if (!option) { option = document.createElement('option'); option.value = 'custom-cluster'; $('deploySetup').append(option); }
+        option.textContent = customCluster.name;
+        selectedSetup = 'custom-cluster';
+        $('deploySetup').value = selectedSetup;
+        $('quant').value = $('clusterQuant').value;
+        $('context').value = '32';
+        setView('deploy');
+      });
+      $('deployMix').addEventListener('click', () => {
+        updateMix();
+        customCluster = makeMixedSetup();
+        let option = $('deploySetup').querySelector('option[value="custom-cluster"]');
+        if (!option) { option = document.createElement('option'); option.value = 'custom-cluster'; $('deploySetup').append(option); }
+        option.textContent = customCluster.name;
+        selectedSetup = 'custom-cluster';
+        $('deploySetup').value = selectedSetup;
+        $('quant').value = $('mixQuant').value;
+        $('context').value = $('mixContext').value;
+        setView('deploy');
+      });
+      $('copyRecipe').addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText($('recipeText').textContent); $('copyRecipe').textContent = 'Copied'; setTimeout(() => $('copyRecipe').textContent = 'Copy', 1400); }
+        catch { $('copyRecipe').textContent = 'Select text'; }
+      });
+      $('copyCluster').addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText($('clusterRecipe').textContent); $('copyCluster').textContent = 'Copied'; setTimeout(() => $('copyCluster').textContent = 'Copy', 1400); }
+        catch { $('copyCluster').textContent = 'Select text'; }
+      });
+      $('copyMix').addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText($('mixRecipe').textContent); $('copyMix').textContent = 'Copied'; setTimeout(() => $('copyMix').textContent = 'Copy', 1400); }
+        catch { $('copyMix').textContent = 'Select text'; }
+      });
+      $('copySplit').addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText($('splitRecipe').textContent); $('copySplit').textContent = 'Copied'; setTimeout(() => $('copySplit').textContent = 'Copy', 1400); }
+        catch { $('copySplit').textContent = 'Select text'; }
+      });
+      $('themeToggle').addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        $('themeToggle').textContent = next === 'dark' ? 'Light mode' : 'Dark mode';
+      });
+      renderBuy();
+      renderEpycBuilder();
+      updateMacCatalog();
+      updateCluster();
+      renderMixRows();
+      updateSplit();
+      updateDeploy();
+    }
+    init();
+  </script>
+</body>
+</html>
