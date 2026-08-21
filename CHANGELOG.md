@@ -26,4 +26,17 @@ Initial public source. No version has been tagged yet.
   one machine together, respecting that machine's real topology.
 - Derive an EPYC or GPU build from a payload and report the host constraints it
   implies.
+- Harness topology as a parameter of one Deploy surface rather than separate
+  Cluster, Mix, and Phase split tabs. Six shapes — single node, independent
+  replicas, workers + judge, distributed single model, federated islands, and
+  a prefill/decode phase split — each with an inline-SVG diagram, its
+  claim state, and its live worker count for the current model, precision and
+  context. The start gate offers topology as a fourth way in: that door opens a
+  second gate step showing only the six shapes, with its own precision and
+  context so the counts are yours before you pick one.
+- Precision and context have one owner, so they follow you across every shape
+  and the Buy view instead of being re-answered per view.
+- Each shape keeps its own roster, seeded from the shape you arrived from.
+  Shapes with no roles to assign — a distributed single model and a phase
+  split — say so rather than rendering a roster that does not apply.
 - Repository invariants enforced by `tools/check.mjs` in CI.

@@ -241,12 +241,13 @@
     /* `safe` keeps the top of the gate reachable when a short viewport cannot
        fit it; browsers without the keyword fall back to the plain centring. */
     .shell[data-gate="open"] { align-items: safe center; }
-    .start-gate { max-width: 940px; margin: 0; text-align: center; }
+    .start-gate { max-width: 1220px; margin: 0; text-align: center; }
     /* Centred ragged text breaks badly by default; `balance` evens the lines
        and is simply ignored where it is not supported. */
     .start-gate h2 { font-size: 34px; line-height: 1.1; margin: 6px 0 10px; text-wrap: balance; }
-    .start-gate > p { color: var(--muted); margin: 0 auto 26px; max-width: 64ch; text-wrap: balance; }
-    .gate-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .gate-step > p { color: var(--muted); margin: 0 auto 26px; max-width: 64ch; text-wrap: balance; }
+    .gate-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 1180px) { .gate-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .gate-card {
       display: flex; flex-direction: column; gap: 6px; text-align: left;
       padding: 18px; border: 1px solid var(--line); border-top: 4px solid var(--signal);
@@ -258,8 +259,17 @@
     .gate-card strong { font-size: 17px; }
     .gate-card p { margin: 0; color: var(--muted); font-size: 13px; }
     .gate-go { margin-top: auto; padding-top: 12px; font: 11px var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--signal); }
-    /* Outranks `.start-gate > p` above, which would otherwise zero this margin. */
-    .start-gate > .gate-foot { margin: 24px auto 0; color: var(--muted); font-size: 13px; max-width: 64ch; text-wrap: balance; }
+    /* Outranks `.gate-step > p` above, which would otherwise zero this margin. */
+    .gate-step > .gate-foot { margin: 24px auto 0; color: var(--muted); font-size: 13px; max-width: 64ch; text-wrap: balance; }
+    .gate-step[hidden] { display: none; }
+    /* Step two is a gate, so it stays centred like step one, but its controls
+       and cards are the planner's own, not a second visual language. */
+    /* The shared strip is a four-column grid; three controls would leave a
+       quarter of it showing as bare separator colour. */
+    .control-strip.gate-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 auto 16px; text-align: left; max-width: 680px; }
+    @media (max-width: 760px) { .control-strip.gate-controls { grid-template-columns: 1fr; } }
+    .gate-step-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
+    .gate-step #gateTopoGrid .topo-card { text-align: left; }
     /* The gate is the shortest state the page has; without this the footer
        floats mid-viewport on a tall screen. Scoped to the gate so no other
        view's layout changes, and flex-based so it cannot overshoot into a
@@ -290,9 +300,6 @@
     }
     .mode-tab:first-child { border-left: 1px solid var(--line); }
     .mode-tab[aria-selected="true"] { background: var(--signal); color: #061b1e; }
-    .mode-tab.branch { font-weight: 700; color: var(--muted); }
-    .mode-tab.branch[aria-selected="true"] { color: #061b1e; }
-    .mode-tab.first-branch { margin-left: 20px; border-left: 1px solid var(--line); }
     .mode-tab:hover { filter: brightness(1.06); }
     .view[hidden] { display: none; }
 
@@ -550,6 +557,50 @@
     .conditional .status-pill { color: var(--amber); }
     .experimental .status-pill { color: var(--danger); }
 
+
+    /* --- Harness topology -------------------------------------------------
+       Tiny at rest, full when changing. One line while you work; a full card
+       page when you actually want to choose, which keeps the app chrome so it
+       reads as arrival rather than a second gate. */
+    .topo-strip { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 9px 12px; margin-bottom: 14px; border: 1px solid var(--line); border-left: 3px solid var(--signal); background: var(--panel-2); }
+    .topo-strip-label { font: 10px var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+    .topo-strip-value { flex: 1; min-width: 0; }
+    .topo-strip-value strong { font-size: 15px; }
+    .topo-strip-value span { color: var(--muted); }
+    .topo-strip-value span:not(:empty)::before { content: '·'; margin: 0 7px; color: var(--line); }
+    .topo-change { flex: none; }
+
+    .topo-picker { padding: 16px; margin-bottom: 18px; border: 1px solid var(--line); background: var(--paper); }
+    .topo-picker .section-head { margin-bottom: 14px; }
+    .topo-picker-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
+    .topo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    @media (max-width: 1000px) { .topo-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .topo-grid { grid-template-columns: 1fr; } }
+    .topo-card { display: block; width: 100%; text-align: left; padding: 13px; border: 1px solid var(--line); border-top: 4px solid var(--line); background: var(--panel-2); color: inherit; font: inherit; cursor: pointer; }
+    .topo-card:hover { border-color: var(--signal); }
+    .topo-card:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+    .topo-card.selected { border-color: var(--signal); border-top-color: var(--signal); background: var(--signal-soft); }
+    .topo-card strong { display: block; margin: 5px 0 2px; font-size: 15px; }
+    .topo-card p { margin: 6px 0 0; color: var(--muted); font-size: 12.5px; }
+    .topo-count { font: 12px var(--mono); color: var(--ink); }
+    .status-pill.conditional { color: var(--amber); }
+    .status-pill.experimental { color: var(--danger); }
+
+    /* Diagrams are inline SVG on theme tokens, so they invert with the page. */
+    .topo-diagram { display: block; width: 100%; max-width: 236px; height: auto; margin: 10px 0 10px; color: var(--muted); }
+    .topo-diagram .d-box { fill: var(--paper); stroke: currentColor; stroke-width: 1; }
+    .topo-diagram .d-box.accent { fill: var(--signal-soft); stroke: var(--signal); }
+    .topo-diagram .d-box.alt { fill: var(--amber-soft); stroke: var(--amber); }
+    .topo-diagram .d-chip { fill: var(--signal); }
+    .topo-diagram .d-chip.dim { fill: var(--line); }
+    .topo-diagram .d-chip.alt { fill: var(--amber); }
+    .topo-diagram .d-link { fill: none; stroke: currentColor; stroke-width: 1; }
+    .topo-diagram .d-span { fill: var(--signal-soft); stroke: var(--signal); stroke-width: 1; }
+    .topo-diagram .d-label { fill: currentColor; font: 7px var(--mono); letter-spacing: .06em; }
+
+    .shape-panel { margin-bottom: 18px; }
+    .shape-panel[hidden], .topo-picker[hidden], .panel[hidden], .control[hidden], .deploy-layout[hidden] { display: none; }
+
     .phase-flow { display: grid; grid-template-columns: minmax(130px, 1fr) 28px minmax(150px, .8fr) 28px minmax(130px, 1fr); gap: 8px; align-items: stretch; }
     .phase-node, .transfer-node { min-height: 144px; padding: 14px; border: 1px solid var(--line); background: var(--paper); }
     .phase-node { border-top: 5px solid var(--signal); }
@@ -599,7 +650,6 @@
       .shell { width: min(100% - 20px, 1440px); }
       .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 46px; }
       .mode-tab { min-width: 0; flex: 1; min-height: 48px; }
-      .mode-tab.first-branch { margin-left: 8px; }
       .orientation { grid-template-columns: 1fr; }
       .orientation-terms { grid-template-columns: 1fr; gap: 2px; }
       .orientation-terms dd { margin-bottom: 10px; }
@@ -643,9 +693,10 @@
 
   <main class="shell" id="mainShell">
     <section class="start-gate" id="startGate" aria-labelledby="startGateTitle" hidden>
+      <div class="gate-step" id="gateStep1">
       <div class="eyebrow">Harness Planner</div>
       <h2 id="startGateTitle">How do you want to start?</h2>
-      <p>Three ways into the same instrument. Every route runs the same memory arithmetic on the same machines &mdash; this only decides where you begin, and you can switch at any time.</p>
+      <p>Four ways into the same instrument. Every route runs the same memory arithmetic on the same machines &mdash; this only decides where you begin, and you can switch at any time.</p>
       <div class="gate-grid">
         <button class="gate-card" type="button" data-gate-choice="plan">
           <span class="gate-kicker">You know what you want to run</span>
@@ -659,6 +710,12 @@
           <p>Pick an exact Mac configuration or derive a GPU host from its payload, and see what that machine can actually hold.</p>
           <span class="gate-go">Open the configuration catalog &rarr;</span>
         </button>
+        <button class="gate-card" type="button" data-gate-choice="shape">
+          <span class="gate-kicker">You know the shape</span>
+          <strong>From a harness topology</strong>
+          <p>Start from how the machines are arranged &mdash; one box, a replica swarm, a federation, or a prefill/decode split &mdash; and see what each shape would host.</p>
+          <span class="gate-go">Open the topology cards &rarr;</span>
+        </button>
         <button class="gate-card" type="button" data-gate-choice="browse">
           <span class="gate-kicker">Not sure yet</span>
           <strong>Browse everything</strong>
@@ -667,6 +724,42 @@
         </button>
       </div>
       <p class="gate-foot">Counts are memory arithmetic, not benchmarks or a ranking. Nothing here is recommended over anything else &mdash; the planner reports what fits and where the numbers came from.</p>
+      </div>
+
+      <div class="gate-step" id="gateStep2" hidden>
+        <div class="eyebrow">Harness Planner</div>
+        <h2 id="gateShapeTitle">How should the machines be arranged?</h2>
+        <p>Six arrangements, same arithmetic. Set the precision and context you have in mind and every card reports what that shape would host &mdash; then pick one to open the planner on it.</p>
+        <div class="control-strip gate-controls" aria-label="Assumptions for these counts">
+          <div class="control">
+            <label for="gateQuant">Precision</label>
+            <select id="gateQuant">
+              <option value="q4">Q4 balanced</option>
+              <option value="q8">Q8 quality</option>
+              <option value="bf16">BF16 reference</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="gateContext">Working context</label>
+            <select id="gateContext">
+              <option value="16">16K</option>
+              <option value="32" selected>32K</option>
+              <option value="64">64K</option>
+              <option value="128">128K</option>
+            </select>
+          </div>
+          <div class="control" role="status">
+            <span class="label">Model</span>
+            <strong id="gateModelName">&mdash;</strong><br><span style="color:var(--muted)">Change it in the bar above.</span>
+          </div>
+        </div>
+        <div class="topo-grid" id="gateTopoGrid"></div>
+        <div class="gate-step-foot">
+          <button class="mini-button" id="gateBack" type="button">&larr; Back</button>
+          <span class="eyebrow" id="gateTopoNote"></span>
+        </div>
+        <p class="gate-foot">Counts are memory arithmetic, not benchmarks or a ranking. A shape is not a commitment &mdash; you can change it at any time from the planner.</p>
+      </div>
     </section>
 
     <section class="hero" id="hero">
@@ -694,7 +787,7 @@
           <dt>Q4 / Q8 / BF16</dt>
           <dd>How tightly the weights are compressed. Q4 is the smallest and fits the most workers; BF16 is the uncompressed reference and fits the fewest.</dd>
         </dl>
-        <p class="orientation-path"><strong>Buy</strong> and <strong>Deploy</strong> are the two main views &mdash; what a machine can host, and how models are routed onto it. Work in either order. Cluster, Mix, and Phase split are alternatives for planning across more than one machine.</p>
+        <p class="orientation-path"><strong>Buy</strong> and <strong>Deploy</strong> are the two views &mdash; what a machine can host, and how models are routed onto it. Work in either order. Inside Deploy, <strong>topology</strong> is how the machines are arranged, from one box to a cluster, a federation, or a prefill/decode split.</p>
       </div>
       <button class="mini-button" id="orientationHide" type="button" aria-controls="orientationPanel">Got it</button>
     </aside>
@@ -704,9 +797,6 @@
     <nav class="mode-nav" aria-label="Planner mode" role="tablist">
       <button class="mode-tab" id="buyTab" role="tab" aria-selected="true" aria-controls="buyView">Buy</button>
       <button class="mode-tab" id="deployTab" role="tab" aria-selected="false" aria-controls="deployView">Deploy</button>
-      <button class="mode-tab branch first-branch" id="clusterTab" role="tab" aria-selected="false" aria-controls="clusterView">Cluster</button>
-      <button class="mode-tab branch" id="mixTab" role="tab" aria-selected="false" aria-controls="mixView">Mix</button>
-      <button class="mode-tab branch" id="splitTab" role="tab" aria-selected="false" aria-controls="splitView">Phase split</button>
     </nav>
 
     <section class="view" id="buyView" role="tabpanel" aria-labelledby="buyTab">
@@ -836,11 +926,29 @@
     <section class="view" id="deployView" role="tabpanel" aria-labelledby="deployTab" hidden>
       <div class="section-head">
         <div><div class="eyebrow">Harness</div><h2>How should it work?</h2></div>
-        <p>Choose a machine and experiment. The planner assigns a flagship, supporting <button type="button" class="term" data-term="worker" aria-expanded="false">workers</button>, and an optional cloud judge.</p>
+        <p>Choose a shape, a machine and an experiment. The planner assigns a flagship, supporting <button type="button" class="term" data-term="worker" aria-expanded="false">workers</button>, and an optional cloud judge. Precision and context are one decision here and carry across every shape.</p>
       </div>
 
+      <div class="topo-strip" id="topoStrip">
+        <span class="topo-strip-label">Topology</span>
+        <span class="topo-strip-value"><strong id="topoStripName">Single node</strong><span id="topoStripSummary"></span></span>
+        <button class="mini-button topo-change" id="topoChange" type="button" aria-expanded="false" aria-controls="topoPicker">Change &#9656;</button>
+      </div>
+
+      <section class="topo-picker" id="topoPicker" aria-labelledby="topoPickerTitle" hidden>
+        <div class="section-head">
+          <div><div class="eyebrow">Harness</div><h2 id="topoPickerTitle">Harness topology</h2></div>
+          <p>How the machines are arranged. Every count below is what the shape would host at the model, precision and context selected right now &mdash; memory arithmetic, not a ranking.</p>
+        </div>
+        <div class="topo-grid" id="topoGrid"></div>
+        <div class="topo-picker-foot">
+          <span class="eyebrow" id="topoPickerNote"></span>
+          <button class="mini-button" id="topoClose" type="button">Close</button>
+        </div>
+      </section>
+
       <div class="control-strip" aria-label="Deployment controls">
-        <div class="control"><label for="deploySetup">Hardware</label><select id="deploySetup"></select></div>
+        <div class="control" id="deploySetupControl"><label for="deploySetup">Hardware</label><select id="deploySetup"></select></div>
         <div class="control">
           <label for="experiment">Experiment</label>
           <select id="experiment">
@@ -870,7 +978,152 @@
         </div>
       </div>
 
-      <div class="deploy-layout">
+      <div class="shape-panels" id="shapePanels">
+        <section class="shape-panel" id="shapeCluster" aria-label="Cluster shape controls" hidden>
+        <div class="control-strip" aria-label="Cluster controls">
+          <div class="control">
+            <label for="clusterFamily">Node family</label>
+            <select id="clusterFamily">
+              <option value="mac:studio_m4max_16c40g_128" selected>Mac Studio M4 Max · 16CPU/40GPU · 128GB</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="clusterCount">Node count</label>
+            <input id="clusterCount" type="range" min="2" max="8" value="2" step="1">
+            <output id="clusterCountOut" for="clusterCount">2 nodes</output>
+          </div>
+        </div>
+
+        <div class="cluster-layout">
+          <section class="panel">
+            <div class="panel-head"><h3>Cluster envelope</h3><span class="eyebrow" id="clusterBackend">MLX / JACCL</span></div>
+            <div class="panel-body">
+              <div class="fit-banner" id="clusterBanner" role="status"><strong id="clusterTitle">Replica swarm recommended</strong><p id="clusterText"></p></div>
+              <div class="metrics">
+                <div class="metric"><span>Aggregate usable memory</span><strong id="clusterMemory">224 GB</strong></div>
+                <div class="metric"><span>Per node</span><strong id="clusterPerNode">112 GB</strong></div>
+                <div class="metric"><span>Primary <button type="button" class="term" data-term="replica" aria-expanded="false">replicas</button></span><strong id="clusterReplicas">6</strong></div>
+                <div class="metric"><span>Interconnect</span><strong id="clusterNetwork">TB5 / 10GbE</strong></div>
+              </div>
+              <div class="cluster-callout" id="clusterCaveat"><strong>Memory rule:</strong> aggregate memory is directly useful for replicas. A single model can use it only through a compatible distributed backend, with communication overhead.</div>
+              </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><h3>Node topology</h3><span class="eyebrow" id="clusterTopologyLabel">2-node replica pool</span></div>
+            <div class="panel-body">
+              <div class="topology" id="clusterNodes" aria-label="Cluster node topology"></div>
+              <div class="recipe">
+                <div class="recipe-head"><span>CLUSTER BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copyCluster" type="button">Copy</button></div>
+                <pre id="clusterRecipe"></pre>
+              </div>
+            </div>
+          </section>
+        </div>
+        </section>
+
+        <section class="shape-panel" id="shapeMix" aria-label="Federated islands controls" hidden>
+        <div class="maturity-grid" aria-label="Mixed cluster operating modes">
+          <article class="maturity-card"><span class="status-pill">Dependable default</span><strong>Whole-request routing</strong><p>Every Mac or Spark runs a complete endpoint. The harness sends each coding task to the cheapest capable node.</p></article>
+          <article class="maturity-card conditional"><span class="status-pill">Backend-specific</span><strong>Capacity sharding</strong><p>Split one model only within a compatible MLX or CUDA island. Networking and synchronization determine whether it helps.</p></article>
+          <article class="maturity-card experimental"><span class="status-pill">Research path</span><strong>Spark prefill → Mac decode</strong><p>EXO demonstrated the phase match, but the public accelerated Metal + CUDA path is not turnkey for Qwen3.8.</p><button class="mini-button" id="openSplit" type="button" style="margin-top:10px">Open phase-split lab →</button></article>
+        </div>
+
+        <section class="panel mix-builder" aria-labelledby="mixBuilderTitle">
+          <div class="panel-head"><h3 id="mixBuilderTitle">Pool composition</h3><span class="eyebrow">Exact profiles</span></div>
+          <div class="panel-body">
+            <div class="mix-rows" id="mixRows"></div>
+            <div class="mix-builder-foot"><span>Combine any Mac configurations with DGX Spark. Memory remains local to each node.</span><button class="mini-button" id="addMixRow" type="button">+ Add profile</button></div>
+          </div>
+        </section>
+
+        <div class="control-strip" aria-label="Mixed pool policy">
+          <div class="control"><label for="mixStrategy">Harness policy</label><select id="mixStrategy"><option value="replicas">All nodes run workers</option><option value="mixed" selected>Workers + strongest-node judge</option></select></div>
+          <div class="control"><span class="label">Federation rule</span><strong>Endpoints, not pooled RAM</strong><br><span style="color:var(--muted)">Route by capability; merge results at the harness layer.</span></div>
+        </div>
+
+        <div class="cluster-layout">
+          <section class="panel">
+            <div class="panel-head"><h3>Federated envelope</h3><span class="eyebrow">MLX + CUDA</span></div>
+            <div class="panel-body">
+              <div class="fit-banner" id="mixBanner" role="status"><strong id="mixTitle">Role-based federation</strong><p id="mixText"></p></div>
+              <div class="metrics">
+                <div class="metric"><span>Aggregate usable memory</span><strong id="mixMemory">304 GB</strong></div>
+                <div class="metric"><span>Total nodes</span><strong id="mixNodesMetric">4</strong></div>
+                <div class="metric"><span>Primary workers</span><strong id="mixReplicas">7</strong></div>
+                <div class="metric"><span>Execution islands</span><strong id="mixPlatforms">MLX + CUDA</strong></div>
+              </div>
+              <div class="cluster-callout" id="mixCaveat"><strong>Architecture rule:</strong> expose every node through a common API and let the router assign work. Keep tensor-parallel jobs inside one compatible platform family.</div>
+              </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><h3>Federated topology</h3><span class="eyebrow" id="mixTopologyLabel">4 nodes / 2 islands</span></div>
+            <div class="panel-body">
+              <div class="topology" id="mixNodes" aria-label="Mixed cluster node topology"></div>
+              <div class="recipe">
+                <div class="recipe-head"><span>FEDERATION BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copyMix" type="button">Copy</button></div>
+                <pre id="mixRecipe"></pre>
+              </div>
+            </div>
+          </section>
+        </div>
+        </section>
+
+        <section class="shape-panel" id="shapeSplit" aria-label="Phase split controls" hidden>
+        <div class="maturity-grid" aria-label="Phase split evidence status">
+          <article class="maturity-card"><span class="status-pill">Demonstrated</span><strong>The phase match is real</strong><p>EXO measured Spark prefill plus M3 Ultra decode over 10GbE on Llama 3.1 8B FP16.</p></article>
+          <article class="maturity-card conditional"><span class="status-pill">Partially public</span><strong>Control plumbing exists</strong><p>Public EXO contains prefill/decode routing, but stock Linux execution remains CPU-only.</p></article>
+          <article class="maturity-card experimental"><span class="status-pill">Unverified</span><strong id="splitAccelPath">Accelerated path</strong><p>No public stock recipe or benchmark was found. Hybrid model state makes correctness testing mandatory.</p></article>
+        </div>
+
+        <div class="control-strip" aria-label="Phase split controls">
+          <div class="control"><label for="splitSparks">Prefill Sparks</label><select id="splitSparks"><option value="1" selected>1× DGX Spark</option><option value="2">2× DGX Spark island</option></select></div>
+          <div class="control"><label for="splitDecode">Decode machine</label><select id="splitDecode"><option value="studio_m3ultra_32c80g_256" selected>Mac Studio M3 Ultra · 32CPU/80GPU · 256GB</option></select></div>
+          <div class="control"><label for="splitNetwork">Cross-platform link</label><select id="splitNetwork"><option value="10" selected>10Gb Ethernet</option><option value="1">1Gb Ethernet</option></select></div>
+          <div class="control"><label for="splitPrompt">Typical input prompt</label><select id="splitPrompt"><option value="4">4K tokens</option><option value="8" selected>8K tokens</option><option value="16">16K tokens</option><option value="32">32K tokens</option><option value="64">64K tokens</option></select></div>
+        </div>
+
+        <div class="cluster-layout">
+          <section class="panel">
+            <div class="panel-head"><h3>Experiment gate</h3><span class="eyebrow" id="splitGateCode">RESEARCH / GO</span></div>
+            <div class="panel-body">
+              <div class="fit-banner warn" id="splitBanner" role="status"><strong id="splitTitle">Strongest research pairing</strong><p id="splitText"></p></div>
+              <div class="metrics">
+                <div class="metric"><span>Runtime status</span><strong id="splitRuntime">Experimental fork</strong></div>
+                <div class="metric"><span>Planning memory</span><strong id="splitMemory">≈232 GB usable</strong></div>
+                <div class="metric"><span>Decode bandwidth</span><strong id="splitBandwidth">819 GB/s</strong></div>
+                <div class="metric"><span>Cross-platform link</span><strong id="splitNetworkMetric">10GbE</strong></div>
+                <div class="metric"><span>Candidate class</span><strong id="splitCandidate">Best match</strong></div>
+                <div class="metric"><span>Promotion rule</span><strong id="splitPromotion">Correct + faster</strong></div>
+              </div>
+              <div class="cluster-callout" id="splitCaveat"><strong>State-transfer rule:</strong> transfer and validate every recurrent, convolutional, and attention state—not only a conventional KV cache.</div>
+              <div class="evidence-note"><strong>What EXO measured—not a Qwen estimate</strong><p>Spark prefill 1.47s + M3 Ultra generation 0.85s = 2.32s total on Llama 3.1 8B FP16, with 8,192 input tokens and 32 output tokens. That was 2.8× faster than the Mac-only total in the reported test.</p></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><h3>Phase topology</h3><span class="eyebrow" id="splitTopologyLabel">1 Spark → 1 Mac</span></div>
+            <div class="panel-body">
+              <div class="phase-flow" aria-label="Prefill and decode phase topology">
+                <article class="phase-node"><span>Phase 01 / CUDA</span><strong id="splitPrefillNode">DGX Spark</strong><small>Process the long input prompt and produce model state.</small></article>
+                <div class="phase-arrow" aria-hidden="true"></div>
+                <article class="transfer-node"><span>State handoff</span><strong id="splitTransferNode">10GbE</strong><small id="splitTransferText">Overlap layer-state transfer with later prefill computation.</small></article>
+                <div class="phase-arrow" aria-hidden="true"></div>
+                <article class="phase-node decode"><span>Phase 02 / MLX</span><strong id="splitDecodeNode">M3 Ultra Studio</strong><small>Generate output tokens on the higher-bandwidth <button type="button" class="term" data-term="decode" aria-expanded="false">decode</button> node.</small></article>
+              </div>
+              <div class="recipe">
+                <div class="recipe-head"><span>EXPERIMENT BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copySplit" type="button">Copy</button></div>
+                <pre id="splitRecipe"></pre>
+              </div>
+            </div>
+          </section>
+        </div>
+        </section>
+
+      </div>
+
+      <div class="deploy-layout" id="deployLayout">
         <section class="panel">
           <div class="panel-head"><h3>Fit report</h3><span class="eyebrow" id="fitCode">FIT / 01</span></div>
           <div class="panel-body">
@@ -887,6 +1140,14 @@
               <div class="metric"><span>Reasoning mode</span><strong id="reasonMetric">Medium</strong></div>
             </div>
             <p style="color:var(--muted);margin-bottom:0">Weights are measured artifact sizes; the context reserve is computed from the model's own attention config. Multimodal input, backend choice, and preserved thinking can raise memory use.</p>
+          </div>
+        </section>
+
+        <section class="panel" id="rosterNA" hidden>
+          <div class="panel-head"><h3>Model roster</h3><span class="eyebrow">Not applicable</span></div>
+          <div class="panel-body">
+            <div class="fit-banner warn" role="status"><strong id="rosterNATitle">This shape has no roles to assign</strong><p id="rosterNAText"></p></div>
+            <p style="color:var(--muted);margin-bottom:0">Switch to a shape that runs independent copies &mdash; single node, replicas, workers + judge, or federated islands &mdash; to plan a roster. Your roster is kept as you left it.</p>
           </div>
         </section>
 
@@ -928,183 +1189,6 @@
       </div>
     </section>
 
-    <section class="view" id="clusterView" role="tabpanel" aria-labelledby="clusterTab" hidden>
-      <div class="section-head">
-        <div><div class="eyebrow">Branch &middot; more than one machine</div><h2>What should the cluster do?</h2></div>
-        <p>Build a quiet Mac swarm or a CUDA Spark cluster. Aggregate memory is shown separately from per-<button type="button" class="term" data-term="nodes" aria-expanded="false">node</button> memory because those numbers answer different questions.</p>
-      </div>
-
-      <div class="control-strip" aria-label="Cluster controls">
-        <div class="control">
-          <label for="clusterFamily">Node family</label>
-          <select id="clusterFamily">
-            <option value="mac:studio_m4max_16c40g_128" selected>Mac Studio M4 Max · 16CPU/40GPU · 128GB</option>
-          </select>
-        </div>
-        <div class="control">
-          <label for="clusterCount">Node count</label>
-          <input id="clusterCount" type="range" min="2" max="8" value="2" step="1">
-          <output id="clusterCountOut" for="clusterCount">2 nodes</output>
-        </div>
-        <div class="control">
-          <label for="clusterStrategy">Topology strategy</label>
-          <select id="clusterStrategy">
-            <option value="replicas" selected>Independent replicas</option>
-            <option value="mixed">Workers + local judge</option>
-            <option value="distributed">Distributed single model</option>
-          </select>
-        </div>
-        <div class="control">
-          <label for="clusterQuant">Precision</label>
-          <select id="clusterQuant">
-            <option value="q4">Q4 balanced</option>
-            <option value="q8" selected>Q8 quality</option>
-            <option value="bf16">BF16 reference</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="cluster-layout">
-        <section class="panel">
-          <div class="panel-head"><h3>Cluster envelope</h3><span class="eyebrow" id="clusterBackend">MLX / JACCL</span></div>
-          <div class="panel-body">
-            <div class="fit-banner" id="clusterBanner" role="status"><strong id="clusterTitle">Replica swarm recommended</strong><p id="clusterText"></p></div>
-            <div class="metrics">
-              <div class="metric"><span>Aggregate usable memory</span><strong id="clusterMemory">224 GB</strong></div>
-              <div class="metric"><span>Per node</span><strong id="clusterPerNode">112 GB</strong></div>
-              <div class="metric"><span>Primary <button type="button" class="term" data-term="replica" aria-expanded="false">replicas</button></span><strong id="clusterReplicas">6</strong></div>
-              <div class="metric"><span>Interconnect</span><strong id="clusterNetwork">TB5 / 10GbE</strong></div>
-            </div>
-            <div class="cluster-callout" id="clusterCaveat"><strong>Memory rule:</strong> aggregate memory is directly useful for replicas. A single model can use it only through a compatible distributed backend, with communication overhead.</div>
-            <button class="action cluster-action" id="deployCluster" type="button">Use this cluster in Deploy →</button>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head"><h3>Node topology</h3><span class="eyebrow" id="clusterTopologyLabel">2-node replica pool</span></div>
-          <div class="panel-body">
-            <div class="topology" id="clusterNodes" aria-label="Cluster node topology"></div>
-            <div class="recipe">
-              <div class="recipe-head"><span>CLUSTER BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copyCluster" type="button">Copy</button></div>
-              <pre id="clusterRecipe"></pre>
-            </div>
-          </div>
-        </section>
-      </div>
-    </section>
-
-    <section class="view" id="mixView" role="tabpanel" aria-labelledby="mixTab" hidden>
-      <div class="section-head">
-        <div><div class="eyebrow">Branch &middot; mixed platforms</div><h2>How should the islands mix?</h2></div>
-        <p>Compose a heterogeneous harness from quiet MLX <button type="button" class="term" data-term="nodes" aria-expanded="false">nodes</button> and CUDA Sparks. The router shares work and evidence—not physical memory—between platform islands.</p>
-      </div>
-
-      <div class="maturity-grid" aria-label="Mixed cluster operating modes">
-        <article class="maturity-card"><span class="status-pill">Dependable default</span><strong>Whole-request routing</strong><p>Every Mac or Spark runs a complete endpoint. The harness sends each coding task to the cheapest capable node.</p></article>
-        <article class="maturity-card conditional"><span class="status-pill">Backend-specific</span><strong>Capacity sharding</strong><p>Split one model only within a compatible MLX or CUDA island. Networking and synchronization determine whether it helps.</p></article>
-        <article class="maturity-card experimental"><span class="status-pill">Research path</span><strong>Spark prefill → Mac decode</strong><p>EXO demonstrated the phase match, but the public accelerated Metal + CUDA path is not turnkey for Qwen3.8.</p><button class="mini-button" id="openSplit" type="button" style="margin-top:10px">Open phase-split lab →</button></article>
-      </div>
-
-      <section class="panel mix-builder" aria-labelledby="mixBuilderTitle">
-        <div class="panel-head"><h3 id="mixBuilderTitle">Pool composition</h3><span class="eyebrow">Exact profiles</span></div>
-        <div class="panel-body">
-          <div class="mix-rows" id="mixRows"></div>
-          <div class="mix-builder-foot"><span>Combine any Mac configurations with DGX Spark. Memory remains local to each node.</span><button class="mini-button" id="addMixRow" type="button">+ Add profile</button></div>
-        </div>
-      </section>
-
-      <div class="control-strip" aria-label="Mixed pool policy">
-        <div class="control"><label for="mixStrategy">Harness policy</label><select id="mixStrategy"><option value="replicas">All nodes run workers</option><option value="mixed" selected>Workers + strongest-node judge</option></select></div>
-        <div class="control"><label for="mixQuant">Precision</label><select id="mixQuant"><option value="q4">Q4 balanced</option><option value="q8" selected>Q8 quality</option><option value="bf16">BF16 reference</option></select></div>
-        <div class="control"><label for="mixContext">Working context</label><select id="mixContext"><option value="16">16K</option><option value="32" selected>32K</option><option value="64">64K</option><option value="128">128K</option></select></div>
-        <div class="control"><span class="label">Federation rule</span><strong>Endpoints, not pooled RAM</strong><br><span style="color:var(--muted)">Route by capability; merge results at the harness layer.</span></div>
-      </div>
-
-      <div class="cluster-layout">
-        <section class="panel">
-          <div class="panel-head"><h3>Federated envelope</h3><span class="eyebrow">MLX + CUDA</span></div>
-          <div class="panel-body">
-            <div class="fit-banner" id="mixBanner" role="status"><strong id="mixTitle">Role-based federation</strong><p id="mixText"></p></div>
-            <div class="metrics">
-              <div class="metric"><span>Aggregate usable memory</span><strong id="mixMemory">304 GB</strong></div>
-              <div class="metric"><span>Total nodes</span><strong id="mixNodesMetric">4</strong></div>
-              <div class="metric"><span>Primary workers</span><strong id="mixReplicas">7</strong></div>
-              <div class="metric"><span>Execution islands</span><strong id="mixPlatforms">MLX + CUDA</strong></div>
-            </div>
-            <div class="cluster-callout" id="mixCaveat"><strong>Architecture rule:</strong> expose every node through a common API and let the router assign work. Keep tensor-parallel jobs inside one compatible platform family.</div>
-            <button class="action cluster-action" id="deployMix" type="button">Use this mixed pool in Deploy →</button>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head"><h3>Federated topology</h3><span class="eyebrow" id="mixTopologyLabel">4 nodes / 2 islands</span></div>
-          <div class="panel-body">
-            <div class="topology" id="mixNodes" aria-label="Mixed cluster node topology"></div>
-            <div class="recipe">
-              <div class="recipe-head"><span>FEDERATION BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copyMix" type="button">Copy</button></div>
-              <pre id="mixRecipe"></pre>
-            </div>
-          </div>
-        </section>
-      </div>
-    </section>
-
-    <section class="view" id="splitView" role="tabpanel" aria-labelledby="splitTab" hidden>
-      <div class="section-head">
-        <div><div class="eyebrow">Branch &middot; experimental</div><h2>Should Spark <button type="button" class="term" data-term="prefill" aria-expanded="false">prefill</button> for a Mac?</h2></div>
-        <p>Model the EXO-style phase split without treating a vendor Llama benchmark as a Qwen forecast. This is an experiment planner, not a purchase promise.</p>
-      </div>
-
-      <div class="maturity-grid" aria-label="Phase split evidence status">
-        <article class="maturity-card"><span class="status-pill">Demonstrated</span><strong>The phase match is real</strong><p>EXO measured Spark prefill plus M3 Ultra decode over 10GbE on Llama 3.1 8B FP16.</p></article>
-        <article class="maturity-card conditional"><span class="status-pill">Partially public</span><strong>Control plumbing exists</strong><p>Public EXO contains prefill/decode routing, but stock Linux execution remains CPU-only.</p></article>
-        <article class="maturity-card experimental"><span class="status-pill">Unverified</span><strong id="splitAccelPath">Accelerated path</strong><p>No public stock recipe or benchmark was found. Hybrid model state makes correctness testing mandatory.</p></article>
-      </div>
-
-      <div class="control-strip" aria-label="Phase split controls">
-        <div class="control"><label for="splitSparks">Prefill Sparks</label><select id="splitSparks"><option value="1" selected>1× DGX Spark</option><option value="2">2× DGX Spark island</option></select></div>
-        <div class="control"><label for="splitDecode">Decode machine</label><select id="splitDecode"><option value="studio_m3ultra_32c80g_256" selected>Mac Studio M3 Ultra · 32CPU/80GPU · 256GB</option></select></div>
-        <div class="control"><label for="splitNetwork">Cross-platform link</label><select id="splitNetwork"><option value="10" selected>10Gb Ethernet</option><option value="1">1Gb Ethernet</option></select></div>
-        <div class="control"><label for="splitPrompt">Typical input prompt</label><select id="splitPrompt"><option value="4">4K tokens</option><option value="8" selected>8K tokens</option><option value="16">16K tokens</option><option value="32">32K tokens</option><option value="64">64K tokens</option></select></div>
-      </div>
-
-      <div class="cluster-layout">
-        <section class="panel">
-          <div class="panel-head"><h3>Experiment gate</h3><span class="eyebrow" id="splitGateCode">RESEARCH / GO</span></div>
-          <div class="panel-body">
-            <div class="fit-banner warn" id="splitBanner" role="status"><strong id="splitTitle">Strongest research pairing</strong><p id="splitText"></p></div>
-            <div class="metrics">
-              <div class="metric"><span>Runtime status</span><strong id="splitRuntime">Experimental fork</strong></div>
-              <div class="metric"><span>Planning memory</span><strong id="splitMemory">≈232 GB usable</strong></div>
-              <div class="metric"><span>Decode bandwidth</span><strong id="splitBandwidth">819 GB/s</strong></div>
-              <div class="metric"><span>Cross-platform link</span><strong id="splitNetworkMetric">10GbE</strong></div>
-              <div class="metric"><span>Candidate class</span><strong id="splitCandidate">Best match</strong></div>
-              <div class="metric"><span>Promotion rule</span><strong id="splitPromotion">Correct + faster</strong></div>
-            </div>
-            <div class="cluster-callout" id="splitCaveat"><strong>State-transfer rule:</strong> transfer and validate every recurrent, convolutional, and attention state—not only a conventional KV cache.</div>
-            <div class="evidence-note"><strong>What EXO measured—not a Qwen estimate</strong><p>Spark prefill 1.47s + M3 Ultra generation 0.85s = 2.32s total on Llama 3.1 8B FP16, with 8,192 input tokens and 32 output tokens. That was 2.8× faster than the Mac-only total in the reported test.</p></div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head"><h3>Phase topology</h3><span class="eyebrow" id="splitTopologyLabel">1 Spark → 1 Mac</span></div>
-          <div class="panel-body">
-            <div class="phase-flow" aria-label="Prefill and decode phase topology">
-              <article class="phase-node"><span>Phase 01 / CUDA</span><strong id="splitPrefillNode">DGX Spark</strong><small>Process the long input prompt and produce model state.</small></article>
-              <div class="phase-arrow" aria-hidden="true"></div>
-              <article class="transfer-node"><span>State handoff</span><strong id="splitTransferNode">10GbE</strong><small id="splitTransferText">Overlap layer-state transfer with later prefill computation.</small></article>
-              <div class="phase-arrow" aria-hidden="true"></div>
-              <article class="phase-node decode"><span>Phase 02 / MLX</span><strong id="splitDecodeNode">M3 Ultra Studio</strong><small>Generate output tokens on the higher-bandwidth <button type="button" class="term" data-term="decode" aria-expanded="false">decode</button> node.</small></article>
-            </div>
-            <div class="recipe">
-              <div class="recipe-head"><span>EXPERIMENT BLUEPRINT / YAML-LIKE</span><button class="mini-button" id="copySplit" type="button">Copy</button></div>
-              <pre id="splitRecipe"></pre>
-            </div>
-          </div>
-        </section>
-      </div>
-    </section>
-
     <section class="model-strip" aria-label="Suggested model roles">
       <article class="model-cell"><span class="model-tag">Fast worker</span><strong>Qwen3.5-9B</strong><p>Repository scout, test writer, summarizer, and router for memory-limited machines.</p></article>
       <article class="model-cell"><span class="model-tag">Efficient agent</span><strong>Qwen3.6-35B-A3B</strong><p>MoE alternative when you want low active compute but can afford the full quantized weights.</p></article>
@@ -1123,7 +1207,7 @@
           <li>For harness research, independent workers are usually more valuable than splitting one small model across many GPUs.</li>
           <li>The M4 Air remains useful as the router, interface, telemetry collector, and small-model worker.</li>
           <li>The Phase split selector covers every current Apple-sold Mac chip, GPU, and unified-memory combination except MacBook Neo, deliberately excluded because its fixed 8GB cannot launch a 27B-class model.</li>
-          <li>Buy, Deploy, Cluster, Mix, and Phase split now read exact Mac configurations from one shared catalog, so memory and bandwidth assumptions stay consistent across views.</li>
+          <li>Buy and every harness topology read exact Mac configurations from one shared catalog, so memory and bandwidth assumptions stay consistent across shapes.</li>
           <li>Storage, finishes, port bundles, and screen sizes are collapsed when they do not change the machine’s model-fit or inference-bandwidth profile.</li>
           <li>Air, base M5, and M5 Pro MacBooks are usually control-plane or whole-request-routing machines here; M5 Max is the first MacBook tier with a strong enough bandwidth contrast to merit a measured Spark-prefill / Mac-decode trial.</li>
           <li>Mini, Studio, and Spark clusters should default to complete model replicas; distributed single-model execution is a separate, communication-sensitive experiment.</li>
@@ -1428,6 +1512,12 @@
 
     const labels = { q4: 'Q4', q8: 'Q8', bf16: 'BF16' };
 
+    // One owner for precision and context. Every shape reads these, which is
+    // why a precision now follows you across a topology change instead of
+    // being re-answered by whichever view you happened to open.
+    const sharedQuant = () => $('quant').value;
+    const sharedContext = () => $('context').value;
+
     // Generic fallback used only when a model's architecture could not be read
     // (gated config.json). Real per-model reserve is computed from the config.
     const genericReserve = { 16: 2, 32: 4, 64: 8, 128: 16 };
@@ -1569,13 +1659,12 @@
     }
     let selectedSetup = 'x4';
     let customCluster = null;
-    let customSource = null;   // 'cluster' | 'mix' — how customCluster was built
 
     const $ = (id) => document.getElementById(id);
     const setupById = (id) => id === 'custom-cluster' ? customCluster : id === 'build:epyc-current' ? generatedBuild : id.startsWith('mac:') ? macProfileToSetup(id.slice(4)) : setups.find(s => s.id === id);
 
-    const viewOrder = ['buy', 'deploy', 'cluster', 'mix', 'split'];
-    const viewTitles = { buy: 'Buy', deploy: 'Deploy', cluster: 'Cluster', mix: 'Mix', split: 'Phase split' };
+    const viewOrder = ['buy', 'deploy'];
+    const viewTitles = { buy: 'Buy', deploy: 'Deploy' };
     let currentView = 'buy';
     let heroHeadline = null;
 
@@ -1593,23 +1682,64 @@
     const gateTargets = {
       plan: { view: 'deploy', focus: 'rosterPanel' },
       machine: { view: 'buy', focus: 'macCatalogPanel' },
+      shape: { view: 'deploy', focus: null, step: 2 },
       browse: { view: 'buy', focus: null }
     };
     let gateChoice = null;
+
+    // Step one asks how you want to start; step two, reached only from the
+    // topology door, asks which shape. Everything outside the gate is already
+    // hidden by `.shell[data-gate="open"]`, so step two is a gate for free.
+    let gateStep = 1;
+
+    function setGateStep(step) {
+      gateStep = step;
+      $('gateStep1').hidden = step !== 1;
+      $('gateStep2').hidden = step !== 2;
+      if (step === 2) {
+        setControl('gateQuant', sharedQuant());
+        setControl('gateContext', sharedContext());
+        $('gateModelName').textContent = activeModel().name;
+        renderTopoGrid('gateTopoGrid', 'gateTopoNote');
+        const card = $('gateTopoGrid').querySelector('.topo-card.selected') || $('gateTopoGrid').querySelector('.topo-card');
+        if (card) card.focus();
+      } else {
+        $('gateStep1').querySelector('.gate-card').focus();
+      }
+    }
 
     function setGate(open) {
       $('startGate').hidden = !open;
       if (open) $('mainShell').dataset.gate = 'open'; else delete $('mainShell').dataset.gate;
       $('gateReopen').hidden = open;
-      if (open) $('startGate').querySelector('.gate-card').focus();
+      // Reopening always returns to the first question, never mid-flow.
+      if (open) setGateStep(1);
+    }
+
+    // Picking a shape at the gate opens the planner on it. It presets the
+    // topology and nothing else, and the strip above the tabs can change it
+    // again immediately, so this is a starting point rather than a commitment.
+    function chooseShape(key) {
+      setGate(false);
+      setView('deploy', { focusTab: false });
+      setTopology(key);
+      const strip = $('topoStrip');
+      strip.setAttribute('tabindex', '-1');
+      strip.focus();
     }
 
     function chooseStart(choice) {
       const target = gateTargets[choice];
       if (!target) return;
       gateChoice = choice;
+      // The topology door asks a second question rather than landing you.
+      if (target.step === 2) { setGateStep(2); return; }
       setGate(false);
       setView(target.view);
+      // The topology door opens the cards it names and every other door shuts
+      // them, so a route presets nothing beyond where you land. Closing takes
+      // no focus, because the door's own focus target owns it.
+      setPicker(Boolean(target.picker), { focus: Boolean(target.picker) });
       // Focusing the destination panel both announces it and scrolls it into
       // view; the tab keeps its own focus when there is no deeper target.
       const panel = target.focus ? $(target.focus) : null;
@@ -1633,10 +1763,7 @@
       });
       setHeroMode(name);
       if (focusTab) $(`${name}Tab`).focus();
-      if (name === 'deploy') updateDeploy();
-      if (name === 'cluster') updateCluster();
-      if (name === 'mix') updateMix();
-      if (name === 'split') updateSplit();
+      if (name === 'deploy') updateHarness();
     }
 
     function populateMacProfileSelect() {
@@ -2164,9 +2291,213 @@
       return packed;
     }
 
+
+    // ---- Harness topology -------------------------------------------------
+    // Topology is a parameter of one harness surface, not four sibling tabs.
+    // Each shape is a real arrangement with its own diagram; none of them is a
+    // value hidden inside a dropdown, because a dropdown value teaches nothing.
+    // `key` matches the topology: field the blueprints already emit.
+    const topologies = [
+      { key: 'single-node', name: 'Single node', claim: 'default', roster: true, panel: null,
+        blurb: 'One machine runs every worker in the roster. Memory pools only as far as that machine actually pools it.' },
+      { key: 'replicas', name: 'Independent replicas', claim: 'default', roster: true, panel: 'shapeCluster',
+        blurb: 'Every node runs complete, independent copies. Nothing synchronises, so aggregate memory is directly useful.' },
+      { key: 'mixed', name: 'Workers + judge', claim: 'default', roster: true, panel: 'shapeCluster',
+        blurb: 'One node is reserved to review and rank what the others generate, so it hosts no workers of its own.' },
+      { key: 'distributed', name: 'Distributed single model', claim: 'conditional', roster: false, panel: 'shapeCluster',
+        blurb: 'One model sharded across every node. No roles to assign, and only a compatible backend can do it at all.' },
+      { key: 'heterogeneous-federation', name: 'Federated islands', claim: 'conditional', roster: true, panel: 'shapeMix',
+        blurb: 'Mac and CUDA islands each expose complete endpoints. Work and evidence federate; memory never does.' },
+      { key: 'disaggregated-prefill-decode', name: 'Phase split', claim: 'experimental', roster: false, panel: 'shapeSplit',
+        blurb: 'One request, two platforms: a Spark prefills the prompt and a Mac decodes the tokens. No roles to assign.' }
+    ];
+
+    // Claim states are evidence, not ranking: they say how well established a
+    // shape is, never which one to prefer.
+    const claimLabel = { default: 'Dependable default', conditional: 'Backend-specific', experimental: 'Research path' };
+    const claimClass = { default: '', conditional: 'conditional', experimental: 'experimental' };
+
+    const diagrams = {
+      'single-node': () => `
+        <rect class="d-box" x="38" y="12" width="64" height="48" rx="2"/>
+        <rect class="d-chip" x="46" y="22" width="20" height="6" rx="1"/>
+        <rect class="d-chip" x="74" y="22" width="20" height="6" rx="1"/>
+        <rect class="d-chip" x="46" y="34" width="20" height="6" rx="1"/>
+        <rect class="d-chip dim" x="74" y="34" width="20" height="6" rx="1"/>
+        <text class="d-label" x="70" y="54" text-anchor="middle">ONE MACHINE</text>`,
+      replicas: () => [6, 52, 98].map(x => `
+        <rect class="d-box" x="${x}" y="12" width="36" height="48" rx="2"/>
+        <rect class="d-chip" x="${x + 6}" y="22" width="24" height="6" rx="1"/>
+        <rect class="d-chip" x="${x + 6}" y="32" width="24" height="6" rx="1"/>
+        <text class="d-label" x="${x + 18}" y="54" text-anchor="middle">COPY</text>`).join(''),
+      mixed: () => `
+        <rect class="d-box" x="6" y="12" width="36" height="48" rx="2"/>
+        <rect class="d-chip" x="12" y="22" width="24" height="6" rx="1"/>
+        <rect class="d-chip" x="12" y="32" width="24" height="6" rx="1"/>
+        <text class="d-label" x="24" y="54" text-anchor="middle">WORKER</text>
+        <rect class="d-box" x="52" y="12" width="36" height="48" rx="2"/>
+        <rect class="d-chip" x="58" y="22" width="24" height="6" rx="1"/>
+        <rect class="d-chip" x="58" y="32" width="24" height="6" rx="1"/>
+        <text class="d-label" x="70" y="54" text-anchor="middle">WORKER</text>
+        <rect class="d-box accent" x="98" y="12" width="36" height="48" rx="2"/>
+        <path class="d-link" d="M42 36 L52 36"/>
+        <path class="d-link" d="M88 36 L98 36"/>
+        <text class="d-label" x="116" y="39" text-anchor="middle">JUDGE</text>`,
+      distributed: () => `
+        <rect class="d-box" x="6" y="18" width="36" height="36" rx="2"/>
+        <rect class="d-box" x="52" y="18" width="36" height="36" rx="2"/>
+        <rect class="d-box" x="98" y="18" width="36" height="36" rx="2"/>
+        <path class="d-link" d="M42 36 L52 36"/>
+        <path class="d-link" d="M88 36 L98 36"/>
+        <rect class="d-span" x="12" y="30" width="116" height="12" rx="2"/>
+        <text class="d-label" x="70" y="39" text-anchor="middle">ONE MODEL, SHARDED</text>`,
+      'heterogeneous-federation': () => `
+        <rect class="d-box accent" x="46" y="4" width="48" height="14" rx="2"/>
+        <text class="d-label" x="70" y="14" text-anchor="middle">ROUTER</text>
+        <path class="d-link" d="M60 18 L28 32"/>
+        <path class="d-link" d="M80 18 L112 32"/>
+        <rect class="d-box" x="6" y="32" width="20" height="24" rx="2"/>
+        <rect class="d-box" x="30" y="32" width="20" height="24" rx="2"/>
+        <rect class="d-chip" x="9" y="40" width="14" height="5" rx="1"/>
+        <rect class="d-chip" x="33" y="40" width="14" height="5" rx="1"/>
+        <text class="d-label" x="28" y="68" text-anchor="middle">MLX ISLAND</text>
+        <rect class="d-box alt" x="90" y="32" width="44" height="24" rx="2"/>
+        <rect class="d-chip alt" x="96" y="40" width="32" height="5" rx="1"/>
+        <text class="d-label" x="112" y="68" text-anchor="middle">CUDA ISLAND</text>`,
+      'disaggregated-prefill-decode': () => `
+        <rect class="d-box alt" x="4" y="20" width="44" height="32" rx="2"/>
+        <text class="d-label" x="26" y="39" text-anchor="middle">PREFILL</text>
+        <rect class="d-span" x="56" y="30" width="28" height="12" rx="2"/>
+        <text class="d-label" x="70" y="39" text-anchor="middle">STATE</text>
+        <rect class="d-box accent" x="92" y="20" width="44" height="32" rx="2"/>
+        <text class="d-label" x="114" y="39" text-anchor="middle">DECODE</text>
+        <path class="d-link" d="M48 36 L56 36"/>
+        <path class="d-link" d="M84 36 L92 36"/>
+        <text class="d-label" x="26" y="64" text-anchor="middle">CUDA</text>
+        <text class="d-label" x="114" y="64" text-anchor="middle">MLX</text>`
+    };
+
+    let currentTopology = 'single-node';
+    // Each shape keeps its own roster, seeded from the shape you arrived from,
+    // so switching never silently discards the roles you just assigned.
+    const shapeRosters = {};
+
+    const topologyByKey = (key) => topologies.find(t => t.key === key) || topologies[0];
+    const clusterStrategyFor = (key) => key === 'replicas' ? 'replicas' : key === 'mixed' ? 'mixed' : 'distributed';
+
+    // The machine a shape actually describes. Only the single-node shape is
+    // governed by the Hardware select; the others build their own from the
+    // controls in their panel, which is what merging the views buys.
+    function machineForTopology(key) {
+      if (key === 'single-node') return setupById($('deploySetup').value);
+      if (key === 'heterogeneous-federation') return makeMixedSetup();
+      if (key === 'disaggregated-prefill-decode') return null;
+      return makeClusterSetup(clusterStrategyFor(key));
+    }
+    const effectiveMachine = () => machineForTopology(currentTopology);
+
+    // Live counts on every card, from the same arithmetic the views use. This
+    // is what keeps the picker informative rather than a second gate.
+    function topologyCount(key) {
+      const required = weightFor(sharedQuant()) + reserveFor(Number(sharedContext()));
+      if (key === 'disaggregated-prefill-decode') return '1 model · 2 phases';
+      const machine = machineForTopology(key);
+      if (!machine) return '—';
+      if (key === 'distributed') return capacityFor(machine, required) ? '1 sharded model' : 'Does not fit';
+      const count = capacityFor(machine, required);
+      return `${count} worker${count === 1 ? '' : 's'}`;
+    }
+
+    function topologySummary() {
+      if (currentTopology === 'single-node') return setupById($('deploySetup').value).name;
+      if (currentTopology === 'heterogeneous-federation') {
+        const nodes = getMixedNodes();
+        const islands = new Set(nodes.map(node => node.platform)).size;
+        return `${nodes.length} nodes / ${islands} island${islands === 1 ? '' : 's'}`;
+      }
+      if (currentTopology === 'disaggregated-prefill-decode') {
+        return `${$('splitSparks').value}× DGX Spark → ${macProfiles[$('splitDecode').value].name}`;
+      }
+      const family = clusterProfileByValue($('clusterFamily').value);
+      return `${$('clusterCount').value} × ${family.short}`;
+    }
+
+    function renderTopoStrip() {
+      $('topoStripName').textContent = topologyByKey(currentTopology).name;
+      $('topoStripSummary').textContent = topologySummary();
+    }
+
+    function renderTopoGrid(gridId = 'topoGrid', noteId = 'topoPickerNote') {
+      $(gridId).innerHTML = topologies.map(t => `
+        <button type="button" class="topo-card${t.key === currentTopology ? ' selected' : ''}" data-topo="${t.key}" aria-pressed="${t.key === currentTopology}">
+          <span class="status-pill ${claimClass[t.claim]}">${claimLabel[t.claim]}</span>
+          <svg class="topo-diagram" viewBox="0 0 140 72" role="img" aria-label="${t.name} arrangement">${diagrams[t.key]()}</svg>
+          <strong>${t.name}</strong>
+          <span class="topo-count">${topologyCount(t.key)}</span>
+          <p>${t.blurb}</p>
+        </button>`).join('');
+      $(noteId).textContent = `At ${labels[sharedQuant()]} · ${sharedContext()}K · ${activeModel().name}`;
+    }
+
+    function setPicker(open, { focus = true } = {}) {
+      $('topoPicker').hidden = !open;
+      $('topoChange').setAttribute('aria-expanded', String(open));
+      if (!focus) return;
+      if (open) {
+        renderTopoGrid();
+        const selected = $('topoGrid').querySelector('.topo-card.selected') || $('topoGrid').querySelector('.topo-card');
+        if (selected) selected.focus();
+      } else {
+        $('topoChange').focus();
+      }
+    }
+
+    function setTopology(key) {
+      if (!topologies.some(t => t.key === key)) return;
+      if (key !== currentTopology) {
+        shapeRosters[currentTopology] = roster;
+        if (!shapeRosters[key]) shapeRosters[key] = roster.map(row => ({ ...row }));
+        currentTopology = key;
+        roster = shapeRosters[key];
+      }
+      setPicker(false);
+      updateHarness();
+    }
+
+    // One orchestrator for the whole harness surface: pick the shape's panel,
+    // run that shape's arithmetic, then run the shared roster and blueprint.
+    function updateHarness() {
+      const shape = topologyByKey(currentTopology);
+      topologies.forEach(t => { if (t.panel) $(t.panel).hidden = true; });
+      if (shape.panel) $(shape.panel).hidden = false;
+      $('deploySetupControl').hidden = currentTopology !== 'single-node';
+
+      if (['replicas', 'mixed', 'distributed'].includes(currentTopology)) updateCluster(clusterStrategyFor(currentTopology));
+      else if (currentTopology === 'heterogeneous-federation') updateMix();
+      else if (currentTopology === 'disaggregated-prefill-decode') updateSplit();
+
+      // A roster does not mean the same thing in every shape. Where there are
+      // no roles to assign, say so rather than render one that does not apply.
+      const noRoles = !shape.roster;
+      $('rosterPanel').hidden = noRoles;
+      $('rosterNA').hidden = !noRoles;
+      if (noRoles) {
+        const sharded = currentTopology === 'distributed';
+        $('rosterNATitle').textContent = sharded ? 'One model, spread across the cluster' : 'One model, split across two phases';
+        $('rosterNAText').textContent = sharded
+          ? 'A distributed single model is one worker sharded over every node, so there are no separate roles to pack. The cluster panel above reports whether it fits at all.'
+          : 'A phase split runs one model in two stages on two machines, so there are no separate roles to pack. The experiment gate above reports what is established and what is not.';
+      }
+
+      $('deployLayout').hidden = currentTopology === 'disaggregated-prefill-decode';
+      if (currentTopology !== 'disaggregated-prefill-decode') updateDeploy();
+      renderTopoStrip();
+      if (!$('topoPicker').hidden) renderTopoGrid();
+    }
+
     function updateDeploy() {
-      const s = setupById($('deploySetup').value);
-      selectedSetup = s.id;
+      const s = effectiveMachine();
+      if (currentTopology === 'single-node') selectedSetup = s.id;
       const quant = $('quant').value;
       const context = $('context').value;
       const experiment = $('experiment').value;
@@ -2234,10 +2565,9 @@
       $('recipeText').textContent = recipe;
     }
 
-    function makeClusterSetup() {
+    function makeClusterSetup(strategy) {
       const family = clusterProfileByValue($('clusterFamily').value);
       const nodes = Math.min(Number($('clusterCount').value), family.maxNodes);
-      const strategy = $('clusterStrategy').value;
       return {
         id: 'custom-cluster',
         name: `${nodes}× ${family.short} cluster`,
@@ -2254,14 +2584,14 @@
       };
     }
 
-    function updateCluster() {
+    function updateCluster(strategy) {
       const family = clusterProfileByValue($('clusterFamily').value);
       $('clusterCount').max = family.maxNodes;
       if (Number($('clusterCount').value) > family.maxNodes) $('clusterCount').value = family.maxNodes;
       const nodes = Number($('clusterCount').value);
-      const strategy = $('clusterStrategy').value;
-      const quant = $('clusterQuant').value;
-      const required = weightFor(quant) + reserveFor(32);
+      const quant = sharedQuant();
+      const context = Number(sharedContext());
+      const required = weightFor(quant) + reserveFor(context);
       const perNodeCopies = Math.min(family.replicaCap, Math.floor(family.usable / required));
       const aggregate = family.usable * nodes;
       const replicas = strategy === 'distributed' ? (aggregate >= required ? 1 : 0) : strategy === 'mixed' ? perNodeCopies * Math.max(1, nodes - 1) : perNodeCopies * nodes;
@@ -2277,7 +2607,7 @@
 
       $('clusterBanner').className = `fit-banner ${noReplica ? 'stop' : strategy === 'distributed' ? 'warn' : ''}`;
       $('clusterTitle').textContent = noReplica ? 'Per-node model does not fit' : strategy === 'distributed' ? 'Experimental distributed path' : strategy === 'mixed' ? 'Reserve one node as judge' : 'Replica swarm recommended';
-      $('clusterText').textContent = noReplica ? `${family.name} cannot host this ${labels[quant]} profile independently. Use smaller workers, choose a larger node, or treat distributed execution as a separate experiment.` : strategy === 'distributed' ? `The cluster exposes about ${aggregate}GB usable across nodes, but it is not one automatically coherent memory pool.` : strategy === 'mixed' ? `${nodes - 1} node${nodes === 2 ? '' : 's'} generate attempts while the final node reviews, ranks, and escalates.` : `${replicas} estimated Qwen3.8 ${labels[quant]} replica slots across ${nodes} independent nodes at 32K planning context.`;
+      $('clusterText').textContent = noReplica ? `${family.name} cannot host this ${labels[quant]} profile independently. Use smaller workers, choose a larger node, or treat distributed execution as a separate experiment.` : strategy === 'distributed' ? `The cluster exposes about ${aggregate}GB usable across nodes, but it is not one automatically coherent memory pool.` : strategy === 'mixed' ? `${nodes - 1} node${nodes === 2 ? '' : 's'} generate attempts while the final node reviews, ranks, and escalates.` : `${replicas} estimated Qwen3.8 ${labels[quant]} replica slots across ${nodes} independent nodes at ${context}K planning context.`;
 
       const sparkNote = family.platform === 'cuda' ? 'NVIDIA documents up to three directly connected Sparks, or four with a switch and Cluster Assistant.' : 'MLX supports multi-host ring and JACCL backends; Thunderbolt/RDMA is the serious distributed path, while replicas avoid synchronization cost.';
       const fitNote = family.replicaCap === 0 ? ` This profile cannot host one practical ${activeModel().name} Q4 replica by itself; use it as a client node or test distributed capacity only.` : '';
@@ -2299,12 +2629,12 @@
         `per_node_usable_memory_gb: ${family.usable}`,
         `model: ${activeModel().repo}`,
         `quantization: ${labels[quant]}`,
-        `planning_context: 32K`,
+        `planning_context: ${context}K`,
         `primary_replicas: ${replicas}`,
         `routing: cheapest-capable`,
         `note: replicas are the dependable default; distributed mode needs benchmarking`
       ].join('\n');
-      customCluster = makeClusterSetup();
+      customCluster = makeClusterSetup(strategy);
     }
 
     function renderMixRows() {
@@ -2315,10 +2645,10 @@
           <button class="mini-button" type="button" data-mix-remove="${index}" aria-label="Remove ${item.profile}">Remove</button>
         </div>`).join('') || '<div class="cluster-callout">Add at least two hardware profiles to compose a mixed pool.</div>';
       mixComposition.forEach((item,index) => { const select = $(`mixProfile${index}`); if (select) select.value = item.profile; });
-      document.querySelectorAll('[data-mix-profile]').forEach(select => select.addEventListener('change', () => { mixComposition[Number(select.dataset.mixProfile)].profile = select.value; updateMix(); }));
-      document.querySelectorAll('[data-mix-count]').forEach(input => input.addEventListener('input', () => { mixComposition[Number(input.dataset.mixCount)].count = Math.max(1, Math.min(8, Number(input.value) || 1)); updateMix(); }));
+      document.querySelectorAll('[data-mix-profile]').forEach(select => select.addEventListener('change', () => { mixComposition[Number(select.dataset.mixProfile)].profile = select.value; updateHarness(); }));
+      document.querySelectorAll('[data-mix-count]').forEach(input => input.addEventListener('input', () => { mixComposition[Number(input.dataset.mixCount)].count = Math.max(1, Math.min(8, Number(input.value) || 1)); updateHarness(); }));
       document.querySelectorAll('[data-mix-remove]').forEach(button => button.addEventListener('click', () => { mixComposition.splice(Number(button.dataset.mixRemove), 1); renderMixRows(); }));
-      updateMix();
+      updateHarness();
     }
 
     function getMixedNodes() {
@@ -2360,8 +2690,8 @@
       const platforms = new Set(nodes.map(node => node.platform));
       const valid = nodes.length >= 2 && familyCount >= 2;
       const strategy = $('mixStrategy').value;
-      const quant = $('mixQuant').value;
-      const context = $('mixContext').value;
+      const quant = sharedQuant();
+      const context = sharedContext();
       const required = weightFor(quant) + reserveFor(Number(context));
       const judgeIndex = strategy === 'mixed' && nodes.length ? judgeNodeIndex(nodes) : -1;
       const workers = nodes.reduce((total,node,index) => total + (index === judgeIndex ? 0 : nodeCapacity(node,required)), 0);
@@ -2375,7 +2705,6 @@
       $('mixReplicas').textContent = String(workers);
       $('mixPlatforms').textContent = platforms.size === 2 ? 'MLX + CUDA' : platforms.has('cuda') ? 'CUDA only' : 'MLX only';
       $('mixTopologyLabel').textContent = `${nodes.length} nodes / ${platforms.size} execution island${platforms.size === 1 ? '' : 's'}`;
-      $('deployMix').disabled = !valid;
 
       const judgeName = judgeIndex >= 0 ? nodes[judgeIndex].name : null;
       $('mixNodes').innerHTML = nodes.map((node,index) => {
@@ -2516,10 +2845,11 @@
       renderFlagship();
       renderBuy();
       updateMacCatalog();
-      updateDeploy();
-      updateCluster();
-      updateMix();
-      updateSplit();
+      updateHarness();
+      if (gateStep === 2 && !$('startGate').hidden) {
+        $('gateModelName').textContent = activeModel().name;
+        renderTopoGrid('gateTopoGrid', 'gateTopoNote');
+      }
     }
 
     // ------------------------------------------------------------------ state
@@ -2530,8 +2860,23 @@
     // Load with #fresh to ignore stored state.
 
     const STATE_KEY = 'harness-planner/v1';
-    const STATE_VERSION = 1;
+    const STATE_VERSION = 2;
     const CONTEXTS = [16, 32, 64, 128];
+
+    // Shapes seed from one another, so most of them hold the same roster.
+    // Storing each distinct one once and mapping shapes onto it keeps a plan
+    // link roughly its old length instead of carrying six near-copies.
+    function shapeRosterState() {
+      const sets = [];
+      const of = {};
+      Object.entries({ ...shapeRosters, [currentTopology]: roster }).forEach(([key, rows]) => {
+        const json = JSON.stringify(rows);
+        let index = sets.findIndex(entry => entry.json === json);
+        if (index < 0) { index = sets.length; sets.push({ json, rows }); }
+        of[key] = index;
+      });
+      return { sets: sets.map(entry => entry.rows.map(row => ({ ...row }))), of };
+    }
 
     function collectState() {
       return {
@@ -2543,7 +2888,6 @@
         model: selectedModel,
         setup: selectedSetup,
         mac: selectedMacKey,
-        customSource,
         buy: { quant: $('buyQuant').value, context: $('buyContext').value },
         epyc: {
           gpu: $('epycGpu').value, count: $('epycGpuCount').value, host: $('epycHost').value,
@@ -2553,12 +2897,11 @@
           experiment: $('experiment').value, quant: $('quant').value, context: $('context').value,
           roster: roster.map(row => ({ ...row }))
         },
-        cluster: {
-          family: $('clusterFamily').value, count: $('clusterCount').value,
-          strategy: $('clusterStrategy').value, quant: $('clusterQuant').value
-        },
+        topology: currentTopology,
+        rosters: shapeRosterState(),
+        cluster: { family: $('clusterFamily').value, count: $('clusterCount').value },
         mix: {
-          strategy: $('mixStrategy').value, quant: $('mixQuant').value, context: $('mixContext').value,
+          strategy: $('mixStrategy').value,
           composition: mixComposition.map(row => ({ ...row }))
         },
         split: {
@@ -2586,6 +2929,21 @@
       return reference.startsWith('mac:')
         ? Boolean(macProfiles[reference.slice(4)])
         : setups.some(setup => setup.id === reference);
+    }
+
+    // A stored plan can outlive the model it referenced, so every row is
+    // validated against what exists now rather than trusted.
+    function sanitiseRoster(rows) {
+      return rows
+        .filter(row => row && models.some(model => model.id === row.model) && quantOrder.includes(row.quant))
+        .map((row, i) => ({
+          role: String(row.role || 'Support worker').slice(0, 60),
+          model: row.model,
+          quant: row.quant,
+          context: CONTEXTS.includes(Number(row.context)) ? Number(row.context) : 32,
+          count: Math.max(0, Math.min(16, Math.round(Number(row.count)) || 0)),
+          primary: i === 0
+        }));
     }
 
     function applyState(state) {
@@ -2647,18 +3005,28 @@
       setControl('quant', state.deploy?.quant);
       setControl('context', state.deploy?.context);
       if (Array.isArray(state.deploy?.roster)) {
-        const restored = state.deploy.roster
-          .filter(row => row && models.some(model => model.id === row.model) && quantOrder.includes(row.quant))
-          .map((row, i) => ({
-            role: String(row.role || 'Support worker').slice(0, 60),
-            model: row.model,
-            quant: row.quant,
-            context: CONTEXTS.includes(Number(row.context)) ? Number(row.context) : 32,
-            count: Math.max(0, Math.min(16, Math.round(Number(row.count)) || 0)),
-            primary: i === 0
-          }));
+        const restored = sanitiseRoster(state.deploy.roster);
         if (restored.length) roster = restored;
       }
+
+      // Each shape's own roster, then the shape that was active. A stored
+      // shape that no longer exists falls back to the default rather than
+      // leaving the surface pointing at nothing. Every shape gets its own
+      // array even when several shared one entry, so editing one shape's
+      // roster never reaches into another's.
+      if (state.rosters && Array.isArray(state.rosters.sets) && state.rosters.of) {
+        const sets = state.rosters.sets.map(rows => Array.isArray(rows) ? sanitiseRoster(rows) : []);
+        Object.entries(state.rosters.of).forEach(([key, index]) => {
+          if (!topologies.some(topology => topology.key === key)) return;
+          const rows = sets[index];
+          if (rows && rows.length) shapeRosters[key] = rows.map(row => ({ ...row }));
+        });
+      }
+      if (typeof state.topology === 'string' && topologies.some(topology => topology.key === state.topology)) {
+        currentTopology = state.topology;
+      }
+      if (shapeRosters[currentTopology]) roster = shapeRosters[currentTopology];
+      else shapeRosters[currentTopology] = roster;
 
       setControl('splitSparks', state.split?.sparks);
       setControl('splitDecode', state.split?.decode);
@@ -2667,17 +3035,7 @@
 
       // A saved build or a derived cluster has to exist before it can be selected.
       if (generatedBuild) refreshPlannerOptions();
-      if (state.setup === 'custom-cluster' && (state.customSource === 'cluster' || state.customSource === 'mix')) {
-        customSource = state.customSource;
-        if (customSource === 'cluster') updateCluster(); else { updateMix(); customCluster = makeMixedSetup(); }
-        if (customCluster) {
-          const option = document.createElement('option');
-          option.value = 'custom-cluster';
-          option.textContent = customCluster.name;
-          $('deploySetup').append(option);
-        }
-      }
-      if (state.setup === 'build:epyc-current' ? Boolean(generatedBuild) : knownProfile(state.setup) || state.setup === 'custom-cluster') {
+      if (state.setup === 'build:epyc-current' ? Boolean(generatedBuild) : knownProfile(state.setup)) {
         if (setControl('deploySetup', state.setup)) selectedSetup = state.setup;
       }
 
@@ -2843,7 +3201,11 @@
       $('macFamily').value = macProfileGroups.find(group => group.options.includes(selectedMacKey)).label;
       populateMacProfileSelect();
       $('macProfile').value = selectedMacKey;
-      ['buyQuant','buyContext'].forEach(id => $(id).addEventListener('change', renderBuy));
+      ['buyQuant','buyContext'].forEach(id => $(id).addEventListener('change', () => {
+        setControl(id === 'buyQuant' ? 'quant' : 'context', $(id).value);
+        renderBuy();
+        updateHarness();
+      }));
       renderModelPicker();
       renderFlagship();
       $('modelSelect').addEventListener('change', applyModel);
@@ -2851,14 +3213,25 @@
       $('addRosterRow').addEventListener('click', () => {
         roster.push({ role: 'Support worker', model: selectedModel, quant: 'q4', context: 32, count: 1 });
         renderRoster();
-        updateDeploy();
+        updateHarness();
       });
       ['epycGpu','epycGpuCount','epycHost'].forEach(id => $(id).addEventListener('change', () => renderEpycBuilder(true)));
       ['epycCpu','epycRam'].forEach(id => $(id).addEventListener('change', () => renderEpycBuilder(false)));
-      ['deploySetup','experiment','quant','context'].forEach(id => $(id).addEventListener('change', updateDeploy));
-      ['clusterFamily','clusterCount','clusterStrategy','clusterQuant'].forEach(id => $(id).addEventListener('input', updateCluster));
-      ['mixStrategy','mixQuant','mixContext'].forEach(id => $(id).addEventListener('input', updateMix));
-      ['splitSparks','splitDecode','splitNetwork','splitPrompt'].forEach(id => $(id).addEventListener('input', updateSplit));
+      ['deploySetup','experiment'].forEach(id => $(id).addEventListener('change', updateHarness));
+      ['quant','context'].forEach(id => $(id).addEventListener('change', () => {
+        setControl(id === 'quant' ? 'buyQuant' : 'buyContext', $(id).value);
+        renderBuy();
+        updateHarness();
+      }));
+      ['clusterFamily','clusterCount'].forEach(id => $(id).addEventListener('input', updateHarness));
+      $('mixStrategy').addEventListener('input', updateHarness);
+      ['splitSparks','splitDecode','splitNetwork','splitPrompt'].forEach(id => $(id).addEventListener('input', updateHarness));
+      $('topoChange').addEventListener('click', () => setPicker($('topoPicker').hidden));
+      $('topoClose').addEventListener('click', () => setPicker(false));
+      $('topoGrid').addEventListener('click', (event) => {
+        const card = event.target.closest('[data-topo]');
+        if (card) setTopology(card.dataset.topo);
+      });
       $('macFamily').addEventListener('change', () => { selectedMacKey = macProfileGroups.find(group => group.label === $('macFamily').value).options[0]; populateMacProfileSelect(); updateMacCatalog(); });
       $('macProfile').addEventListener('change', updateMacCatalog);
       $('addMixRow').addEventListener('click', () => { mixComposition.push({ profile: `mac:${selectedMacKey}`, count: 1 }); renderMixRows(); });
@@ -2875,20 +3248,18 @@
       });
       $('buyTab').addEventListener('click', () => setView('buy'));
       $('deployTab').addEventListener('click', () => setView('deploy'));
-      $('clusterTab').addEventListener('click', () => setView('cluster'));
-      $('mixTab').addEventListener('click', () => setView('mix'));
-      $('splitTab').addEventListener('click', () => setView('split'));
-      $('openSplit').addEventListener('click', () => setView('split'));
+      $('openSplit').addEventListener('click', () => setTopology('disaggregated-prefill-decode'));
       $('macToDeploy').addEventListener('click', () => { selectedSetup = `mac:${selectedMacKey}`; $('deploySetup').value = selectedSetup; setView('deploy'); });
-      $('macToCluster').addEventListener('click', () => { $('clusterFamily').value = `mac:${selectedMacKey}`; setView('cluster'); });
+      $('macToCluster').addEventListener('click', () => { $('clusterFamily').value = `mac:${selectedMacKey}`; setTopology('replicas'); setView('deploy'); });
       $('macToMix').addEventListener('click', () => {
         const value = `mac:${selectedMacKey}`;
         const existing = mixComposition.find(item => item.profile === value);
         if (existing) existing.count += 1; else mixComposition.push({ profile: value, count: 1 });
         renderMixRows();
-        setView('mix');
+        setTopology('heterogeneous-federation');
+        setView('deploy');
       });
-      $('macToSplit').addEventListener('click', () => { $('splitDecode').value = selectedMacKey; setView('split'); });
+      $('macToSplit').addEventListener('click', () => { $('splitDecode').value = selectedMacKey; setTopology('disaggregated-prefill-decode'); setView('deploy'); });
       $('saveEpycBuild').addEventListener('click', () => {
         const build = deriveEpycBuild();
         if (!build.valid) return;
@@ -2896,7 +3267,7 @@
         selectedSetup = generatedBuild.id;
         refreshPlannerOptions();
         renderBuy();
-        $('saveEpycBuild').textContent = 'Saved to Deploy, Cluster, and Mix';
+        $('saveEpycBuild').textContent = 'Saved to every topology';
         setTimeout(() => $('saveEpycBuild').textContent = 'Update saved build →', 1800);
       });
       $('resetEpycBuild').addEventListener('click', () => {
@@ -2905,31 +3276,6 @@
         $('epycHost').value = 'auto';
         fillEpycDependentControls(true);
         renderEpycBuilder();
-      });
-      $('deployCluster').addEventListener('click', () => {
-        updateCluster();
-        let option = $('deploySetup').querySelector('option[value="custom-cluster"]');
-        if (!option) { option = document.createElement('option'); option.value = 'custom-cluster'; $('deploySetup').append(option); }
-        option.textContent = customCluster.name;
-        customSource = 'cluster';
-        selectedSetup = 'custom-cluster';
-        $('deploySetup').value = selectedSetup;
-        $('quant').value = $('clusterQuant').value;
-        $('context').value = '32';
-        setView('deploy');
-      });
-      $('deployMix').addEventListener('click', () => {
-        updateMix();
-        customCluster = makeMixedSetup();
-        let option = $('deploySetup').querySelector('option[value="custom-cluster"]');
-        if (!option) { option = document.createElement('option'); option.value = 'custom-cluster'; $('deploySetup').append(option); }
-        option.textContent = customCluster.name;
-        customSource = 'mix';
-        selectedSetup = 'custom-cluster';
-        $('deploySetup').value = selectedSetup;
-        $('quant').value = $('mixQuant').value;
-        $('context').value = $('mixContext').value;
-        setView('deploy');
       });
       // Clipboard access fails on an insecure origin or a denied permission.
       // The fallback selects the block so the keyboard shortcut still works,
@@ -2991,15 +3337,30 @@
       renderBuy();
       renderEpycBuilder();
       updateMacCatalog();
-      updateCluster();
       renderMixRows();
-      updateSplit();
-      updateDeploy();
+      updateHarness();
 
       $('startGate').addEventListener('click', (event) => {
         const door = event.target.closest('[data-gate-choice]');
-        if (door) chooseStart(door.dataset.gateChoice);
+        if (door) { chooseStart(door.dataset.gateChoice); return; }
+        const card = event.target.closest('[data-topo]');
+        if (card) chooseShape(card.dataset.topo);
       });
+      $('gateBack').addEventListener('click', () => setGateStep(1));
+      // Escape backs out of the second question rather than trapping you in it.
+      $('startGate').addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && gateStep === 2) { event.preventDefault(); setGateStep(1); }
+      });
+      // The gate's own precision and context are the same values the planner
+      // uses, so what you set here is what you arrive with.
+      ['gateQuant', 'gateContext'].forEach(id => $(id).addEventListener('change', () => {
+        const owner = id === 'gateQuant' ? 'quant' : 'context';
+        setControl(owner, $(id).value);
+        setControl(owner === 'quant' ? 'buyQuant' : 'buyContext', $(id).value);
+        renderBuy();
+        updateHarness();
+        renderTopoGrid('gateTopoGrid', 'gateTopoNote');
+      }));
       $('gateReopen').addEventListener('click', () => setGate(true));
 
       // The gate is the front door, so it is asked on every load. Stored state

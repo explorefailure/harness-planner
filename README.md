@@ -144,7 +144,11 @@ pool is the specific error this tool exists to avoid.
   have changed.
 - **A plan link can outgrow a paste.** The link carries the whole state as
   uncompressed JSON with long keys, so it grows with the roster and mix rows:
-  a four-role roster encodes to about 1,460 characters. Browsers and bookmarks
+  a four-role roster across all six topologies encodes to about 1,880
+  characters. Because shapes seed their roster from one another, each distinct
+  roster is stored once and the shapes point at it, so visiting every shape
+  costs almost nothing — only rosters you actually edit apart add length, and
+  three genuinely different rosters reach roughly 3,400. Browsers and bookmarks
   handle that comfortably, but some chat clients truncate URLs near 2,000, so a
   large plan could produce a link that does not arrive intact. Shortening the
   state keys, or omitting values that already match the defaults, would cut it
