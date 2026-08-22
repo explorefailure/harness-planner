@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-No Harness Planner version has been published yet. Untagged commits and
+No Architecture Playground version has been published yet. Untagged commits and
 development branches do not receive security support.
 
 After the first public release, only the newest published release will receive
@@ -19,7 +19,7 @@ updated if the project adopts a longer support window.
 
 Report vulnerabilities through GitHub's private vulnerability-reporting form:
 
-<https://github.com/explorefailure/harness-planner/security/advisories/new>
+<https://github.com/explorefailure/architecture-playground/security/advisories/new>
 
 If that link does not present a private report form, **do not post exploit
 details or proof-of-concept code in a public issue**. There is currently no
@@ -32,7 +32,7 @@ proof of concept in the private report.
 
 ## Trust boundary
 
-Harness Planner is a single static HTML file. It has a deliberately small
+Architecture Playground is a single static HTML file. It has a deliberately small
 attack surface, and it is worth being precise about why:
 
 - **It executes nothing you supply.** There is no server, no build step, no

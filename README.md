@@ -1,13 +1,20 @@
-# Harness Planner
+# Architecture Playground
 
 _An [Explore Failure](https://explorefailure.com/) field instrument._
 
-[![CI](https://github.com/explorefailure/harness-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/explorefailure/harness-planner/actions/workflows/ci.yml)
+[![CI](https://github.com/explorefailure/architecture-playground/actions/workflows/ci.yml/badge.svg)](https://github.com/explorefailure/architecture-playground/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-Plan a local LLM coding harness against real hardware: pick a model, see what
-each machine can actually host, then assign different models to different jobs
-and pack them onto one box together.
+A playground for local LLM architectures. Pick a model, then try arrangements of
+real hardware against it — the sensible ones and the ones that only look sensible
+— and see what each would actually host. Assign different models to different
+jobs and pack them onto one box together.
+
+Nothing is filtered out for being a bad idea. A passively cooled server card in a
+desktop tower, an aftermarket 48GB rebuild, a board too small for the model you
+picked: all of them are here, all of them report the same arithmetic, and each
+one says what it would take or why it fails. Seeing a bad idea fail precisely is
+worth more than never being shown it.
 
 It is a single self-contained HTML file. No build step and no dependencies.
 It loads no third-party assets; the only network access is reading public model
@@ -83,9 +90,9 @@ plausible fraction of the BF16 size is dropped rather than reported.
 
 ## Your plan persists
 
-Every control — model, precision, context, roster, EPYC build, cluster and mix
-composition, theme, imported models, and which view and Buy page you were on —
-is saved to `localStorage` as you work and restored on the next visit.
+Every control — model, precision, context, roster, derived build, cluster and
+mix composition, theme, imported models, and which view and Buy page you were
+on — is saved to `localStorage` as you work and restored on the next visit.
 
 **Copy plan link** encodes that same state into the URL, so a plan can be sent
 somewhere or kept as a bookmark. Opening a plan link applies it and then strips

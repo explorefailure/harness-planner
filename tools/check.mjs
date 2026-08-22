@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Repository invariants for Harness Planner.
+// Repository invariants for Architecture Playground.
 //
 // These are the properties that are easy to break silently and expensive to
 // notice later, so they fail the build rather than living in a checklist.
@@ -94,6 +94,44 @@ function arrayLiteral(declaration) {
   throw new Error(`unbalanced brackets in ${declaration}`);
 }
 
+function objectLiteral(declaration) {
+  const start = html.indexOf(declaration);
+  if (start < 0) throw new Error(`could not locate ${declaration}`);
+  let i = html.indexOf('{', start), depth = 0, inStr = null;
+  for (let j = i; j < html.length; j++) {
+    const ch = html[j], prev = html[j - 1];
+    if (inStr) { if (ch === inStr && prev !== '\\') inStr = null; continue; }
+    if (ch === "'" || ch === '"' || ch === '`') { inStr = ch; continue; }
+    if (ch === '{') depth++;
+    else if (ch === '}') { depth--; if (depth === 0) return html.slice(i, j + 1); }
+  }
+  throw new Error(`unbalanced braces in ${declaration}`);
+}
+
+check('every host memory option is buildable from real modules', () => {
+  // A capacity is only honest if it can be reached by filling the board's slots
+  // with a module that exists. This is the check that stops a plausible-looking
+  // number — 500GB across 12 channels, say — from ever reaching the panel, and
+  // it also underwrites the memory draw, which divides capacity by slot count.
+  const manufactured = [16, 32, 48, 64, 96, 128, 192, 256];
+  const hosts = new Function(`return ${objectLiteral('const epycHostProfiles = ')}`)();
+  const keys = Object.keys(hosts);
+  if (keys.length < 3) throw new Error(`parsed fewer than 3 hosts`);
+  const bad = [];
+  for (const [key, host] of Object.entries(hosts)) {
+    if (!Number.isInteger(host.dimmSlots) || host.dimmSlots < 1) { bad.push(`${key}: no dimmSlots`); continue; }
+    if (host.dimmSlots % host.channels !== 0) bad.push(`${key}: ${host.dimmSlots} slots is not a whole multiple of ${host.channels} channels`);
+    if (!host.ramOptions.includes(host.defaultRam)) bad.push(`${key}: defaultRam ${host.defaultRam} is not among its options`);
+    for (const ram of host.ramOptions) {
+      const per = ram / host.dimmSlots;
+      if (!Number.isInteger(per)) bad.push(`${key}: ${ram}GB does not divide across ${host.dimmSlots} slots`);
+      else if (!manufactured.includes(per)) bad.push(`${key}: ${ram}GB implies a ${per}GB module, which is not made`);
+    }
+  }
+  if (bad.length) throw new Error(bad.join('; '));
+  return `${keys.length} hosts, ${Object.values(hosts).reduce((n, h) => n + h.ramOptions.length, 0)} memory options`;
+});
+
 check('every model declares provenance and sizes', () => {
   const block = arrayLiteral('const models = ');
   const entries = block.split(/\{\s*id:\s*'/).slice(1);
@@ -130,6 +168,35 @@ check('every build declares exactly one memory topology', () => {
   }
   if (bad.length) throw new Error(bad.join('; '));
   return `${entries.length} builds`;
+});
+
+check('every GPU profile is fully specified', () => {
+  // A half-filled card is the failure this catalogue invites: the entry looks
+  // present in the dropdown while the panel silently reports `undefined` for the
+  // fact you added the card to learn. Cooling and link are the two that decide
+  // advice rather than decorate it, so a missing one is a build failure.
+  const block = objectLiteral('const epycGpuProfiles = ');
+  const entries = [...block.matchAll(/(\w+):\s*\{([^}]*)\}/g)];
+  if (entries.length < 4) throw new Error(`parsed only ${entries.length} GPU profiles`);
+  const required = ['name', 'short', 'vram', 'tdp', 'pcie', 'pcieLanes', 'bandwidth', 'bandwidthPublished', 'cooling', 'link', 'platform', 'official', 'slot', 'max', 'fit'];
+  const bad = [];
+  for (const [, key, body] of entries) {
+    const missing = required.filter(field => !new RegExp(`\\b${field}:`).test(body));
+    if (missing.length) bad.push(`${key}: missing ${missing.join(', ')}`);
+    const cooling = body.match(/\bcooling:\s*'([^']*)'/);
+    if (cooling && !['active', 'passive'].includes(cooling[1])) bad.push(`${key}: cooling '${cooling[1]}' is neither active nor passive`);
+    // `link: null` is a real answer (no bridge); an absent key is not.
+    if (!/\blink:\s*(null|'[^']*')/.test(body)) bad.push(`${key}: link must be null or a bridge description`);
+    const platform = body.match(/\bplatform:\s*'([^']*)'/);
+    if (platform && !['cuda', 'rocm', 'oneapi'].includes(platform[1])) bad.push(`${key}: unknown platform '${platform[1]}'`);
+    // An unofficial card may not claim a vendor-published figure, because its
+    // vendor does not publish one. This is the pairing most likely to rot.
+    if (/\bofficial:\s*false/.test(body) && /\bbandwidthPublished:\s*true/.test(body)) {
+      bad.push(`${key}: official:false cannot also claim bandwidthPublished:true`);
+    }
+  }
+  if (bad.length) throw new Error(bad.join('; '));
+  return `${entries.length} GPU profiles`;
 });
 
 // ------------------------------------------------------------------- report

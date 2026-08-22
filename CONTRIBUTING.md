@@ -1,4 +1,4 @@
-# Contributing to Harness Planner
+# Contributing to Architecture Playground
 
 Thank you for considering a contribution. This project is solo-maintained, so
 please open an issue before starting substantial work — it avoids you building

@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Harness Planner — an Explore Failure field instrument
+  Architecture Playground — an Explore Failure field instrument
   https://explorefailure.com/
 
   Copyright 2026 Garrett Davis
@@ -24,8 +24,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="An Explore Failure field instrument: compare local AI hardware and plan coding-harness deployments against a chosen model.">
-  <title>Harness Planner — Explore Failure</title>
+  <meta name="description" content="An Explore Failure field instrument: try local AI hardware architectures against a chosen model — the realistic and the unrealistic — and see what each would actually host.">
+  <title>Architecture Playground — Explore Failure</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -186,13 +186,6 @@
     /* Only Buy is introduced by the full hero. The other views state their own
        question, so the hero collapses to a model readout and gives the panels
        back roughly 300px above the fold. */
-    .hero[data-compact="true"] { padding: 24px 0 20px; gap: 20px 40px; align-items: center; }
-    .hero[data-compact="true"] .classification-strip,
-    .hero[data-compact="true"] .hero-copy p,
-    .hero[data-compact="true"] .release-card p,
-    .hero[data-compact="true"] > .specimen-label { display: none; }
-    .hero[data-compact="true"] h1 { font-size: clamp(30px, 3.2vw, 44px); line-height: 1; margin: 6px 0 0; }
-    .hero[data-compact="true"] .release-card { padding: 12px 14px; }
     .eyebrow { font: 12px var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--signal); }
     h1 { max-width: 900px; margin: 12px 0 18px; font-size: clamp(42px, 6.5vw, 90px); line-height: .92; letter-spacing: -.065em; }
     .hero p { max-width: 760px; margin: 0; color: var(--muted); font-size: clamp(17px, 2vw, 22px); }
@@ -258,9 +251,11 @@
     /* Centred ragged text breaks badly by default; `balance` evens the lines
        and is simply ignored where it is not supported. */
     .start-gate h2 { font-size: 34px; line-height: 1.1; margin: 6px 0 10px; text-wrap: balance; }
-    .gate-step > p { color: var(--muted); margin: 0 auto 26px; max-width: 64ch; text-wrap: balance; }
-    .gate-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-    @media (max-width: 1180px) { .gate-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    #startGateTitle, #gateShapeTitle { font-size: clamp(30px, 6.5vw, 62px); line-height: 1.03; letter-spacing: -0.02em; }
+    .gate-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 1000px; margin: clamp(30px, 3.5vw, 46px) auto 0; }
+    /* Three cards fall to one column together: a two-column step would leave
+       one card stranded on its own row. */
+    @media (max-width: 900px) { .gate-grid { grid-template-columns: 1fr; } }
     .gate-card {
       display: flex; flex-direction: column; gap: 6px; text-align: left;
       padding: 18px; border: 1px solid var(--line); border-top: 4px solid var(--signal);
@@ -272,17 +267,14 @@
     .gate-card strong { font-size: 17px; }
     .gate-card p { margin: 0; color: var(--muted); font-size: 13px; }
     .gate-go { margin-top: auto; padding-top: 12px; font: 11px var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--signal); }
-    /* Outranks `.gate-step > p` above, which would otherwise zero this margin. */
-    .gate-step > .gate-foot { margin: 24px auto 0; color: var(--muted); font-size: 13px; max-width: 64ch; text-wrap: balance; }
     .gate-step[hidden] { display: none; }
     /* Step two is a gate, so it stays centred like step one, but its controls
        and cards are the planner's own, not a second visual language. */
     /* The shared strip is a four-column grid; three controls would leave a
        quarter of it showing as bare separator colour. */
-    .control-strip.gate-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 auto 16px; text-align: left; max-width: 680px; }
-    @media (max-width: 760px) { .control-strip.gate-controls { grid-template-columns: 1fr; } }
     .gate-step-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
     .gate-step #gateTopoGrid .topo-card { text-align: left; }
+    #gateTopoGrid { margin-top: clamp(30px, 3.5vw, 46px); }
     /* The gate is the shortest state the page has; without this the footer
        floats mid-viewport on a tall screen. Scoped to the gate so no other
        view's layout changes, and flex-based so it cannot overshoot into a
@@ -292,7 +284,7 @@
     .gate-reopen { margin: 30px 0 0; }
     .orientation-show:not([hidden]) + .gate-reopen { margin-left: 8px; }
     .gate-reopen + .mode-nav { margin-top: 18px; }
-    @media (max-width: 760px) { .gate-grid { grid-template-columns: 1fr; } .start-gate h2 { font-size: 26px; } }
+    @media (max-width: 760px) { .start-gate h2 { font-size: 26px; } }
 
     .mode-nav {
       display: flex;
@@ -355,7 +347,9 @@
     }
     .action:hover { background: var(--signal); color: #061b1e; border-color: var(--signal); }
 
-    .mac-catalog { margin: 0 0 24px; }
+    /* The machine page spaces its own panels, rather than each panel carrying
+       the gap: a panel added later cannot forget it and collide. */
+    #buyMachine > .panel { margin: 0 0 24px; }
     .catalog-layout { display: grid; grid-template-columns: minmax(300px, .4fr) minmax(0, .6fr); gap: 16px; }
     .catalog-summary { min-width: 0; }
     .catalog-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
@@ -366,7 +360,7 @@
     .catalog-table tr[aria-current="true"] td { background: var(--signal-soft); }
     .catalog-table button { min-height: 30px; }
 
-    .builder { margin: 0 0 24px; border-top: 5px solid var(--signal); }
+    .builder { border-top: 5px solid var(--signal); }
     .builder-controls { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     .builder-layout { display: grid; grid-template-columns: minmax(300px, .38fr) minmax(0, .62fr); gap: 16px; }
     .builder-verdict { min-width: 0; }
@@ -571,7 +565,7 @@
     .experimental .status-pill { color: var(--danger); }
 
 
-    /* --- Harness topology -------------------------------------------------
+    /* --- Architecture topology -------------------------------------------------
        Tiny at rest, full when changing. One line while you work; a full card
        page when you actually want to choose, which keeps the app chrome so it
        reads as arrival rather than a second gate. */
@@ -715,7 +709,7 @@
 <body>
   <header class="topbar">
     <div class="shell topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-org">Explore Failure</span><span class="brand-sep" aria-hidden="true">/</span><span class="brand-tool">Harness Planner</span><span class="status-live">Aug 2026</span></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-org">Explore Failure</span><span class="brand-sep" aria-hidden="true">/</span><span class="brand-tool">Architecture Playground</span><span class="status-live">Aug 2026</span></div>
       <div class="topbar-tools">
         <label class="model-picker">
           <span class="model-picker-label">Model</span>
@@ -731,16 +725,8 @@
   <main class="shell" id="mainShell">
     <section class="start-gate" id="startGate" aria-labelledby="startGateTitle" hidden>
       <div class="gate-step" id="gateStep1">
-      <div class="eyebrow">Harness Planner</div>
       <h2 id="startGateTitle">How do you want to start?</h2>
-      <p>Four ways into the same instrument. Every route runs the same memory arithmetic on the same machines &mdash; this only decides where you begin, and you can switch at any time.</p>
       <div class="gate-grid">
-        <button class="gate-card" type="button" data-gate-choice="plan">
-          <span class="gate-kicker">You know what you want to run</span>
-          <strong>From a harness plan</strong>
-          <p>Describe the jobs &mdash; a primary coder, a reviewer, a scout &mdash; and see what memory that roster needs before you commit to hardware.</p>
-          <span class="gate-go">Open the model roster &rarr;</span>
-        </button>
         <button class="gate-card" type="button" data-gate-choice="machine">
           <span class="gate-kicker">You know the hardware</span>
           <strong>From a machine</strong>
@@ -749,7 +735,7 @@
         </button>
         <button class="gate-card" type="button" data-gate-choice="shape">
           <span class="gate-kicker">You know the shape</span>
-          <strong>From a harness topology</strong>
+          <strong>From an architecture</strong>
           <p>Start from how the machines are arranged &mdash; one box, a replica swarm, a federation, or a prefill/decode split &mdash; and see what each shape would host.</p>
           <span class="gate-go">Open the topology cards &rarr;</span>
         </button>
@@ -760,42 +746,15 @@
           <span class="gate-go">Open the build grid &rarr;</span>
         </button>
       </div>
-      <p class="gate-foot">Counts are memory arithmetic, not benchmarks or a ranking. Nothing here is recommended over anything else &mdash; the planner reports what fits and where the numbers came from.</p>
       </div>
 
       <div class="gate-step" id="gateStep2" hidden>
-        <div class="eyebrow">Harness Planner</div>
         <h2 id="gateShapeTitle">How should the machines be arranged?</h2>
-        <p>Six arrangements, same arithmetic. Set the precision and context you have in mind and every card reports what that shape would host &mdash; then pick one to open the planner on it.</p>
-        <div class="control-strip gate-controls" aria-label="Assumptions for these counts">
-          <div class="control">
-            <label for="gateQuant">Precision</label>
-            <select id="gateQuant">
-              <option value="q4">Q4 balanced</option>
-              <option value="q8">Q8 quality</option>
-              <option value="bf16">BF16 reference</option>
-            </select>
-          </div>
-          <div class="control">
-            <label for="gateContext">Working context</label>
-            <select id="gateContext">
-              <option value="16">16K</option>
-              <option value="32" selected>32K</option>
-              <option value="64">64K</option>
-              <option value="128">128K</option>
-            </select>
-          </div>
-          <div class="control" role="status">
-            <span class="label">Model</span>
-            <strong id="gateModelName">&mdash;</strong><br><span style="color:var(--muted)">Change it in the bar above.</span>
-          </div>
-        </div>
         <div class="topo-grid" id="gateTopoGrid"></div>
         <div class="gate-step-foot">
           <button class="mini-button" id="gateBack" type="button">&larr; Back</button>
           <span class="eyebrow" id="gateTopoNote"></span>
         </div>
-        <p class="gate-foot">Counts are memory arithmetic, not benchmarks or a ranking. A shape is not a commitment &mdash; you can change it at any time from the planner.</p>
       </div>
     </section>
 
@@ -819,7 +778,7 @@
         <div class="classification-strip">Independent research lab</div>
         <div class="eyebrow">Local coding systems / field instrument</div>
         <h1 id="heroTitle">Buy the machine.<br>Route the models.</h1>
-        <p>Compare realistic local-AI builds, then turn the winning hardware into a coding harness for the model you pick — with explicit workers, memory limits, and escalation paths.</p>
+        <p>Try local-AI architectures against a model and see what each would really host — the sensible ones and the ones that only look sensible. Every build reports the same arithmetic, so a bad idea fails visibly instead of quietly.</p>
       </div>
       <aside class="release-card" aria-label="Selected model">
         <span class="eyebrow">Local flagship</span>
@@ -931,13 +890,83 @@
         </div>
       </section>
 
-      <section class="panel builder" aria-labelledby="epycBuilderTitle">
+      <section class="panel" id="standalonePanel" aria-labelledby="standaloneTitle">
         <div class="panel-head">
-          <h3 id="epycBuilderTitle">EPYC / GPU Build Designer</h3>
-          <span class="eyebrow">Payload first / host derived</span>
+          <h3 id="standaloneTitle">Standalone systems</h3>
+          <span class="eyebrow" id="standaloneCount"></span>
         </div>
         <div class="panel-body">
-          <div class="control-strip builder-controls" aria-label="EPYC build controls">
+          <div class="control-strip" aria-label="Standalone system controls">
+            <div class="control"><label for="standaloneSelect">System</label><select id="standaloneSelect"></select></div>
+            <div class="control"><span class="label">Investment</span><strong id="standaloneInvestment">&mdash;</strong></div>
+            <div class="control"><span class="label">Power</span><strong id="standalonePower">&mdash;</strong></div>
+            <div class="control"><span class="label">Complexity</span><strong id="standaloneComplexity">&mdash;</strong><br><span style="color:var(--muted)">Operating, not assembly &mdash; these arrive built.</span></div>
+          </div>
+          <div class="catalog-summary">
+            <div class="fit-banner" id="standaloneBanner" role="status"><strong id="standaloneName"></strong><p id="standaloneNote"></p></div>
+            <div class="metrics">
+              <div class="metric"><span>Planning memory</span><strong id="standaloneMemory"></strong></div>
+              <div class="metric"><span>Q4 workers</span><strong id="standaloneQ4"></strong></div>
+              <div class="metric"><span>Q8 workers</span><strong id="standaloneQ8"></strong></div>
+              <div class="metric"><span>BF16 workers</span><strong id="standaloneBf16"></strong></div>
+            </div>
+            <div class="catalog-actions" aria-label="Use selected standalone system">
+              <button class="action" id="standaloneToDeploy" type="button">Use in Deploy &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel builder" aria-labelledby="consBuilderTitle">
+        <div class="panel-head">
+          <h3 id="consBuilderTitle">Consumer PC builds</h3>
+          <span class="eyebrow">Desktop platforms / payload first</span>
+        </div>
+        <div class="panel-body">
+          <div class="control-strip builder-controls" aria-label="Consumer build controls">
+            <div class="control"><label for="consGpu">GPU payload</label><select id="consGpu"></select></div>
+            <div class="control"><label for="consGpuCount">GPU count</label><select id="consGpuCount"></select></div>
+            <div class="control"><label for="consHost">Reference platform</label><select id="consHost"></select></div>
+            <div class="control"><label for="consCpu">CPU override</label><select id="consCpu"></select></div>
+            <div class="control"><label for="consRam">System RAM</label><select id="consRam"></select></div>
+          </div>
+
+          <div class="builder-layout">
+            <div class="builder-verdict">
+              <div class="fit-banner" id="consBuildBanner">
+                <span class="eyebrow" id="consConfidence">Derived reference</span>
+                <h4 id="consBuildName"></h4>
+                <p id="consBuildSummary"></p>
+              </div>
+              <div class="build-flags" id="consBuildFlags" aria-live="polite"></div>
+              <div class="builder-actions">
+                <button class="action" id="consSaveBuild" type="button">Save build to planner &rarr;</button>
+                <button class="mini-button" id="consResetBuild" type="button">Reset</button>
+              </div>
+            </div>
+
+            <div class="derived-grid" aria-label="Derived build specifications">
+              <div class="derived-cell"><span>CPU</span><strong id="consSpecCpu"></strong></div>
+              <div class="derived-cell"><span>GPU memory</span><strong id="consSpecVram"></strong></div>
+              <div class="derived-cell"><span>PCIe topology</span><strong id="consSpecPcie"></strong></div>
+              <div class="derived-cell"><span>System memory</span><strong id="consSpecRam"></strong></div>
+              <div class="derived-cell"><span>Board / system</span><strong id="consSpecBoard"></strong></div>
+              <div class="derived-cell"><span>Chassis</span><strong id="consSpecChassis"></strong></div>
+              <div class="derived-cell"><span>Estimated draw</span><strong id="consSpecPower"></strong></div>
+              <div class="derived-cell"><span>PSU target</span><strong id="consSpecPsu"></strong></div>
+              <div class="derived-cell"><span>Electrical class</span><strong id="consSpecCircuit"></strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel builder" aria-labelledby="epycBuilderTitle">
+        <div class="panel-head">
+          <h3 id="epycBuilderTitle">Server hardware</h3>
+          <span class="eyebrow">Rack and workstation / payload first</span>
+        </div>
+        <div class="panel-body">
+          <div class="control-strip builder-controls" aria-label="Server build controls">
             <div class="control"><label for="epycGpu">GPU payload</label><select id="epycGpu"></select></div>
             <div class="control"><label for="epycGpuCount">GPU count</label><select id="epycGpuCount"></select></div>
             <div class="control"><label for="epycHost">Reference platform</label><select id="epycHost"></select></div>
@@ -949,13 +978,13 @@
             <div class="builder-verdict">
               <div class="fit-banner" id="epycBuildBanner">
                 <span class="eyebrow" id="epycConfidence">Derived reference</span>
-                <h4 id="epycBuildName">4× RTX 3090 · SP3 value workstation</h4>
+                <h4 id="epycBuildName"></h4>
                 <p id="epycBuildSummary"></p>
               </div>
               <div class="build-flags" id="epycBuildFlags" aria-live="polite"></div>
               <div class="builder-actions">
-                <button class="action" id="saveEpycBuild" type="button">Save build to planner →</button>
-                <button class="mini-button" id="resetEpycBuild" type="button">Reset to value build</button>
+                <button class="action" id="epycSaveBuild" type="button">Save build to planner &rarr;</button>
+                <button class="mini-button" id="epycResetBuild" type="button">Reset</button>
               </div>
             </div>
 
@@ -976,22 +1005,20 @@
       </div>
 
       <div class="buy-mode" id="buyBrowse">
+      <section class="model-strip" aria-label="Suggested model roles">
+        <article class="model-cell"><span class="model-tag">Fast worker</span><strong>Qwen3.5-9B</strong><p>Repository scout, test writer, summarizer, and router for memory-limited machines.</p></article>
+        <article class="model-cell"><span class="model-tag">Efficient agent</span><strong>Qwen3.6-35B-A3B</strong><p>MoE alternative when you want low active compute but can afford the full quantized weights.</p></article>
+        <article class="model-cell"><span class="model-tag">Local flagship</span><strong id="stripFlagship">Qwen3.8-27B</strong><p>Main coder, reviewer, visual agent, and long-horizon experiment subject.</p></article>
+        <article class="model-cell"><span class="model-tag">Escalation</span><strong>Qwen3.8 Max / 2.4T</strong><p>Cloud judge or hard-task fallback. Not a plausible single-rack local target.</p></article>
+      </section>
       <p class="topology-legend">Every build below holds its memory in one of four ways &mdash; as a <button type="button" class="term" data-term="pool" aria-expanded="false">pool</button>, as <button type="button" class="term" data-term="lanes" aria-expanded="false">lanes</button>, in <button type="button" class="term" data-term="tiers" aria-expanded="false">tiers</button>, or across <button type="button" class="term" data-term="nodes" aria-expanded="false">nodes</button> &mdash; and that difference, not the headline number, decides what fits. A worker too large for one lane needs <button type="button" class="term" data-term="sharding" aria-expanded="false">sharding</button>.</p>
       <div class="setup-grid" id="setupGrid" aria-label="Hardware choices"></div>
-
-      <div class="compare-wrap">
-        <table>
-          <caption class="sr-only">Comparison of local AI hardware setups</caption>
-          <thead><tr><th>Setup</th><th>Investment</th><th>Usable model memory</th><th>Q4 workers</th><th>Q8 workers</th><th>BF16 workers</th><th>Noise / power</th><th>Notes</th></tr></thead>
-          <tbody id="compareBody"></tbody>
-        </table>
-      </div>
       </div>
     </section>
 
     <section class="view" id="deployView" role="tabpanel" aria-labelledby="deployTab" hidden>
       <div class="section-head">
-        <div><div class="eyebrow">Harness</div><h2>How should it work?</h2></div>
+        <div><div class="eyebrow">Architecture</div><h2>How should it work?</h2></div>
         <p>Choose a shape, a machine and an experiment. The planner assigns a flagship, supporting <button type="button" class="term" data-term="worker" aria-expanded="false">workers</button>, and an optional cloud judge. Precision and context are one decision here and carry across every shape.</p>
       </div>
 
@@ -1003,7 +1030,7 @@
 
       <section class="topo-picker" id="topoPicker" aria-labelledby="topoPickerTitle" hidden>
         <div class="section-head">
-          <div><div class="eyebrow">Harness</div><h2 id="topoPickerTitle">Harness topology</h2></div>
+          <div><div class="eyebrow">Architecture</div><h2 id="topoPickerTitle">Architecture</h2></div>
           <p>How the machines are arranged. Every count below is what the shape would host at the model, precision and context selected right now &mdash; memory arithmetic, not a ranking.</p>
         </div>
         <div class="topo-grid" id="topoGrid"></div>
@@ -1020,7 +1047,7 @@
           <select id="experiment">
             <option value="coding">Daily coding loop</option>
             <option value="repo">Deep repository task</option>
-            <option value="ab">Harness A/B test</option>
+            <option value="ab">Architecture A/B test</option>
             <option value="swarm">Parallel attempt swarm</option>
             <option value="vision">Visual coding / browser task</option>
           </select>
@@ -1104,7 +1131,7 @@
         </section>
 
         <div class="control-strip" aria-label="Mixed pool policy">
-          <div class="control"><label for="mixStrategy">Harness policy</label><select id="mixStrategy"><option value="replicas">All nodes run workers</option><option value="mixed" selected>Workers + strongest-node judge</option></select></div>
+          <div class="control"><label for="mixStrategy">Architecture policy</label><select id="mixStrategy"><option value="replicas">All nodes run workers</option><option value="mixed" selected>Workers + strongest-node judge</option></select></div>
           <div class="control"><span class="label">Federation rule</span><strong>Endpoints, not pooled RAM</strong><br><span style="color:var(--muted)">Route by capability; merge results at the harness layer.</span></div>
         </div>
 
@@ -1255,13 +1282,6 @@
       </div>
     </section>
 
-    <section class="model-strip" aria-label="Suggested model roles">
-      <article class="model-cell"><span class="model-tag">Fast worker</span><strong>Qwen3.5-9B</strong><p>Repository scout, test writer, summarizer, and router for memory-limited machines.</p></article>
-      <article class="model-cell"><span class="model-tag">Efficient agent</span><strong>Qwen3.6-35B-A3B</strong><p>MoE alternative when you want low active compute but can afford the full quantized weights.</p></article>
-      <article class="model-cell"><span class="model-tag">Local flagship</span><strong id="stripFlagship">Qwen3.8-27B</strong><p>Main coder, reviewer, visual agent, and long-horizon experiment subject.</p></article>
-      <article class="model-cell"><span class="model-tag">Escalation</span><strong>Qwen3.8 Max / 2.4T</strong><p>Cloud judge or hard-task fallback. Not a plausible single-rack local target.</p></article>
-    </section>
-
     <section class="notes">
       <div>
         <h2>How to read these numbers</h2>
@@ -1270,10 +1290,10 @@
           <li>Two GPUs can improve precision or host two independent workers; those are different experiments.</li>
           <li>RTX 5090 cards have 32GB each and no NVLink. Independent workers avoid PCIe sharding overhead; a BF16 model of this class requires at least two cards.</li>
           <li>RTX PRO 6000 Blackwell cards provide 96GB ECC each. Workstation Edition favors one fast 600W card; 300W Max-Q is the practical dense two- or four-GPU path.</li>
-          <li>For harness research, independent workers are usually more valuable than splitting one small model across many GPUs.</li>
+          <li>For architecture research, independent workers are usually more valuable than splitting one small model across many GPUs.</li>
           <li>The M4 Air remains useful as the router, interface, telemetry collector, and small-model worker.</li>
           <li>The Phase split selector covers every current Apple-sold Mac chip, GPU, and unified-memory combination except MacBook Neo, deliberately excluded because its fixed 8GB cannot launch a 27B-class model.</li>
-          <li>Buy and every harness topology read exact Mac configurations from one shared catalog, so memory and bandwidth assumptions stay consistent across shapes.</li>
+          <li>Buy and every architecture topology read exact Mac configurations from one shared catalog, so memory and bandwidth assumptions stay consistent across shapes.</li>
           <li>Storage, finishes, port bundles, and screen sizes are collapsed when they do not change the machine’s model-fit or inference-bandwidth profile.</li>
           <li>Air, base M5, and M5 Pro MacBooks are usually control-plane or whole-request-routing machines here; M5 Max is the first MacBook tier with a strong enough bandwidth contrast to merit a measured Spark-prefill / Mac-decode trial.</li>
           <li>Mini, Studio, and Spark clusters should default to complete model replicas; distributed single-model execution is a separate, communication-sensitive experiment.</li>
@@ -1282,7 +1302,7 @@
       </div>
       <div>
         <h2>Sources and uncertainty</h2>
-        <p>Hardware facts come from <a href="https://github.com/QwenLM/Qwen3.8">Qwen’s official Qwen3.8 repository</a>, the <a href="https://huggingface.co/Qwen/Qwen3.8-27B">official 27B model card</a>, Apple’s current <a href="https://www.apple.com/macbook-air/specs/">MacBook Air</a>, <a href="https://www.apple.com/macbook-pro/specs/">MacBook Pro</a>, <a href="https://www.apple.com/imac/specs/">iMac</a>, <a href="https://www.apple.com/mac-mini/specs/">Mac mini</a>, and <a href="https://www.apple.com/mac-studio/specs/">Mac Studio</a> matrices. Configuration compatibility is cross-checked against Apple’s detailed <a href="https://support.apple.com/en-gb/122209">M4 Air</a>, <a href="https://support.apple.com/en-us/126321">M5 Air</a>, <a href="https://support.apple.com/en-gb/125405">M5 MacBook Pro</a>, <a href="https://support.apple.com/en-us/126318">M5 Pro / Max MacBook Pro</a>, <a href="https://support.apple.com/en-us/121556">two-port iMac</a>, <a href="https://support.apple.com/en-euro/121557">four-port iMac</a>, <a href="https://support.apple.com/en-euro/121555">Mac mini</a>, and <a href="https://support.apple.com/en-gb/122211">Mac Studio</a> specifications; Apple’s <a href="https://www.apple.com/newsroom/2025/03/apple-unveils-new-mac-studio-the-most-powerful-mac-ever/">M3 Ultra announcement</a> documents the 512GB ceiling. NVIDIA facts come from the official <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5090/">RTX 5090 specifications</a>, <a href="https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000-family/">RTX PRO 6000 Blackwell family specifications</a>, and the <a href="https://docs.nvidia.com/dgx/dgx-spark/hardware.html">DGX Spark hardware guide</a>.</p>
+        <p>Hardware facts come from <a href="https://github.com/QwenLM/Qwen3.8">Qwen’s official Qwen3.8 repository</a>, the <a href="https://huggingface.co/Qwen/Qwen3.8-27B">official 27B model card</a>, Apple’s current <a href="https://www.apple.com/macbook-air/specs/">MacBook Air</a>, <a href="https://www.apple.com/macbook-pro/specs/">MacBook Pro</a>, <a href="https://www.apple.com/imac/specs/">iMac</a>, <a href="https://www.apple.com/mac-mini/specs/">Mac mini</a>, and <a href="https://www.apple.com/mac-studio/specs/">Mac Studio</a> matrices. Configuration compatibility is cross-checked against Apple’s detailed <a href="https://support.apple.com/en-gb/122209">M4 Air</a>, <a href="https://support.apple.com/en-us/126321">M5 Air</a>, <a href="https://support.apple.com/en-gb/125405">M5 MacBook Pro</a>, <a href="https://support.apple.com/en-us/126318">M5 Pro / Max MacBook Pro</a>, <a href="https://support.apple.com/en-us/121556">two-port iMac</a>, <a href="https://support.apple.com/en-euro/121557">four-port iMac</a>, <a href="https://support.apple.com/en-euro/121555">Mac mini</a>, and <a href="https://support.apple.com/en-gb/122211">Mac Studio</a> specifications; Apple’s <a href="https://www.apple.com/newsroom/2025/03/apple-unveils-new-mac-studio-the-most-powerful-mac-ever/">M3 Ultra announcement</a> documents the 512GB ceiling. NVIDIA facts come from the official <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5090/">RTX 5090 specifications</a>, <a href="https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000-family/">RTX PRO 6000 Blackwell family specifications</a>, and the <a href="https://docs.nvidia.com/dgx/dgx-spark/hardware.html">DGX Spark hardware guide</a>. The rest of the GPU catalogue is taken from each card’s own NVIDIA datasheet or product page — <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3090-3090ti/">RTX 3090</a>, <a href="https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4090/">RTX 4090</a>, <a href="https://www.nvidia.com/content/dam/en-zz/Solutions/products/workstations/nvidia-rtx-a5000-datasheet.pdf">RTX A5000</a>, <a href="https://www.nvidia.com/en-us/products/workstations/rtx-a6000/">RTX A6000</a>, <a href="https://www.nvidia.com/content/dam/en-zz/Solutions/design-visualization/rtx-6000/proviz-print-rtx6000-datasheet-web-2504660.pdf">RTX 6000 Ada</a>, <a href="https://images.nvidia.com/content/Solutions/data-center/a40/nvidia-a40-datasheet.pdf">A40</a>, <a href="https://www.nvidia.com/en-us/data-center/l40s/">L40S</a>, <a href="https://www.nvidia.com/en-us/data-center/a100/">A100 80GB PCIe</a>, <a href="https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000-max-q/">RTX PRO 6000 Max-Q</a>, and <a href="https://www.nvidia.com/en-us/data-center/rtx-pro-6000-blackwell-server-edition/">RTX PRO 6000 Server Edition</a> — which are also where the cooling, NVLink, and per-card configuration ceilings come from. Memory bandwidth is quoted from those sources for the professional and data-center boards. NVIDIA omits it from the GeForce product pages but states it in the architecture whitepapers, so the GeForce figures come from those instead — the <a href="https://www.nvidia.com/content/dam/en-zz/Solutions/geforce/ampere/pdf/NVIDIA-ampere-GA102-GPU-Architecture-Whitepaper-V1.pdf">Ampere GA102</a> whitepaper for the RTX 3090, the <a href="https://images.nvidia.com/aem-dam/Solutions/geforce/ada/nvidia-ada-gpu-architecture.pdf">Ada</a> whitepaper for the RTX 4090, and the <a href="https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf">RTX Blackwell</a> whitepaper for the RTX 5090, each of which states the figure in prose and again in a specification table. The Max-Q figure is from its own <a href="https://www.nvidia.com/content/dam/en-zz/Solutions/products/workstations/professional-desktop-gpus/rtx-pro-6000-max-q/workstation-datasheet-blackwell-rtx-pro-6000-max-q-nvidia-3519233.pdf">Max-Q Workstation Edition datasheet</a>. The RTX 5080 and RTX 5070 Ti figures come from that same RTX Blackwell whitepaper. AMD and Intel facts come from their own vendors — AMD’s <a href="https://www.amd.com/content/dam/amd/en/documents/products/graphics/workstation/radeon-pro-w7900-datasheet.pdf">Radeon PRO W7900 datasheet</a>, <a href="https://www.amd.com/content/dam/amd/en/documents/partner-hub/radeon-pro/radeon-ai-pro-r9700-datasheet.pdf">Radeon AI PRO R9700 datasheet</a>, and <a href="https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xtx.html">Radeon RX 7900 XTX</a> page, and Intel’s <a href="https://cdrdv2-public.intel.com/855693/Datasheet-Intel%C2%AE%20Arc%E2%84%A2%20Pro%20B60%20Graphics.pdf">Arc Pro B60 datasheet</a>. AMD does not state the RX 7900 XTX’s bandwidth alongside its other specifications, so that one figure is marked derived. The 48GB RTX 4090 is an aftermarket rebuild with no vendor specification of any kind: its figures are reported from what those boards carry, not published by NVIDIA, and the panel says so wherever it appears. Every other bandwidth in this catalogue is a vendor-published number rather than one the planner computed. Consumer host platforms are derived from their reference boards&rsquo; published specifications &mdash; ASUS&rsquo;s <a href="https://www.asus.com/us/motherboards-components/motherboards/proart/proart-x870e-creator-wifi/techspec/">ProArt X870E-Creator WIFI</a> and <a href="https://www.asus.com/motherboards-components/motherboards/proart/proart-z890-creator-wifi/techspec/">ProArt Z890-Creator WIFI</a>, which document the x8/x8 lane split, the 256GB DDR5 ceiling, and whether ECC is supported &mdash; together with AMD&rsquo;s <a href="https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html">Ryzen 9 9950X</a>, <a href="https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9900x.html">Ryzen 9 9900X</a> and <a href="https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-7-9700x.html">Ryzen 7 9700X</a> pages, and Intel&rsquo;s <a href="https://www.intel.com/content/www/us/en/products/sku/241060/intel-core-ultra-9-processor-285k-36m-cache-up-to-5-70-ghz/specifications.html">Core Ultra 9 285K</a> and <a href="https://www.intel.com/content/www/us/en/products/sku/241063/intel-core-ultra-7-processor-265k-30m-cache-up-to-5-50-ghz/specifications.html">Core Ultra 7 265K</a> specifications.</p>
         <p>The EPYC builder derives its SP3 lane and memory assumptions from AMD’s <a href="https://www.amd.com/content/dam/amd/en/documents/epyc-technical-docs/white-papers/overview-amd-epyc7003-series-processors-microarchitecture.pdf">EPYC 7003 architecture</a> and the <a href="https://www.asrockrack.com/general/2022_AMDEPYC7000DM.pdf">ASRock Rack ROMED8-2T</a>; its SP5 workstation is based on the <a href="https://www.supermicro.com/en/products/motherboard/h13ssl-nt">Supermicro H13SSL-NT</a>. Exact SP5 CPU values come from AMD’s official <a href="https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9254.html">9254</a>, <a href="https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9354p.html">9354P</a>, and <a href="https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9454p.html">9454P</a> specifications. The validated eight-GPU topology follows the <a href="https://servers.asus.com/products/Servers/GPU-Servers/ESC8000A-E13">ASUS ESC8000A-E13</a>. Power, PSU headroom, circuit class, cooling, and consumer-GPU compatibility remain planning estimates.</p>
         <p>Cluster behavior is grounded in the official <a href="https://github.com/ml-explore/mlx/blob/main/docs/src/usage/distributed.rst">MLX distributed communication guide</a> and NVIDIA’s <a href="https://docs.nvidia.com/dgx/dgx-spark/spark-clustering.html">DGX Spark clustering guide</a>. Phase-split guidance distinguishes <a href="https://blog.exolabs.net/nvidia-dgx-spark/">EXO’s measured Mac + Spark demonstration</a> from the <a href="https://github.com/exo-explore/exo">public EXO runtime</a> and its still-open <a href="https://github.com/exo-explore/exo/pull/2129">Metal + CUDA work</a>.</p>
         <p>Quantized weight sizes, context reserves, concurrency, fit grades, and relative investment bands are planning estimates as of August 20, 2026. Dollar-sign bands are comparative and exclude facility, cooling, and used-market volatility. Validate the exact backend and quant before purchasing hardware.</p>
@@ -1290,7 +1310,7 @@
     </section>
   </main>
 
-  <footer><div class="shell">HARNESS PLANNER / LOCAL-FIRST / ESTIMATES ARE DECISION AIDS, NOT BENCHMARK CLAIMS</div></footer>
+  <footer><div class="shell">ARCHITECTURE PLAYGROUND / LOCAL-FIRST / TRY THE UNREASONABLE ONES TOO / ESTIMATES ARE DECISION AIDS, NOT BENCHMARK CLAIMS</div></footer>
 
   <div class="term-pop" id="termPop" hidden></div>
 
@@ -1306,10 +1326,10 @@
         id: 'x1', name: '1× RTX 3090', kicker: 'CUDA entry', sub: 'The smallest credible local coding node for a 27B-class model.', memory: 24, displayMemory: '24GB VRAM', investment: '$', complexity: 'Low–mid', gpus: 1, unit: 24, power: '≈350W GPU', fit: 'Q4 / 16–32K', reason: 'Cheapest path to a real local Qwen3.8-27B coding worker.', bullets: ['One Q4 flagship worker', 'CUDA ecosystem', 'Limited context headroom']
       },
       {
-        id: 'x2', name: '2× RTX 3090', kicker: 'Value sweet spot', sub: 'Two workers—or one higher-precision worker across cards.', memory: 48, displayMemory: '48GB VRAM', investment: '$$', complexity: 'Mid', gpus: 2, unit: 24, power: '≈700W GPUs', fit: '2× Q4 or 1× Q8', reason: 'The strongest starting balance of price, CUDA, and experiment variety.', bullets: ['A/B harness experiments', 'Coder + reviewer', 'Straightforward expansion']
+        id: 'x2', name: '2× RTX 3090', kicker: 'Value sweet spot', sub: 'Two workers—or one higher-precision worker across cards.', memory: 48, displayMemory: '48GB VRAM', investment: '$$', complexity: 'Mid', gpus: 2, unit: 24, power: '≈700W GPUs', fit: '2× Q4 or 1× Q8', reason: 'The strongest starting balance of price, CUDA, and experiment variety.', bullets: ['A/B architecture experiments', 'Coder + reviewer', 'Straightforward expansion']
       },
       {
-        id: 'x4', name: '4× RTX 3090 · EPYC', kicker: 'Serious harness lab', sub: 'Four independent 24GB CUDA lanes with rack-level thermals.', memory: 96, displayMemory: '96GB VRAM', investment: '$$$', complexity: 'High', gpus: 4, unit: 24, power: '≈1.4kW GPUs', fit: '4× Q4 workers', reason: 'Best balance of CUDA, independent workers, and an upgrade path for harness experiments.', bullets: ['Parallel attempts', 'Local judge/reviewer', 'Cooling becomes a project']
+        id: 'x4', name: '4× RTX 3090 · EPYC', kicker: 'Serious architecture lab', sub: 'Four independent 24GB CUDA lanes with rack-level thermals.', memory: 96, displayMemory: '96GB VRAM', investment: '$$$', complexity: 'High', gpus: 4, unit: 24, power: '≈1.4kW GPUs', fit: '4× Q4 workers', reason: 'Best balance of CUDA, independent workers, and an upgrade path for architecture experiments.', bullets: ['Parallel attempts', 'Local judge/reviewer', 'Cooling becomes a project']
       },
       {
         id: 'g5090x1', name: '1× RTX 5090', kicker: 'Fast CUDA worker', sub: 'Maximum single-card throughput with 32GB of GDDR7.', memory: 32, displayMemory: '32GB VRAM', investment: '$$$', complexity: 'Mid', gpus: 1, unit: 32, workerCapacity: 1, noNvlink: true, power: '575W GPU / 1kW system', fit: 'Q4 long-context', reason: 'Choose it for fast single-agent CUDA throughput, not for the most memory per dollar.', bullets: ['One fast Q4 worker', 'Q8 only at modest context', '32GB is the hard ceiling']
@@ -1318,7 +1338,7 @@
         id: 'g5090x2', name: '2× RTX 5090', kicker: 'Premium dual worker', sub: 'Two independent 32GB workers—or one PCIe-sharded high-precision worker.', memory: 64, displayMemory: '64GB across cards', investment: '$$$$', complexity: 'High', gpus: 2, unit: 32, workerCapacity: 2, noNvlink: true, multiGpuLink: 'PCIe 5.0 (no NVLink)', power: '≈1.15kW GPUs', fit: '2× Q4 or 1× BF16', reason: 'A strong throughput lab when two fast independent coding agents justify the power and cost.', bullets: ['Two independent Q4 workers', 'BF16 spans both cards', 'PCIe 5.0; no NVLink']
       },
       {
-        id: 'g5090x4', name: '4× RTX 5090 · rack', kicker: 'Blackwell harness rack', sub: 'Four 32GB CUDA lanes with server-class power, spacing, and cooling demands.', memory: 128, displayMemory: '128GB across cards', investment: '$$$$$+', complexity: 'Very high', gpus: 4, unit: 32, workerCapacity: 4, noNvlink: true, multiGpuLink: 'PCIe 5.0 (no NVLink)', power: '≈2.3kW GPUs', fit: '4× Q4 or 2× BF16', reason: 'Build this only when high-throughput CUDA harness research justifies rack-level infrastructure.', bullets: ['Four fast Q4 attempts', 'Two PCIe-sharded BF16 workers', 'Chassis and circuit planning']
+        id: 'g5090x4', name: '4× RTX 5090 · rack', kicker: 'Blackwell architecture rack', sub: 'Four 32GB CUDA lanes with server-class power, spacing, and cooling demands.', memory: 128, displayMemory: '128GB across cards', investment: '$$$$$+', complexity: 'Very high', gpus: 4, unit: 32, workerCapacity: 4, noNvlink: true, multiGpuLink: 'PCIe 5.0 (no NVLink)', power: '≈2.3kW GPUs', fit: '4× Q4 or 2× BF16', reason: 'Build this only when high-throughput CUDA architecture research justifies rack-level infrastructure.', bullets: ['Four fast Q4 attempts', 'Two PCIe-sharded BF16 workers', 'Chassis and circuit planning']
       },
       {
         id: 'pro6000x1', name: '1× RTX PRO 6000 · 96GB', kicker: 'Large-memory CUDA workstation', sub: 'One 96GB ECC Blackwell card for complete high-precision models and dense local workers.', memory: 96, displayMemory: '96GB ECC VRAM', investment: '$$$$$', complexity: 'Mid', gpus: 1, unit: 96, copiesPerGpu: 4, workerCapacity: 4, power: '600W GPU', fit: 'BF16 or 4× Q4', reason: 'Buy it when 96GB of fast ECC VRAM and CUDA compatibility matter more than consumer-GPU value.', bullets: ['One BF16 flagship worker', 'Up to four estimated Q4 replicas', '1,792GB/s memory bandwidth']
@@ -1339,7 +1359,7 @@
         id: 'ultra', name: 'Mac Studio M3 Ultra · 256GB', kicker: 'Huge-memory desktop', sub: 'A large unified-memory envelope for many workers or distributed-model research.', memory: 232, displayMemory: '≈232GB after OS', investment: '$$$$$', complexity: 'Low–mid', shared: true, capacityCap: 8, workerCapacity: 8, gpus: 1, unit: 232, power: '≤480W system', fit: '8× Q4 capacity', reason: 'Buy this for larger models and memory-heavy experiments, not merely one 27B worker.', bullets: ['819GB/s memory bandwidth', '256GB shown; 512GB available', 'TB5/JACCL cluster research']
       },
       {
-        id: 'spark', name: 'DGX Spark · 128GB', kicker: 'Compact CUDA lab', sub: 'Coherent memory, CUDA software, and strong networking in a tiny box.', memory: 112, displayMemory: '≈112GB usable', investment: '$$$', complexity: 'Low–mid', shared: true, capacityCap: 4, workerCapacity: 4, gpus: 1, unit: 112, power: '140W SoC', fit: 'BF16 + CUDA', reason: 'Compact CUDA development with enough coherent memory for large experiments.', bullets: ['128GB coherent memory', 'ARM64 compatibility check', 'Excellent portable lab node']
+        id: 'spark', standalone: true, name: 'DGX Spark · 128GB', kicker: 'Compact CUDA lab', sub: 'Coherent memory, CUDA software, and strong networking in a tiny box.', memory: 112, displayMemory: '≈112GB usable', investment: '$$$', complexity: 'Low–mid', shared: true, capacityCap: 4, workerCapacity: 4, gpus: 1, unit: 112, power: '140W SoC', fit: 'BF16 + CUDA', reason: 'Compact CUDA development with enough coherent memory for large experiments.', bullets: ['128GB coherent memory', 'ARM64 compatibility check', 'Excellent portable lab node']
       },
       {
         id: 'a6000x1', name: '1× RTX A6000 · 48GB', kicker: 'Used pro card', sub: 'Ampere-era 48GB ECC — the cheapest route to a single large allocation.', memory: 48, displayMemory: '48GB ECC VRAM', investment: '$$ used', complexity: 'Low', gpus: 1, unit: 48, power: '300W board',
@@ -1350,22 +1370,22 @@
         multiGpuLink: 'NVLink 3rd gen · 112GB/s bridge', fit: 'BF16 or 4× Q4', reason: 'Choose it when a worker must exceed 48GB without paying Blackwell prices — the bridge, not PCIe, carries the span.', bullets: ['NVIDIA states a combined 96GB', '112GB/s bridge vs 768GB/s local', '2-way bridge only', 'No 4-way NVLink on this card']
       },
       {
-        id: 'spark2', name: '2× DGX Spark · linked', kicker: 'Cabled pair', sub: 'Two coherent 128GB nodes joined by QSFP — two machines, not one pool.', memory: 224, displayMemory: '2 × ≈112GB usable', investment: '$$$$', complexity: 'Mid', power: '≈480W pair',
+        id: 'spark2', standalone: true, name: '2× DGX Spark · linked', kicker: 'Cabled pair', sub: 'Two coherent 128GB nodes joined by QSFP — two machines, not one pool.', memory: 224, displayMemory: '2 × ≈112GB usable', investment: '$$$$', complexity: 'Mid', power: '≈480W pair',
         cluster: true, nodes: 2, strategy: 'replica', usablePerNode: 112, replicaCap: 6, gpus: 2, unit: 112, interconnect: 'QSFP 200Gb/s', backend: 'NCCL / distributed',
         fit: 'Two independent nodes', reason: 'Buy the second Spark for capacity and independent workers; the 200Gb/s link is far slower than either node’s own memory.', bullets: ['NVIDIA documents up to 3 cabled', '200Gb/s per QSFP port ≈ 25GB/s', 'Each node keeps 273GB/s locally', 'Memory does not pool across nodes']
       },
       {
-        id: 'strixhalo', name: 'Ryzen AI Max+ 395 · 128GB', kicker: 'Unified x86', sub: 'An x86 desktop with 128GB unified memory, 96GB of it dedicated to the iGPU.', memory: 112, displayMemory: '96GB VGM + 16GB shared', investment: '$$', complexity: 'Low–mid', shared: true, capacityCap: 5, workerCapacity: 5, gpus: 1, unit: 112, power: '≈120–140W',
+        id: 'strixhalo', standalone: true, name: 'Ryzen AI Max+ 395 · 128GB', kicker: 'Unified x86', sub: 'An x86 desktop with 128GB unified memory, 96GB of it dedicated to the iGPU.', memory: 112, displayMemory: '96GB VGM + 16GB shared', investment: '$$', complexity: 'Low–mid', shared: true, capacityCap: 5, workerCapacity: 5, gpus: 1, unit: 112, power: '≈120–140W',
         tiers: [{ name: 'Dedicated VGM', capacity: 96, bandwidth: '256 GB/s' }, { name: 'Shared overflow', capacity: 16, bandwidth: 'reduced performance' }],
         fit: 'Large model, low power', reason: 'The cheapest way to hold a very large model on x86 — provided its 256GB/s bandwidth is enough for the decode speed you need.', bullets: ['128GB unified LPDDR5X', '256GB/s memory bandwidth', 'Radeon 8060S, 40 RDNA 3.5 CUs', 'AMD advises staying within 96GB']
       },
       {
-        id: 'dgxstation', name: 'DGX Station · GB300', kicker: 'Deskside superchip', sub: 'Grace Blackwell Ultra with 748GB of coherent — but tiered — memory.', memory: 748, displayMemory: '252GB HBM3e + 496GB LPDDR5X', investment: 'Quote / enterprise', complexity: 'High', shared: true, capacityCap: 16, workerCapacity: 16, gpus: 1, unit: 748, power: '≈1.6kW platform',
+        id: 'dgxstation', standalone: true, name: 'DGX Station · GB300', kicker: 'Deskside superchip', sub: 'Grace Blackwell Ultra with 748GB of coherent — but tiered — memory.', memory: 748, displayMemory: '252GB HBM3e + 496GB LPDDR5X', investment: 'Quote / enterprise', complexity: 'High', shared: true, capacityCap: 16, workerCapacity: 16, gpus: 1, unit: 748, power: '≈1.6kW platform',
         tiers: [{ name: 'HBM3e', capacity: 252, bandwidth: '7.1 TB/s' }, { name: 'LPDDR5X', capacity: 496, bandwidth: '396 GB/s' }],
         fit: 'Very large or many models', reason: 'The only single box here that holds a frontier-scale model locally — but its memory is two tiers, not one pool.', bullets: ['252GB HBM3e at 7.1TB/s', '496GB LPDDR5X at 396GB/s', 'NVLink-C2C 900GB/s', '72-core Grace + Blackwell Ultra']
       },
       {
-        id: 'thor', name: 'Jetson AGX Thor · 128GB', kicker: 'Edge Blackwell', sub: 'A 128GB Blackwell platform built for physical AI rather than desk inference.', memory: 112, displayMemory: '≈112GB usable', investment: '$$$$', complexity: 'Mid', shared: true, capacityCap: 6, workerCapacity: 6, gpus: 1, unit: 112, power: '40–130W platform',
+        id: 'thor', standalone: true, name: 'Jetson AGX Thor · 128GB', kicker: 'Edge Blackwell', sub: 'A 128GB Blackwell platform built for physical AI rather than desk inference.', memory: 112, displayMemory: '≈112GB usable', investment: '$$$$', complexity: 'Mid', shared: true, capacityCap: 6, workerCapacity: 6, gpus: 1, unit: 112, power: '40–130W platform',
         fit: 'Large model, low power', reason: 'Buy it for embedded and robotics work; as a desk inference box you pay for I/O you will not use.', bullets: ['128GB 256-bit LPDDR5X', '273GB/s bandwidth', '2560-core Blackwell GPU', '14-core Neoverse-V3AE']
       },
       {
@@ -1378,16 +1398,88 @@
 
     const sparkProfile = { key: 'spark128', name: 'DGX Spark · 128GB', short: 'DGX Spark', usable: 112, total: 128, replicaCap: 4, backend: 'CUDA / NCCL', network: 'ConnectX-7 / RoCE', investment: '$$$', platform: 'cuda', maxNodes: 4 };
 
+    // GPU payloads the builder can derive.
+    //
+    // `bandwidth` is the vendor's own published figure wherever one exists — the
+    // professional and data-center boards state it on their datasheets, and the
+    // GeForce boards state it in NVIDIA's architecture whitepapers rather than on
+    // their product pages. Where `bandwidthPublished` is false the number is
+    // arithmetic from a published bus width and memory clock, and the panel says
+    // so rather than letting it sit in the same column as a quoted spec.
+    //
+    // `cooling` decides whether a card can live in the host you picked; it drives
+    // a flag, never a filter, because a passive board in a tower is a real build
+    // that needs a plan rather than a refusal.
+    //
+    // `platform` is the software stack, and it is a first-class fact rather than a
+    // footnote: capacity and bandwidth say what a card could do, and the stack
+    // says what you will actually spend your evenings on. CUDA is the default the
+    // harness assumes; the others are viable and cheaper per gigabyte, and the
+    // panel states the trade rather than hiding or disqualifying it.
+    //
+    // `official` marks whether the vendor sells and specifies the card at all.
+    // Aftermarket rebuilds are real hardware that real people run, so they are
+    // listed — but every figure on them is reported rather than vendor-published,
+    // and nothing here may present that as equivalent evidence.
     const epycGpuProfiles = {
-      rtx3090: { name: 'RTX 3090', short: '3090', vram: 24, tdp: 350, pcie: 4, slot: '3-slot planning clearance', max: 8, fit: 'Q4 lane' },
-      rtx5090: { name: 'RTX 5090', short: '5090', vram: 32, tdp: 575, pcie: 5, slot: '3-slot airflow clearance', max: 8, fit: 'fast Q4 lane' },
-      pro6000maxq: { name: 'RTX PRO 6000 Max-Q', short: 'PRO 6000 Max-Q', vram: 96, tdp: 300, pcie: 5, slot: 'dual-slot active', max: 4, fit: 'BF16 / 4× Q4 lane' },
-      pro6000server: { name: 'RTX PRO 6000 Server', short: 'PRO 6000 Server', vram: 96, tdp: 600, pcie: 5, slot: 'dual-slot passive', max: 8, fit: 'BF16 / 4× Q4 lane' }
+      rtx5070ti: { name: 'RTX 5070 Ti', short: '5070 Ti', vram: 16, tdp: 300, pcie: 5, pcieLanes: 16, bandwidth: 896, bandwidthPublished: true, cooling: 'active', link: null, platform: 'cuda', official: true, slot: 'dual-slot active', max: 8, fit: 'small-model lane' },
+      rtx5080: { name: 'RTX 5080', short: '5080', vram: 16, tdp: 360, pcie: 5, pcieLanes: 16, bandwidth: 960, bandwidthPublished: true, cooling: 'active', link: null, platform: 'cuda', official: true, slot: 'dual-slot active', max: 8, fit: 'small-model lane' },
+      rtx3090: { name: 'RTX 3090', short: '3090', vram: 24, tdp: 350, pcie: 4, pcieLanes: 16, bandwidth: 936, bandwidthPublished: true, cooling: 'active', link: 'NVLink SLI bridge · 2-way', platform: 'cuda', official: true, slot: '3-slot planning clearance', max: 8, fit: 'Q4 lane' },
+      rtx4090: { name: 'RTX 4090', short: '4090', vram: 24, tdp: 450, pcie: 4, pcieLanes: 16, bandwidth: 1008, bandwidthPublished: true, cooling: 'active', link: null, platform: 'cuda', official: true, slot: '3-slot airflow clearance', max: 8, fit: 'fast Q4 lane' },
+      rtx4090x48: { name: 'RTX 4090 48GB (aftermarket)', short: '4090 48GB', vram: 48, tdp: 450, pcie: 4, pcieLanes: 16, bandwidth: 1008, bandwidthPublished: false, cooling: 'active', link: null, platform: 'cuda', official: false, slot: 'dual-slot blower', max: 8, fit: 'Q8 / 2× Q4 lane' },
+      rtx5090: { name: 'RTX 5090', short: '5090', vram: 32, tdp: 575, pcie: 5, pcieLanes: 16, bandwidth: 1792, bandwidthPublished: true, cooling: 'active', link: null, platform: 'cuda', official: true, slot: '3-slot airflow clearance', max: 8, fit: 'fast Q4 lane' },
+      a5000: { name: 'RTX A5000', short: 'A5000', vram: 24, tdp: 230, pcie: 4, pcieLanes: 16, bandwidth: 768, bandwidthPublished: true, cooling: 'active', link: 'NVLink · 2-way · 112.5GB/s', platform: 'cuda', official: true, slot: 'dual-slot active', max: 8, fit: 'efficient Q4 lane' },
+      a6000: { name: 'RTX A6000', short: 'A6000', vram: 48, tdp: 300, pcie: 4, pcieLanes: 16, bandwidth: 768, bandwidthPublished: true, cooling: 'active', link: 'NVLink · 2-way · 112.5GB/s', platform: 'cuda', official: true, slot: 'dual-slot active', max: 8, fit: 'Q8 / 2× Q4 lane' },
+      rtx6000ada: { name: 'RTX 6000 Ada', short: 'RTX 6000 Ada', vram: 48, tdp: 300, pcie: 4, pcieLanes: 16, bandwidth: 960, bandwidthPublished: true, cooling: 'active', link: null, platform: 'cuda', official: true, slot: 'dual-slot active', max: 8, fit: 'Q8 / 2× Q4 lane' },
+      a40: { name: 'NVIDIA A40', short: 'A40', vram: 48, tdp: 300, pcie: 4, pcieLanes: 16, bandwidth: 696, bandwidthPublished: true, cooling: 'passive', link: 'NVLink · 2-way · 112.5GB/s', platform: 'cuda', official: true, slot: 'dual-slot passive', max: 8, fit: 'Q8 / 2× Q4 lane' },
+      l40s: { name: 'NVIDIA L40S', short: 'L40S', vram: 48, tdp: 350, pcie: 4, pcieLanes: 16, bandwidth: 864, bandwidthPublished: true, cooling: 'passive', link: null, platform: 'cuda', official: true, slot: 'dual-slot passive', max: 8, fit: 'Q8 / 2× Q4 lane' },
+      a100pcie80: { name: 'A100 80GB PCIe', short: 'A100 80GB', vram: 80, tdp: 300, pcie: 4, pcieLanes: 16, bandwidth: 1935, bandwidthPublished: true, cooling: 'passive', link: 'NVLink bridge · 2-way · 600GB/s', platform: 'cuda', official: true, slot: 'dual-slot passive', max: 8, fit: 'BF16 / 4× Q4 lane' },
+      pro6000maxq: { name: 'RTX PRO 6000 Max-Q', short: 'PRO 6000 Max-Q', vram: 96, tdp: 300, pcie: 5, pcieLanes: 16, bandwidth: 1792, bandwidthPublished: true, cooling: 'active', link: null, platform: 'cuda', official: true, slot: 'dual-slot active', max: 4, fit: 'BF16 / 4× Q4 lane' },
+      pro6000server: { name: 'RTX PRO 6000 Server', short: 'PRO 6000 Server', vram: 96, tdp: 600, pcie: 5, pcieLanes: 16, bandwidth: 1597, bandwidthPublished: true, cooling: 'passive', link: null, platform: 'cuda', official: true, slot: 'dual-slot passive', max: 8, fit: 'BF16 / 4× Q4 lane' },
+      rx7900xtx: { name: 'Radeon RX 7900 XTX', short: 'RX 7900 XTX', vram: 24, tdp: 355, pcie: 4, pcieLanes: 16, bandwidth: 960, bandwidthPublished: false, cooling: 'active', link: null, platform: 'rocm', official: true, slot: '2.5-slot active', max: 8, fit: 'Q4 lane' },
+      r9700: { name: 'Radeon AI PRO R9700', short: 'R9700', vram: 32, tdp: 300, pcie: 5, pcieLanes: 16, bandwidth: 640, bandwidthPublished: true, cooling: 'active', link: null, platform: 'rocm', official: true, slot: 'dual-slot blower', max: 8, fit: 'Q4 long-context lane' },
+      w7900: { name: 'Radeon PRO W7900', short: 'W7900', vram: 48, tdp: 295, pcie: 4, pcieLanes: 16, bandwidth: 864, bandwidthPublished: true, cooling: 'active', link: null, platform: 'rocm', official: true, slot: 'triple-slot active', max: 8, fit: 'Q8 / 2× Q4 lane' },
+      arcprob60: { name: 'Intel Arc Pro B60', short: 'Arc Pro B60', vram: 24, tdp: 200, pcie: 5, pcieLanes: 8, bandwidth: 456, bandwidthPublished: true, cooling: 'active', link: null, platform: 'oneapi', official: true, slot: 'varies by partner', max: 8, fit: 'low-power Q4 lane' }
     };
 
+    // What each software stack actually costs you, stated once. The harness
+    // assumes CUDA because that is what its tooling was built against; the other
+    // two run the same models and are cheaper per gigabyte, and the honest
+    // difference is setup friction and coverage, not capability.
+    const gpuPlatforms = {
+      cuda: { label: 'CUDA', backend: 'CUDA / NCCL', note: null },
+      rocm: { label: 'ROCm', backend: 'ROCm / RCCL',
+        note: 'llama.cpp, vLLM, and Ollama all run on ROCm, and this card holds its memory at its rated bandwidth like any other. What you trade is smoothness: fewer prebuilt wheels, a shorter list of supported kernels, and occasional waits after a new model lands. Budget setup time rather than expecting a drop-in swap for a CUDA card.' },
+      oneapi: { label: 'oneAPI', backend: 'oneAPI / oneCCL',
+        note: 'Intel\'s stack reaches these cards through IPEX-LLM, SYCL builds of llama.cpp, and vLLM\'s XPU path. It is the least travelled of the three for local inference, so expect to build more from source and to find fewer people who have already hit your exact problem.' }
+    };
+
+    // Host platforms the builder can derive, consumer first. The `epyc` prefix
+    // on these identifiers is historical — the map now holds consumer desktops
+    // too — and is kept because the state key `epyc` travels in saved plans and
+    // shared plan links, where a rename would break links already sent.
     const epycHostProfiles = {
+      am5: {
+        name: 'AM5 creator workstation', platform: 'AM5 / X870E', board: 'ASUS ProArt X870E-Creator WIFI', maxGpu: 2, pcie: 5, channels: 2, dimmSlots: 4, memoryType: 'DDR5 ECC or non-ECC UDIMM',
+        hostClass: 'consumer', chassis: 'ATX mid-tower; two-slot spacing at x8/x8', ramOptions: [64, 128, 256], defaultRam: 128,
+        cpus: [
+          { id: 'auto', name: 'Auto → Ryzen 9 9950X', model: 'Ryzen 9 9950X', cores: 16, tdp: 170 },
+          { id: '9700x', name: 'Ryzen 7 9700X · 8 cores', model: 'Ryzen 7 9700X', cores: 8, tdp: 65 },
+          { id: '9900x', name: 'Ryzen 9 9900X · 12 cores', model: 'Ryzen 9 9900X', cores: 12, tdp: 120 },
+          { id: '9950x', name: 'Ryzen 9 9950X · 16 cores', model: 'Ryzen 9 9950X', cores: 16, tdp: 170 }
+        ]
+      },
+      lga1851: {
+        name: 'LGA1851 creator workstation', platform: 'LGA1851 / Z890', board: 'ASUS ProArt Z890-Creator WIFI', maxGpu: 2, pcie: 5, channels: 2, dimmSlots: 4, memoryType: 'DDR5-6400 non-ECC',
+        hostClass: 'consumer', chassis: 'ATX mid-tower; two-slot spacing at x8/x8', ramOptions: [64, 128, 256], defaultRam: 128,
+        cpus: [
+          { id: 'auto', name: 'Auto → Core Ultra 9 285K', model: 'Core Ultra 9 285K', cores: 24, tdp: 250 },
+          { id: '265k', name: 'Core Ultra 7 265K · 20 cores', model: 'Core Ultra 7 265K', cores: 20, tdp: 250 },
+          { id: '285k', name: 'Core Ultra 9 285K · 24 cores', model: 'Core Ultra 9 285K', cores: 24, tdp: 250 }
+        ]
+      },
       sp3: {
-        name: 'SP3 value workstation', platform: 'SP3 / EPYC 7003', board: 'ASRock Rack ROMED8-2T', maxGpu: 4, pcie: 4, channels: 8, memoryType: 'DDR4-3200 ECC',
+        name: 'SP3 value workstation', platform: 'SP3 / EPYC 7003', board: 'ASRock Rack ROMED8-2T', hostClass: 'server', maxGpu: 4, pcie: 4, channels: 8, dimmSlots: 8, memoryType: 'DDR4-3200 ECC',
         chassis: '4U custom or open-frame with powered risers', ramOptions: [256, 512, 1024], defaultRam: 256,
         cpus: [
           { id: 'auto', name: 'Auto → EPYC 7443P', model: 'EPYC 7443P', cores: 24, tdp: 200 },
@@ -1397,7 +1489,7 @@
         ]
       },
       sp5: {
-        name: 'SP5 PCIe 5 workstation', platform: 'SP5 / EPYC 9004', board: 'Supermicro H13SSL-NT', maxGpu: 4, pcie: 5, channels: 12, memoryType: 'DDR5-4800 ECC',
+        name: 'SP5 PCIe 5 workstation', platform: 'SP5 / EPYC 9004', board: 'Supermicro H13SSL-NT', hostClass: 'server', maxGpu: 4, pcie: 5, channels: 12, dimmSlots: 12, memoryType: 'DDR5-4800 ECC',
         chassis: '4U custom chassis; riser/backplane above 3 GPUs', ramOptions: [384, 768, 1536], defaultRam: 384,
         cpus: [
           { id: 'auto', name: 'Auto → EPYC 9254', model: 'EPYC 9254', cores: 24, tdp: 200 },
@@ -1407,7 +1499,7 @@
         ]
       },
       rack8: {
-        name: '4U eight-GPU server', platform: 'Dual SP5 / EPYC 9004–9005', board: 'ASUS ESC8000A-E13 reference system', maxGpu: 8, minGpu: 4, pcie: 5, channels: 24, memoryType: 'DDR5 ECC',
+        name: '4U eight-GPU server', platform: 'Dual SP5 / EPYC 9004–9005', board: 'ASUS ESC8000A-E13 reference system', hostClass: 'server', maxGpu: 8, minGpu: 4, pcie: 5, channels: 24, dimmSlots: 24, memoryType: 'DDR5 ECC',
         chassis: 'Manufacturer 4U GPU server with switch/riser complex', ramOptions: [768, 1536, 3072], defaultRam: 768,
         cpus: [
           { id: 'auto', name: 'Auto → 2× EPYC 9354', model: '2× EPYC 9354', cores: 64, tdp: 560 },
@@ -1419,6 +1511,17 @@
     };
 
     let generatedBuild = null;
+    // There is one derived-build slot, so saving from either designer replaces
+    // the other. This records which panel owns it, so a restored plan re-derives
+    // from the right one.
+    let savedBuildFrom = 'epyc';
+
+    // What each designer offers. Counts stop where that class's boards stop, so
+    // the consumer panel never lists an eight-GPU option it cannot host.
+    const builderPanels = {
+      cons: { hostClass: 'consumer', counts: [1, 2], gpu: 'rtx3090', count: '2' },
+      epyc: { hostClass: 'server', counts: [1, 2, 4, 8], gpu: 'rtx3090', count: '4' }
+    };
 
     const macProfiles = {};
     const macProfileGroups = [];
@@ -1730,23 +1833,12 @@
     const setupById = (id) => id === 'custom-cluster' ? customCluster : id === 'build:epyc-current' ? generatedBuild : id.startsWith('mac:') ? macProfileToSetup(id.slice(4)) : setups.find(s => s.id === id);
 
     const viewOrder = ['buy', 'deploy'];
-    const viewTitles = { buy: 'Buy', deploy: 'Deploy' };
     let currentView = 'buy';
-    let heroHeadline = null;
-
-    // The hero sells the Buy view. Carrying it unchanged across the other four
-    // left them opening under a headline about buying, so it compacts instead.
-    function setHeroMode(name) {
-      if (heroHeadline === null) heroHeadline = $('heroTitle').innerHTML;
-      $('hero').dataset.compact = String(name !== 'buy');
-      $('heroTitle').innerHTML = name === 'buy' ? heroHeadline : viewTitles[name];
-    }
 
     // Each door names the surface it opens. A door presets nothing beyond the
     // view and the focus target: no route unlocks, hides, or reorders any
     // capability, so a starting point is never a commitment.
     const gateTargets = {
-      plan: { view: 'deploy', focus: 'rosterPanel' },
       machine: { view: 'buy', mode: 'machine', focus: 'macCatalogPanel' },
       shape: { view: 'deploy', focus: null, step: 2 },
       browse: { view: 'buy', mode: 'browse', focus: null }
@@ -1762,10 +1854,11 @@
       gateStep = step;
       $('gateStep1').hidden = step !== 1;
       $('gateStep2').hidden = step !== 2;
+      // The section is named by whichever question is on screen. Left pointing
+      // at step one's heading, step two announces a hidden element asking
+      // something it is no longer asking.
+      $('startGate').setAttribute('aria-labelledby', step === 2 ? 'gateShapeTitle' : 'startGateTitle');
       if (step === 2) {
-        setControl('gateQuant', sharedQuant());
-        setControl('gateContext', sharedContext());
-        $('gateModelName').textContent = activeModel().name;
         renderTopoGrid('gateTopoGrid', 'gateTopoNote');
         const card = $('gateTopoGrid').querySelector('.topo-card.selected') || $('gateTopoGrid').querySelector('.topo-card');
         if (card) card.focus();
@@ -1803,10 +1896,11 @@
       setGate(false);
       setView(target.view);
       if (target.mode) setBuyMode(target.mode);
-      // The topology door opens the cards it names and every other door shuts
-      // them, so a route presets nothing beyond where you land. Closing takes
-      // no focus, because the door's own focus target owns it.
-      setPicker(Boolean(target.picker), { focus: Boolean(target.picker) });
+      // Every door that lands you shuts the topology picker, so a route presets
+      // nothing beyond where you land. The topology door is not among them: it
+      // returns to step two above rather than reaching here. Closing takes no
+      // focus, because the door's own focus target owns it.
+      setPicker(false, { focus: false });
       // Focusing the destination panel both announces it and scrolls it into
       // view; the tab keeps its own focus when there is no deeper target.
       const panel = target.focus ? $(target.focus)
@@ -1868,7 +1962,6 @@
         // Roving tabindex: the strip is a single tab stop and arrows move inside it.
         tab.tabIndex = active ? 0 : -1;
       });
-      setHeroMode(name);
       if (focusTab) $(`${name}Tab`).focus();
       if (name === 'deploy') updateHarness();
     }
@@ -1911,65 +2004,136 @@
       document.querySelectorAll('[data-mac-key]').forEach(button => button.addEventListener('click', () => selectMacProfile(button.dataset.macKey)));
     }
 
-    function automaticEpycHost() {
-      const gpuKey = $('epycGpu').value;
-      const count = Number($('epycGpuCount').value);
+    // Each panel auto-selects only inside its own class, so the consumer panel
+    // can never answer with a 4U server and the server panel can never answer
+    // with a desktop. Choosing between the classes is the panel you are in.
+    function automaticEpycHost(p) {
+      if (p === 'cons') return 'am5';
+      const gpuKey = $(`${p}Gpu`).value;
+      const count = Number($(`${p}GpuCount`).value);
       if (count > 4 || gpuKey === 'pro6000server') return 'rack8';
       if (gpuKey === 'rtx3090') return 'sp3';
       return 'sp5';
     }
 
-    function resolvedEpycHost() {
-      return $('epycHost').value === 'auto' ? automaticEpycHost() : $('epycHost').value;
+    // Both designers run this same engine; `p` says which panel's controls to
+    // read — 'cons' for consumer desktops, 'epyc' for the server platforms.
+    function resolvedEpycHost(p) {
+      return $(`${p}Host`).value === 'auto' ? automaticEpycHost(p) : $(`${p}Host`).value;
     }
 
-    function fillEpycDependentControls(forceDefaults = false) {
-      const host = epycHostProfiles[resolvedEpycHost()];
-      const oldCpu = $('epycCpu').value;
-      const oldRam = Number($('epycRam').value);
-      $('epycCpu').innerHTML = host.cpus.map(cpu => `<option value="${cpu.id}">${cpu.name}</option>`).join('');
-      $('epycRam').innerHTML = host.ramOptions.map(ram => `<option value="${ram}">${ram}GB · ${host.channels} channels populated</option>`).join('');
-      if (!forceDefaults && host.cpus.some(cpu => cpu.id === oldCpu)) $('epycCpu').value = oldCpu;
-      else $('epycCpu').value = 'auto';
-      if (!forceDefaults && host.ramOptions.includes(oldRam)) $('epycRam').value = String(oldRam);
-      else $('epycRam').value = String(host.defaultRam);
+    function fillEpycDependentControls(p, forceDefaults = false) {
+      const host = epycHostProfiles[resolvedEpycHost(p)];
+      const oldCpu = $(`${p}Cpu`).value;
+      const oldRam = Number($(`${p}Ram`).value);
+      $(`${p}Cpu`).innerHTML = host.cpus.map(cpu => `<option value="${cpu.id}">${cpu.name}</option>`).join('');
+      $(`${p}Ram`).innerHTML = host.ramOptions.map(ram => `<option value="${ram}">${ram}GB · ${host.dimmSlots} × ${ram / host.dimmSlots}GB</option>`).join('');
+      if (!forceDefaults && host.cpus.some(cpu => cpu.id === oldCpu)) $(`${p}Cpu`).value = oldCpu;
+      else $(`${p}Cpu`).value = 'auto';
+      if (!forceDefaults && host.ramOptions.includes(oldRam)) $(`${p}Ram`).value = String(oldRam);
+      else $(`${p}Ram`).value = String(host.defaultRam);
     }
 
-    function deriveEpycBuild() {
-      const gpuKey = $('epycGpu').value;
+    // Active-load draw per memory module. Higher-capacity parts carry more ranks
+    // and stacked die, so they cost more *per module*, not merely more in total —
+    // which is why a fully populated 3TB server is not a 768GB one with the same
+    // power plan. Bands for DDR4/DDR5 ECC modules; an estimate like every other
+    // wattage on this panel, not a measured figure.
+    const DIMM_LOAD_WATTS = { 16: 4, 32: 5, 48: 6, 64: 8, 96: 10, 128: 12, 192: 16, 256: 20 };
+
+    // Every option populates every slot, so the module size is the capacity
+    // divided by the slot count. check.mjs enforces that this stays a whole
+    // number and a capacity that is actually manufactured.
+    function hostDimmPlan(host, ram) {
+      const perDimm = ram / host.dimmSlots;
+      const watts = Math.round(host.dimmSlots * (DIMM_LOAD_WATTS[perDimm] || perDimm / 8));
+      return { count: host.dimmSlots, perDimm, watts };
+    }
+
+    function deriveEpycBuild(p) {
+      const gpuKey = $(`${p}Gpu`).value;
       const gpu = epycGpuProfiles[gpuKey];
-      const count = Number($('epycGpuCount').value);
-      const hostKey = resolvedEpycHost();
+      const count = Number($(`${p}GpuCount`).value);
+      const hostKey = resolvedEpycHost(p);
       const host = epycHostProfiles[hostKey];
-      const cpu = host.cpus.find(item => item.id === $('epycCpu').value) || host.cpus[0];
-      const ram = Number($('epycRam').value);
+      const isConsumer = host.hostClass === 'consumer';
+      const cpu = host.cpus.find(item => item.id === $(`${p}Cpu`).value) || host.cpus[0];
+      const ram = Number($(`${p}Ram`).value);
+      const stack = gpuPlatforms[gpu.platform];
+      // Capacity is measured against the model actually selected, not a flat
+      // constant. The old 20GB proxy stood in for "a 27B Q4 worker plus context"
+      // and was close enough while every card in the catalogue cleared it; adding
+      // 16GB boards broke that, because flooring to a minimum of one reported a
+      // worker on a card that cannot hold one. A card that does not fit the
+      // selected model now reports zero and says so.
+      const requiredPerWorker = weightFor(sharedQuant()) + reserveFor(Number(sharedContext()));
+      const fitsSelectedModel = gpu.vram >= requiredPerWorker;
+      const perGpuCopies = fitsSelectedModel ? Math.floor(gpu.vram / requiredPerWorker) : 0;
       const gpuPower = gpu.tdp * count;
-      const estimatedDraw = gpuPower + cpu.tdp + 180 + count * 20;
+      const dimmPlan = hostDimmPlan(host, ram);
+      // The platform allowance covers board, drives and fans. Memory is costed
+      // separately because it is a control on this panel: a flat allowance made
+      // every RAM choice produce an identical PSU target, which is the one thing
+      // this figure exists to prevent.
+      const basePlatformW = isConsumer ? 90 : 140;
+      const estimatedDraw = gpuPower + cpu.tdp + basePlatformW + dimmPlan.watts + count * 20;
       const psuTarget = Math.ceil(estimatedDraw * 1.2 / 100) * 100;
       const validCount = count <= host.maxGpu && (!host.minGpu || count >= host.minGpu) && count <= gpu.max;
-      const pcieTopology = hostKey === 'sp5' && count === 4
+      const linkGen = Math.min(gpu.pcie, host.pcie);
+      // A card can be electrically narrower than the slot it sits in, and that is
+      // the card's ceiling however many lanes the board offers.
+      const hostLanes = isConsumer && count === 2 ? 8 : 16;
+      const lanes = Math.min(gpu.pcieLanes, hostLanes);
+      const pcieTopology = hostKey === 'sp5' && count === 4 && gpu.pcieLanes >= 16
         ? '3× Gen5 x16 + 1× Gen5 x8'
-        : `${count}× Gen${Math.min(gpu.pcie, host.pcie)} x16`;
+        : isConsumer && count === 2 && gpu.pcieLanes >= 16
+          ? `2× Gen${linkGen} x8 · x8/x8 split`
+          : `${count}× Gen${linkGen} x${lanes}`;
       const manufacturerValidated = hostKey === 'rack8' && gpuKey === 'pro6000server';
       const confidence = manufacturerValidated ? 'Manufacturer-validated class' : hostKey === 'rack8' ? 'Derived / GPU certification required' : 'Derived reference build';
       const circuit = psuTarget <= 1400 ? '120V / 15A possible' : psuTarget <= 1900 ? 'Dedicated 120V / 20A' : psuTarget <= 2800 ? 'Dedicated 240V / 15A' : psuTarget <= 3800 ? 'Dedicated 240V / 20A' : 'Datacenter power planning';
       const flags = [];
-      if (!validCount) flags.push({ cls: 'stop', title: 'Incompatible count', text: `${host.name} supports ${host.minGpu ? `${host.minGpu}–` : 'up to '}${host.maxGpu} GPUs in this planner.` });
+      // Two different ceilings reach this point, and saying which one you hit is
+      // the whole value of the message: a host limit is answered by a different
+      // chassis, a card limit by a different card.
+      const hostCountOk = count <= host.maxGpu && (!host.minGpu || count >= host.minGpu);
+      if (!hostCountOk) flags.push({ cls: 'stop', title: 'Incompatible count', text: `${host.name} supports ${host.minGpu ? `${host.minGpu}–` : 'up to '}${host.maxGpu} GPUs in this planner.` });
       if (hostKey === 'sp5' && count === 4) flags.push({ cls: 'warn', title: 'Riser required', text: 'H13SSL-NT exposes three x16 and two x8 slots; the fourth GPU is planned at x8 and physical spacing needs a custom riser or backplane.' });
-      if (gpuKey === 'rtx5090') flags.push({ cls: 'warn', title: 'Consumer GPU thermals', text: 'The 575W reference card needs three-slot airflow clearance; add-in-board dimensions vary and server certification is not assumed.' });
+      // Cooling is one fact read in two directions rather than a list of cards.
+      // A passive board has no fan and expects a chassis to push air through it;
+      // an active one expects clearance the rack's slot pitch may not give. Both
+      // are buildable with a plan, so both are stated as work to do, not refused.
+      if (gpu.cooling === 'passive' && isConsumer) flags.push({ cls: 'warn', title: 'Devise a cooling solution', text: `The ${gpu.name} is a passively cooled board: it carries a heatsink but no fan, and is specified for server chassis that force air across it. In a tower you supply that airflow yourself — a shroud and high-static-pressure fans, ducted front to back. It is a solved problem, not a supported configuration, so plan the parts and the noise before you buy.` });
+      if (gpu.cooling === 'active' && hostKey === 'rack8') flags.push({ cls: 'warn', title: 'Active card in a server chassis', text: `The ${gpu.name} draws its own air from the slot. A 4U GPU server plans front-to-back pressure for passive boards instead, so confirm slot pitch, intake clearance, and the vendor's support position before committing to ${count} of them.` });
+      if (gpu.tdp >= 450 && gpu.cooling === 'active') flags.push({ cls: 'warn', title: 'High-draw consumer board', text: `At ${gpu.tdp}W the ${gpu.name} needs its full airflow clearance and its own PSU cabling; add-in-board dimensions vary by partner and server certification is not assumed.` });
       if (hostKey === 'rack8' && !manufacturerValidated) flags.push({ cls: 'warn', title: 'Validate the exact GPU', text: 'The chassis topology is a real eight-GPU reference, but consumer cards and active-cooling variants require vendor, power-cable, and airflow confirmation.' });
-      if (gpuKey === 'pro6000maxq') flags.push({ cls: '', title: 'Density-optimized payload', text: 'NVIDIA positions the 300W dual-slot Max-Q for configurations of up to four GPUs.' });
+      if (hostCountOk && count > gpu.max) flags.push({ cls: 'stop', title: 'Beyond the card\'s configuration ceiling', text: `The chassis can host ${count}, but NVIDIA positions the ${gpu.name} for up to ${gpu.max} GPUs per system. This is the card's limit, not the board's.` });
+      if (gpu.link && count === 2) flags.push({ cls: '', title: 'This pair can be bridged', text: `${gpu.link}. A bridge lets one worker exceed a single card's ${gpu.vram}GB without crossing PCIe, but it stays far slower than either card's own ${gpu.bandwidth}GB/s — size workers to one card first and bridge only when a model genuinely will not fit.` });
+      // The bridge on every card here joins two GPUs, not the whole tray. At four
+      // and eight that is the assumption most worth interrupting: the total looks
+      // poolable and is not.
+      if (gpu.link && count > 2) flags.push({ cls: 'warn', title: 'The bridge joins two cards, not all of them', text: `${gpu.link} — a two-way bridge. ${count} of these do not become one ${gpu.vram * count}GB pool: you get ${Math.floor(count / 2)} bridged pair${Math.floor(count / 2) === 1 ? '' : 's'} of ${gpu.vram * 2}GB at most, and anything wider crosses PCIe. Plan workers against ${gpu.vram}GB, or ${gpu.vram * 2}GB across a bridged pair.` });
+      if (!gpu.link && count > 1) flags.push({ cls: '', title: 'No bridge on this card', text: `The ${gpu.name} has no NVLink, so the ${count} cards are independent islands joined only by PCIe. Run one worker per card; anything spanning them pays the link on every token.` });
+      if (isConsumer && count === 2 && gpu.pcieLanes >= 16) flags.push({ cls: 'warn', title: 'Lanes split x8/x8', text: `${host.board} splits the CPU's sixteen graphics lanes x8/x8 across two cards. Each card still holds its own memory at full local speed; the halved link costs you when loading weights and whenever anything crosses between cards.` });
+      if (isConsumer) flags.push({ cls: '', title: 'Two memory channels', text: `${host.channels} channels here against eight or more on the EPYC platforms. Anything that spills out of VRAM into system memory runs far slower on this class of board.` });
+      if (hostKey === 'lga1851') flags.push({ cls: 'warn', title: 'No ECC, and a turbo-rated CPU figure', text: 'Z890 does not support ECC memory. The CPU wattage shown is Intel\'s 250W maximum turbo power, not its 125W base power, because the PSU has to carry the peak.' });
+      if (hostKey === 'am5') flags.push({ cls: '', title: 'ECC is available here', text: 'The ProArt X870E board accepts ECC and non-ECC unbuffered DDR5, so a long unattended run can keep error correction on a consumer platform.' });
+      if (validCount && ram < gpu.vram * count) flags.push({ cls: 'warn', title: 'System memory below VRAM', text: `${ram}GB of system memory against ${gpu.vram * count}GB of VRAM. Staging weights through host memory wants room for the largest single model; below the VRAM figure you are relying on mmap from fast NVMe, so size the drive for it or take the next memory option.` });
+      if (!fitsSelectedModel) flags.push({ cls: 'warn', title: `${gpu.vram}GB will not hold this model`, text: `${activeModel().name} at ${labels[sharedQuant()] || sharedQuant()} with ${sharedContext()}K context needs about ${gb(requiredPerWorker)}GB, and this card has ${gpu.vram}GB. Adding more of them does not help: each worker has to fit on one card. Drop the precision, cut the context, or choose a card with more memory.` });
+      if (!gpu.official) flags.push({ cls: 'warn', title: 'Not a card its vendor sells', text: `The ${gpu.name} is an aftermarket rebuild — third-party board shops respinning NVIDIA silicon onto a denser memory layout. People run these and they work, but NVIDIA publishes no specification for this configuration, so every figure shown here is reported rather than vendor-stated. There is no manufacturer warranty, driver and VBIOS support is the seller's problem rather than NVIDIA's, and resale depends on a market that could close. Price that risk in; do not treat this row as equivalent evidence to the ones above it.` });
+      if (stack.note) flags.push({ cls: 'warn', title: `${stack.label}, not CUDA`, text: stack.note });
+      if (gpu.pcieLanes < 16) flags.push({ cls: '', title: `Electrically x${gpu.pcieLanes}, whatever the slot`, text: `The ${gpu.name} wires only ${gpu.pcieLanes} PCIe lanes even in a full x16 slot. That costs you when loading weights and whenever work crosses between cards; it costs you very little once a model is resident and generating.` });
+      if (!gpu.bandwidthPublished) flags.push({ cls: '', title: 'Bandwidth is derived, not quoted', text: `The ${gpu.bandwidth}GB/s shown for the ${gpu.name} is not quoted from a vendor specification. NVIDIA states bus width and memory type for its GeForce boards but not the resulting bandwidth, so that figure is arithmetic from the two; where a professional board is marked derived, its own datasheet was not reachable to confirm. Sound for ranking cards against each other, not for quoting.` });
       if (!flags.length) flags.push({ cls: '', title: 'Buildable reference', text: 'The lane budget, memory population, and CPU choice are coherent; verify the exact risers, card model, and PSU cabling before purchase.' });
-      const perGpuCopies = Math.max(1, Math.floor(gpu.vram / 20));
-      const complexity = hostKey === 'rack8' ? 'Very high' : count >= 4 ? 'High' : 'Mid';
+      const complexity = hostKey === 'rack8' ? 'Very high' : isConsumer ? 'Low' : count >= 4 ? 'High' : 'Mid';
       return {
         id: 'build:epyc-current',
         name: `${count}× ${gpu.name} · ${host.name}`,
-        kicker: 'Your derived EPYC build',
+        kicker: 'Your derived build',
         sub: `${confidence}. CPU remains secondary to the ${pcieTopology} payload, physical layout, and ${psuTarget}W PSU target.`,
         memory: gpu.vram * count,
         displayMemory: `${gpu.vram * count}GB across ${count} GPU${count === 1 ? '' : 's'}`,
-        investment: hostKey === 'rack8' || gpuKey.includes('pro6000') ? 'Enterprise / quote' : count >= 4 ? '$$$$' : '$$$',
+        investment: hostKey === 'rack8' || gpu.vram >= 80 ? 'Enterprise / quote' : isConsumer ? '$$' : count >= 4 ? '$$$$' : '$$$',
         complexity,
         gpus: count,
         unit: gpu.vram,
@@ -1978,9 +2142,9 @@
         power: `≈${estimatedDraw}W estimated`,
         fit: count === 1 ? gpu.fit : `${count} independent ${gpu.fit}s`,
         reason: validCount ? `${manufacturerValidated ? 'A manufacturer-validated system class' : 'A reference-derived host'} based on ${host.board}; CPU, RAM, PCIe, chassis, power, and electrical class remain visible.` : 'The selected GPU count is incompatible with this reference platform.',
-        bullets: [`${cpu.model} · ${cpu.cores} cores`, `${ram}GB ${host.memoryType}`, pcieTopology],
+        bullets: [`${cpu.model} · ${cpu.cores} cores`, `${ram}GB ${host.memoryType}`, pcieTopology, `${gpu.bandwidth}GB/s per card${gpu.bandwidthPublished ? '' : ' (derived)'}`],
         valid: validCount,
-        hostKey, gpuKey, gpu, host, cpu, ram, estimatedDraw, psuTarget, pcieTopology, confidence, circuit, flags
+        hostKey, gpuKey, gpu, host, cpu, ram, dimmPlan, estimatedDraw, psuTarget, pcieTopology, confidence, circuit, flags
       };
     }
 
@@ -1992,33 +2156,36 @@
         usable: build.memory,
         total: build.memory,
         replicaCap: build.workerCapacity,
-        backend: 'CUDA / NCCL',
+        backend: gpuPlatforms[build.gpu.platform].backend,
         network: build.hostKey === 'rack8' ? '25–100GbE recommended' : '10–25GbE recommended',
         investment: build.investment,
-        platform: 'cuda',
+        platform: build.gpu.platform,
         maxNodes: 8,
         build
       };
     }
 
-    function renderEpycBuilder(refill = false) {
-      if (refill) fillEpycDependentControls();
-      const build = deriveEpycBuild();
-      $('epycBuildBanner').className = `fit-banner ${build.valid ? build.flags.some(flag => flag.cls === 'warn') ? 'warn' : '' : 'stop'}`;
-      $('epycConfidence').textContent = build.confidence;
-      $('epycBuildName').textContent = build.name;
-      $('epycBuildSummary').textContent = build.valid ? build.reason : 'Choose Auto or a compatible host platform to continue.';
-      $('epycSpecCpu').textContent = `${build.cpu.model} · ${build.cpu.cores} cores · ${build.cpu.tdp}W`;
-      $('epycSpecVram').textContent = `${build.memory}GB total · ${build.gpu.vram}GB each`;
-      $('epycSpecPcie').textContent = build.pcieTopology;
-      $('epycSpecRam').textContent = `${build.ram}GB · ${build.host.channels} channels · ${build.host.memoryType}`;
-      $('epycSpecBoard').textContent = build.host.board;
-      $('epycSpecChassis').textContent = `${build.host.chassis} · ${build.gpu.slot}`;
-      $('epycSpecPower').textContent = `≈${build.estimatedDraw}W · GPUs ${build.gpu.tdp * build.gpus}W`;
-      $('epycSpecPsu').textContent = `${build.psuTarget}W minimum target / redundant equivalent`;
-      $('epycSpecCircuit').textContent = build.circuit;
-      $('epycBuildFlags').innerHTML = build.flags.map(flag => `<div class="build-flag ${flag.cls}"><strong>${flag.title}:</strong> ${flag.text}</div>`).join('');
-      $('saveEpycBuild').disabled = !build.valid;
+    function renderEpycBuilder(p, refill = false) {
+      if (refill) fillEpycDependentControls(p);
+      const build = deriveEpycBuild(p);
+      $(`${p}BuildBanner`).className = `fit-banner ${build.valid ? build.flags.some(flag => flag.cls === 'warn') ? 'warn' : '' : 'stop'}`;
+      $(`${p}Confidence`).textContent = build.confidence;
+      $(`${p}BuildName`).textContent = build.name;
+      $(`${p}BuildSummary`).textContent = build.valid ? build.reason : 'Choose Auto or a compatible host platform to continue.';
+      $(`${p}SpecCpu`).textContent = `${build.cpu.model} · ${build.cpu.cores} cores · ${build.cpu.tdp}W`;
+      $(`${p}SpecVram`).textContent = `${build.memory}GB total · ${build.gpu.vram}GB each`;
+      $(`${p}SpecPcie`).textContent = build.pcieTopology;
+      $(`${p}SpecRam`).textContent = `${build.ram}GB · ${build.dimmPlan.count} × ${build.dimmPlan.perDimm}GB · ${build.host.channels} channels · ${build.host.memoryType}`;
+      $(`${p}SpecBoard`).textContent = build.host.board;
+      $(`${p}SpecChassis`).textContent = `${build.host.chassis} · ${build.gpu.slot}`;
+      $(`${p}SpecPower`).textContent = `≈${build.estimatedDraw}W · GPUs ${build.gpu.tdp * build.gpus}W · RAM ${build.dimmPlan.watts}W`;
+      $(`${p}SpecPsu`).textContent = `${build.psuTarget}W minimum target / redundant equivalent`;
+      $(`${p}SpecCircuit`).textContent = build.circuit;
+      $(`${p}BuildFlags`).innerHTML = build.flags.map(flag => `<div class="build-flag ${flag.cls}"><strong>${flag.title}:</strong> ${flag.text}</div>`).join('');
+      $(`${p}SaveBuild`).disabled = !build.valid;
+      // Only the panel that owns the saved slot offers to update it; the other
+      // offers to take it, so the single slot is never ambiguous.
+      $(`${p}SaveBuild`).textContent = generatedBuild && savedBuildFrom === p ? 'Update saved build →' : 'Save build to planner →';
     }
 
     function refreshPlannerOptions() {
@@ -2065,6 +2232,34 @@
       return '';
     }
 
+    // Systems bought whole: neither a Mac configuration nor a host you
+    // assemble from a payload. They are ordinary catalogue entries carrying
+    // their own sourced figures; this panel selects among them and reports
+    // what each holds at the current model, precision and context.
+    function renderStandalone() {
+      const list = setups.filter(x => x.standalone);
+      const select = $('standaloneSelect');
+      if (!select.options.length) {
+        select.innerHTML = list.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+        $('standaloneCount').textContent = `${list.length} systems / bought whole`;
+      }
+      const s = list.find(x => x.id === select.value) || list[0];
+      select.value = s.id;
+      $('standaloneName').textContent = s.name;
+      // The topology note, not the headline figure: these systems include
+      // tiered ones, where a single memory number would mislead.
+      $('standaloneNote').textContent = poolingNote(s);
+      $('standaloneInvestment').textContent = s.investment;
+      $('standalonePower').textContent = s.power;
+      $('standaloneComplexity').textContent = s.complexity;
+      $('standaloneMemory').textContent = s.displayMemory;
+      const counts = workerCounts(s);
+      ['standaloneQ4', 'standaloneQ8', 'standaloneBf16'].forEach((id, i) => {
+        const row = counts[i];
+        $(id).textContent = row.count === 0 ? '—' : `${row.count} × ${gb(row.required)}GB`;
+      });
+    }
+
     function renderBuy() {
       const visibleSetups = currentSetups();
       const quant = buyQuant();
@@ -2092,11 +2287,7 @@
         </article>`;
       }).join('');
 
-      $('compareBody').innerHTML = visibleSetups.map(s => {
-        const rows = workerCounts(s);
-        const cell = r => `<td${r.count === 0 ? ' class="cap-none"' : ''}>${r.count === 0 ? '—' : r.count}</td>`;
-        return `<tr><td><strong>${s.name}</strong></td><td>${s.investment}</td><td>${s.displayMemory}</td>${rows.map(cell).join('')}<td>${s.power}</td><td>${poolingNote(s)}</td></tr>`;
-      }).join('');
+      renderStandalone();
 
       document.querySelectorAll('[data-setup]').forEach(el => {
         el.addEventListener('click', (event) => {
@@ -2399,8 +2590,8 @@
     }
 
 
-    // ---- Harness topology -------------------------------------------------
-    // Topology is a parameter of one harness surface, not four sibling tabs.
+    // ---- Architecture topology -------------------------------------------------
+    // Topology is a parameter of one architecture surface, not four sibling tabs.
     // Each shape is a real arrangement with its own diagram; none of them is a
     // value hidden inside a dropdown, because a dropdown value teaches nothing.
     // `key` matches the topology: field the blueprints already emit.
@@ -2571,7 +2762,7 @@
       updateHarness();
     }
 
-    // One orchestrator for the whole harness surface: pick the shape's panel,
+    // One orchestrator for the whole architecture surface: pick the shape's panel,
     // run that shape's arithmetic, then run the shared roster and blueprint.
     function updateHarness() {
       const shape = topologyByKey(currentTopology);
@@ -2642,7 +2833,7 @@
       $('contextBar').style.width = `${Math.min(100, c/barBase*100)}%`;
       $('reserveBar').style.width = `${Math.max(0, 100-(w+c)/barBase*100)}%`;
 
-      const experimentNames = { coding: 'Daily coding loop', repo: 'Deep repository task', ab: 'Harness A/B test', swarm: 'Parallel attempt swarm', vision: 'Visual coding task' };
+      const experimentNames = { coding: 'Daily coding loop', repo: 'Deep repository task', ab: 'Architecture A/B test', swarm: 'Parallel attempt swarm', vision: 'Visual coding task' };
       $('routeLabel').textContent = experimentNames[experiment];
       const lanes = buildLanes(s, copies, experiment, fit);
       $('lanes').innerHTML = lanes.map(l => `<div class="lane"><div class="hardware-node">${l.hardware}</div><div class="wire" aria-hidden="true"></div><div class="worker-node ${l.cls}"><strong>${l.title}</strong><span>${l.detail}</span></div></div>`).join('');
@@ -2821,12 +3012,12 @@
         return `<article class="cluster-node ${node.platform === 'cuda' ? 'cuda' : ''} ${judge ? 'judge' : ''}"><span>${node.platform.toUpperCase()} · Node ${String(index+1).padStart(2,'0')}</span><strong>${node.short}</strong><small>${role}<br>${node.usable}GB usable</small></article>`;
       }).join('') || '<div class="cluster-callout">Add nodes to draw the federated topology.</div>';
 
-      $('mixCaveat').innerHTML = `<strong>Architecture rule:</strong> expose MLX and CUDA nodes as compatible endpoints, then route tasks and merge results at the harness layer. ${platforms.size === 2 ? 'Do not tensor-shard one model across Mac and Spark nodes; keep distributed jobs within a compatible island.' : 'Heterogeneous Macs still benefit most from role-based replicas because uneven nodes create synchronization drag.'}`;
+      const stackNames = [...platforms].map(name => (gpuPlatforms[name] || {}).label || name.toUpperCase());
+      $('mixCaveat').innerHTML = `<strong>Architecture rule:</strong> expose ${stackNames.length > 1 ? `${stackNames.slice(0, -1).join(', ')} and ${stackNames[stackNames.length - 1]}` : stackNames[0] || 'all'} nodes as compatible endpoints, then route tasks and merge results at the harness layer. ${platforms.size > 1 ? 'Do not tensor-shard one model across nodes of different stacks; keep distributed jobs within a compatible island.' : 'Nodes on one stack still benefit most from role-based replicas because uneven nodes create synchronization drag.'}`;
       $('mixRecipe').textContent = [
         `topology: heterogeneous-federation`,
         `nodes: ${nodes.length}`,
-        `mlx_nodes: ${nodes.filter(node => node.platform === 'mlx').length}`,
-        `cuda_nodes: ${nodes.filter(node => node.platform === 'cuda').length}`,
+        ...[...new Set(nodes.map(node => node.platform))].sort().map(name => `${name}_nodes: ${nodes.filter(node => node.platform === name).length}`),
         `policy: ${strategy}`,
         `router: cheapest-capable`,
         `endpoint_contract: OpenAI-compatible`,
@@ -3234,7 +3425,6 @@
       updateMacCatalog();
       updateHarness();
       if (gateStep === 2 && !$('startGate').hidden) {
-        $('gateModelName').textContent = activeModel().name;
         renderTopoGrid('gateTopoGrid', 'gateTopoNote');
       }
     }
@@ -3246,6 +3436,11 @@
     // an explicit share beats whatever this browser happened to be holding.
     // Load with #fresh to ignore stored state.
 
+    // Deliberately keeps the old name. This key travels in saved plans and in
+    // shared plan links, so renaming it would orphan every plan already stored
+    // and break every link already sent — the same reason the `epyc` panel key
+    // still carries a name its map outgrew. A product name is worth less than a
+    // link that still opens.
     const STATE_KEY = 'harness-planner/v1';
     const STATE_VERSION = 2;
     const CONTEXTS = [16, 32, 64, 128];
@@ -3277,9 +3472,13 @@
         setup: selectedSetup,
         mac: selectedMacKey,
         buy: { mode: buyMode, quant: $('buyQuant').value, context: $('buyContext').value },
+        // The consumer designer rides under the existing `epyc` key rather than
+        // a new one, so a plan link written before it existed still restores.
         epyc: {
           gpu: $('epycGpu').value, count: $('epycGpuCount').value, host: $('epycHost').value,
-          cpu: $('epycCpu').value, ram: $('epycRam').value, saved: generatedBuild !== null
+          cpu: $('epycCpu').value, ram: $('epycRam').value,
+          cons: { gpu: $('consGpu').value, count: $('consGpuCount').value, host: $('consHost').value, cpu: $('consCpu').value, ram: $('consRam').value },
+          saved: generatedBuild !== null, savedFrom: savedBuildFrom
         },
         deploy: {
           experiment: $('experiment').value, quant: $('quant').value, context: $('context').value,
@@ -3379,12 +3578,24 @@
       if (state.epyc) {
         setControl('epycGpu', state.epyc.gpu);
         setControl('epycGpuCount', state.epyc.count);
+        // A plan written when one designer held both classes may name a
+        // consumer platform here; setControl rejects it and the panel stays on
+        // auto rather than restoring a host it can no longer offer.
         setControl('epycHost', state.epyc.host);
-        fillEpycDependentControls(true);
+        fillEpycDependentControls('epyc', true);
         setControl('epycCpu', state.epyc.cpu);
         setControl('epycRam', state.epyc.ram);
+        if (state.epyc.cons) {
+          setControl('consGpu', state.epyc.cons.gpu);
+          setControl('consGpuCount', state.epyc.cons.count);
+          setControl('consHost', state.epyc.cons.host);
+          fillEpycDependentControls('cons', true);
+          setControl('consCpu', state.epyc.cons.cpu);
+          setControl('consRam', state.epyc.cons.ram);
+        }
         if (state.epyc.saved) {
-          const build = deriveEpycBuild();
+          savedBuildFrom = state.epyc.savedFrom === 'cons' ? 'cons' : 'epyc';
+          const build = deriveEpycBuild(savedBuildFrom);
           if (build.valid) generatedBuild = build;
         }
       }
@@ -3586,13 +3797,15 @@
     }
 
     function init() {
-      $('epycGpu').innerHTML = Object.entries(epycGpuProfiles).map(([key,gpu]) => `<option value="${key}">${gpu.name} · ${gpu.vram}GB · ${gpu.tdp}W</option>`).join('');
-      $('epycGpuCount').innerHTML = [1,2,4,8].map(count => `<option value="${count}">${count} GPU${count === 1 ? '' : 's'}</option>`).join('');
-      $('epycHost').innerHTML = `<option value="auto">Auto-select compatible platform</option>${Object.entries(epycHostProfiles).map(([key,host]) => `<option value="${key}">${host.name}</option>`).join('')}`;
-      $('epycGpu').value = 'rtx3090';
-      $('epycGpuCount').value = '4';
-      $('epycHost').value = 'auto';
-      fillEpycDependentControls(true);
+      Object.entries(builderPanels).forEach(([p, cfg]) => {
+        $(`${p}Gpu`).innerHTML = Object.entries(epycGpuProfiles).map(([key,gpu]) => `<option value="${key}">${gpu.name} · ${gpu.vram}GB · ${gpu.bandwidth}GB/s · ${gpu.tdp}W</option>`).join('');
+        $(`${p}GpuCount`).innerHTML = cfg.counts.map(count => `<option value="${count}">${count} GPU${count === 1 ? '' : 's'}</option>`).join('');
+        $(`${p}Host`).innerHTML = `<option value="auto">Auto-select compatible platform</option>${Object.entries(epycHostProfiles).filter(([, host]) => host.hostClass === cfg.hostClass).map(([key,host]) => `<option value="${key}">${host.name}</option>`).join('')}`;
+        $(`${p}Gpu`).value = cfg.gpu;
+        $(`${p}GpuCount`).value = cfg.count;
+        $(`${p}Host`).value = 'auto';
+        fillEpycDependentControls(p, true);
+      });
       $('deploySetup').innerHTML = allHardwareOptions();
       $('deploySetup').value = selectedSetup;
       $('clusterFamily').innerHTML = allClusterOptions();
@@ -3624,8 +3837,10 @@
         renderRoster();
         updateHarness();
       });
-      ['epycGpu','epycGpuCount','epycHost'].forEach(id => $(id).addEventListener('change', () => renderEpycBuilder(true)));
-      ['epycCpu','epycRam'].forEach(id => $(id).addEventListener('change', () => renderEpycBuilder(false)));
+      Object.keys(builderPanels).forEach(p => {
+        ['Gpu','GpuCount','Host'].forEach(name => $(`${p}${name}`).addEventListener('change', () => renderEpycBuilder(p, true)));
+        ['Cpu','Ram'].forEach(name => $(`${p}${name}`).addEventListener('change', () => renderEpycBuilder(p, false)));
+      });
       ['deploySetup','experiment'].forEach(id => $(id).addEventListener('change', updateHarness));
       ['quant','context'].forEach(id => $(id).addEventListener('change', () => {
         setControl(id === 'quant' ? 'buyQuant' : 'buyContext', $(id).value);
@@ -3659,6 +3874,12 @@
       $('deployTab').addEventListener('click', () => setView('deploy'));
       $('openSplit').addEventListener('click', () => setTopology('disaggregated-prefill-decode'));
       $('macToDeploy').addEventListener('click', () => { selectedSetup = `mac:${selectedMacKey}`; $('deploySetup').value = selectedSetup; setView('deploy'); });
+      $('standaloneSelect').addEventListener('change', renderStandalone);
+      $('standaloneToDeploy').addEventListener('click', () => {
+        selectedSetup = $('standaloneSelect').value;
+        $('deploySetup').value = selectedSetup;
+        setView('deploy');
+      });
       $('macToCluster').addEventListener('click', () => { $('clusterFamily').value = `mac:${selectedMacKey}`; setTopology('replicas'); setView('deploy'); });
       $('macToMix').addEventListener('click', () => {
         const value = `mac:${selectedMacKey}`;
@@ -3669,22 +3890,28 @@
         setView('deploy');
       });
       $('macToSplit').addEventListener('click', () => { $('splitDecode').value = selectedMacKey; setTopology('disaggregated-prefill-decode'); setView('deploy'); });
-      $('saveEpycBuild').addEventListener('click', () => {
-        const build = deriveEpycBuild();
-        if (!build.valid) return;
-        generatedBuild = build;
-        selectedSetup = generatedBuild.id;
-        refreshPlannerOptions();
-        renderBuy();
-        $('saveEpycBuild').textContent = 'Saved to every topology';
-        setTimeout(() => $('saveEpycBuild').textContent = 'Update saved build →', 1800);
-      });
-      $('resetEpycBuild').addEventListener('click', () => {
-        $('epycGpu').value = 'rtx3090';
-        $('epycGpuCount').value = '4';
-        $('epycHost').value = 'auto';
-        fillEpycDependentControls(true);
-        renderEpycBuilder();
+      Object.keys(builderPanels).forEach(p => {
+        $(`${p}SaveBuild`).addEventListener('click', () => {
+          const build = deriveEpycBuild(p);
+          if (!build.valid) return;
+          generatedBuild = build;
+          savedBuildFrom = p;
+          selectedSetup = generatedBuild.id;
+          refreshPlannerOptions();
+          renderBuy();
+          // One slot: saving here replaces whatever the other designer saved,
+          // so the other button goes back to offering rather than claiming.
+          renderEpycBuilder(p === 'cons' ? 'epyc' : 'cons');
+          $(`${p}SaveBuild`).textContent = 'Saved to every topology';
+          setTimeout(() => renderEpycBuilder(p), 1800);
+        });
+        $(`${p}ResetBuild`).addEventListener('click', () => {
+          $(`${p}Gpu`).value = builderPanels[p].gpu;
+          $(`${p}GpuCount`).value = builderPanels[p].count;
+          $(`${p}Host`).value = 'auto';
+          fillEpycDependentControls(p, true);
+          renderEpycBuilder(p);
+        });
       });
       // Clipboard access fails on an insecure origin or a denied permission.
       // The fallback selects the block so the keyboard shortcut still works,
@@ -3745,7 +3972,7 @@
       setBuyMode(buyMode);
 
       renderBuy();
-      renderEpycBuilder();
+      Object.keys(builderPanels).forEach(p => renderEpycBuilder(p));
       updateMacCatalog();
       renderMixRows();
       updateHarness();
@@ -3761,16 +3988,6 @@
       $('startGate').addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && gateStep === 2) { event.preventDefault(); setGateStep(1); }
       });
-      // The gate's own precision and context are the same values the planner
-      // uses, so what you set here is what you arrive with.
-      ['gateQuant', 'gateContext'].forEach(id => $(id).addEventListener('change', () => {
-        const owner = id === 'gateQuant' ? 'quant' : 'context';
-        setControl(owner, $(id).value);
-        setControl(owner === 'quant' ? 'buyQuant' : 'buyContext', $(id).value);
-        renderBuy();
-        updateHarness();
-        renderTopoGrid('gateTopoGrid', 'gateTopoNote');
-      }));
       Object.keys(buyModes).forEach(key => {
         $(`buyMode-${key}`).addEventListener('click', () => setBuyMode(key, { focus: true }));
       });
