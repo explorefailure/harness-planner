@@ -1,12 +1,12 @@
-# Support for Harness Planner
+# Support for Architecture Playground
 
-Harness Planner is a solo-maintained open-source project. Help is provided on a
+Architecture Playground is a solo-maintained open-source project. Help is provided on a
 best-effort basis; there is no guaranteed response time, resolution,
 compatibility exception, or support SLA.
 
 ## Where to ask
 
-Use [GitHub Issues](https://github.com/explorefailure/harness-planner/issues)
+Use [GitHub Issues](https://github.com/explorefailure/architecture-playground/issues)
 for usage questions and non-sensitive bug reports. Search existing issues
 first, and pick the template that matches:
 

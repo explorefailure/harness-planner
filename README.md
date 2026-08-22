@@ -1,16 +1,25 @@
-# Harness Planner
+# Architecture Playground
 
 _An [Explore Failure](https://explorefailure.com/) field instrument._
 
-[![CI](https://github.com/explorefailure/harness-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/explorefailure/harness-planner/actions/workflows/ci.yml)
+[![CI](https://github.com/explorefailure/architecture-playground/actions/workflows/ci.yml/badge.svg)](https://github.com/explorefailure/architecture-playground/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-Plan a local LLM coding harness against real hardware: pick a model, see what
-each machine can actually host, then assign different models to different jobs
-and pack them onto one box together.
+A playground for local LLM architectures. Pick a model, then try arrangements of
+real hardware against it — the sensible ones and the ones that only look sensible
+— and see what each would actually host. Assign different models to different
+jobs and pack them onto one box together.
 
-It is a single self-contained HTML file. No build step, no dependencies, no
-network requests.
+Nothing is filtered out for being a bad idea. A passively cooled server card in a
+desktop tower, an aftermarket 48GB rebuild, a board too small for the model you
+picked: all of them are here, all of them report the same arithmetic, and each
+one says what it would take or why it fails. Seeing a bad idea fail precisely is
+worth more than never being shown it.
+
+It is a single self-contained HTML file. No build step and no dependencies.
+It loads no third-party assets; the only network access is reading public model
+metadata from Hugging Face when you ask it to import a model, and everything
+else works offline.
 
 ## The point
 
@@ -36,6 +45,65 @@ Open `index.html` in a browser, or serve the folder:
 python3 -m http.server 8765 --directory .
 # http://127.0.0.1:8765/
 ```
+
+## Import a model from Hugging Face
+
+**Import model** takes a model page link or an `owner/name` id and reads that
+repository's own figures, so a model that is not in the catalogue can still be
+planned against. Nothing is downloaded but metadata — the weights are never
+fetched, only their size is needed.
+
+What it reads, and from where:
+
+| Figure | Source |
+|---|---|
+| Parameter count | `safetensors.total` from the model's hub metadata |
+| BF16 size | measured bytes of the canonical `model*.safetensors` set |
+| Q4 / Q8 sizes | the matching GGUF artifacts in a quantised sibling repository |
+| KV reserve inputs | `num_hidden_layers`, `num_key_value_heads`, `head_dim` from `config.json` |
+| Native quantisation | `quantization_config.quant_method` in `config.json` |
+
+Imported models carry `provenance: 'imported'` and are shown under an
+**Imported** group with an `imported from the hub` flag. They are never
+presented as `measured`, which is reserved for entries a human has verified.
+
+Three cases where a figure is not simply measured, each stated in the UI:
+
+- **No quantised sibling.** Q4 and Q8 fall back to `params × bits ÷ 8` and are
+  flagged `estimated`. That formula runs low against real GGUF artifacts — on
+  Qwen3-8B it is 18.5% under at Q4 and 6.0% under at Q8 — so treat those two
+  numbers as a floor, not a measurement.
+- **Natively quantised weights.** No size formula applies, so the measured
+  artifact is reported at every precision, and the parameter figure counts
+  packed tensor elements and will not match the model's name.
+- **Gated repository.** The config cannot be read, so the KV reserve falls back
+  to the generic estimate, exactly as for a gated catalogue entry. Hugging Face
+  answers `401` both for a gated repository and for one that does not exist, so
+  the error says both rather than guessing.
+
+Two guards exist because the hub is messier than it looks. A repository that
+ships a `consolidated.safetensors` beside its sharded set would otherwise be
+counted twice, so only the canonical set is summed. And a GGUF repository often
+carries speculative-decoding draft models naming the same precision — one is
+0.85 GB where the real artifact is 63.39 GB — so a candidate far outside a
+plausible fraction of the BF16 size is dropped rather than reported.
+
+## Your plan persists
+
+Every control — model, precision, context, roster, derived build, cluster and
+mix composition, theme, imported models, and which view and Buy page you were
+on — is saved to `localStorage` as you work and restored on the next visit.
+
+**Copy plan link** encodes that same state into the URL, so a plan can be sent
+somewhere or kept as a bookmark. Opening a plan link applies it and then strips
+it from the address bar, so it cannot shadow later edits. A shared link always
+wins over locally stored state.
+
+Load `index.html#fresh` to discard the stored plan and start from defaults.
+
+A stored plan is validated on restore: a model, machine, or profile that no
+longer exists is dropped rather than applied, and a plan from an older schema
+version is ignored outright.
 
 ## Files
 
@@ -125,6 +193,23 @@ pool is the specific error this tool exists to avoid.
   are flagged in the UI.
 - Prices and specifications were accurate as read on the dates cited and may
   have changed.
+- **An imported model is only as good as its repository.** The figures are read
+  from the hub at import time and are not rechecked afterwards, so a plan can
+  hold a size that has since changed. Imported entries are marked, and are not
+  a substitute for the catalogue's verified numbers.
+- **A plan link can outgrow a paste.** The link carries the whole state as
+  uncompressed JSON with long keys, so it grows with the roster and mix rows:
+  a four-role roster across all six topologies encodes to about 1,880
+  characters. Because shapes seed their roster from one another, each distinct
+  roster is stored once and the shapes point at it, so visiting every shape
+  costs almost nothing — only rosters you actually edit apart add length, and
+  three genuinely different rosters reach roughly 3,400. Each imported model
+  travels in the link too, so that the recipient sees the same numbers without
+  refetching, and costs about 780 characters. Browsers and bookmarks handle
+  that comfortably, but some chat clients truncate URLs near 2,000, so a large
+  plan could produce a link that does not arrive intact. Shortening the state
+  keys, or omitting values that already match the defaults, would cut it
+  substantially — neither is done yet.
 
 ## Branding
 

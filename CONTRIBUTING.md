@@ -1,4 +1,4 @@
-# Contributing to Harness Planner
+# Contributing to Architecture Playground
 
 Thank you for considering a contribution. This project is solo-maintained, so
 please open an issue before starting substantial work — it avoids you building
@@ -73,6 +73,12 @@ the traps:
 
 Set `provenance` honestly: `measured` only if you actually read the artifact
 sizes.
+
+`imported` is reserved for entries the running page read from Hugging Face at a
+user's request. Do not commit an entry with that provenance: a catalogue entry
+is a human claim about a model, and the whole point of the distinction is that
+`measured` means someone checked. If the importer's numbers look right, verify
+them yourself and commit them as `measured`.
 
 ## Adding a machine
 
